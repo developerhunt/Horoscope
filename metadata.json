@@ -2,5 +2,7 @@
   "name": "Tamil Jathagam Generator",
   "description": "Premium Tamil Astrology Application to generate and download traditional Thirukanidappadi Horoscope with South Indian Rasi & Navamsam charts, Dasa-Bhukti, and planetary degrees in A4 printout format.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
