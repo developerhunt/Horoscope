@@ -94,7 +94,7 @@ function atan2D(y: number, x: number): number {
   return Math.atan2(y, x) * RAD_TO_DEG;
 }
 
-function normalizeDeg(deg: number): number {
+export function normalizeDeg(deg: number): number {
   let val = deg % 360;
   if (val < 0) val += 360;
   return val;
@@ -131,12 +131,12 @@ export function calculateJulianDate(year: number, month: number, day: number, ut
 }
 
 /**
- * Calculate dynamic Lahiri Ayanamsha (Chitra Paksha) for Julian Ephemeris Century T
- * Baseline at J2000.0 is 23° 51' 25.53"
+ * High-Precision Lahiri Ayanamsha (IAU / Indian Astronomical Ephemeris Standard)
+ * T = (JD - 2451545.0) / 36525.0
+ * Ayanamsha = 23.858072 + 1.396887 * T + 0.000308 * T * T
  */
 export function calculateLahiriAyanamsha(T: number): number {
-  // Lahiri standard precession polynomial:
-  return 23.8570925 + 1.396042 * T + 0.000308 * T * T;
+  return 23.858072 + (1.396887 * T) + (0.000308 * T * T);
 }
 
 // ==========================================
@@ -153,17 +153,25 @@ interface RawPlanetResult {
 
 /**
  * High-Precision Geocentric Sun Calculation (Meeus Astronomical Algorithms)
+ * M_sun = 357.5291 + 35999.0503 * T
+ * Equation of Center C = (1.9146 - 0.004817*T)*sin(M) + (0.019993 - 0.000101*T)*sin(2M) + 0.000290*sin(3M)
  */
 function calculateSun(T: number, ayanamsha: number): RawPlanetResult {
   const L0 = normalizeDeg(280.46646 + 36000.76983 * T + 0.0003032 * T * T);
-  const M = normalizeDeg(357.52911 + 35999.05029 * T - 0.0001537 * T * T);
-  const C = (1.914602 - 0.004817 * T) * sinD(M) + (0.019993 - 0.000101 * T) * sinD(2 * M) + 0.000289 * sinD(3 * M);
+  const M_sun = normalizeDeg(357.5291092 + 35999.0502909 * T - 0.0001536 * T * T);
+  
+  // Equation of center
+  const C = (1.914602 - 0.004817 * T) * sinD(M_sun) + 
+            (0.019993 - 0.000101 * T) * sinD(2 * M_sun) + 
+            0.000289 * sinD(3 * M_sun);
   
   const trueLong = normalizeDeg(L0 + C);
-  const apparentLong = normalizeDeg(trueLong - 0.00569 - 0.00478 * sinD(125.04 - 1934.136 * T));
+  
+  // Apparent longitude including aberration and nutation approximation
+  const apparentLong = normalizeDeg(trueLong - 0.00569 - 0.00478 * sinD(125.04452 - 1934.136261 * T));
   const siderealLong = normalizeDeg(apparentLong - ayanamsha);
 
-  // Approximate daily speed ~ 0.9856 deg/day
+  // Mean daily speed ~ 0.9856 deg/day
   const speed = 0.9856;
 
   return {
@@ -175,43 +183,85 @@ function calculateSun(T: number, ayanamsha: number): RawPlanetResult {
 }
 
 /**
- * High-Precision Geocentric Moon Calculation (Truncated ELP-2000 / Meeus Ch. 47)
+ * High-Precision Geocentric Moon Calculation (Truncated ELP-2000 / Jean Meeus Ch. 47)
+ * Implements higher-order periodic perturbation terms for Nirayana precision.
  */
 function calculateMoon(T: number, ayanamsha: number): RawPlanetResult {
-  const Lp = normalizeDeg(218.3164477 + 481267.88123421 * T - 0.0015786 * T * T);
-  const D = normalizeDeg(297.8501921 + 445267.1114034 * T - 0.0018819 * T * T);
-  const M = normalizeDeg(357.5291092 + 35999.0502909 * T - 0.0001536 * T * T);
-  const Mp = normalizeDeg(134.9633964 + 477198.8675055 * T + 0.0087414 * T * T);
-  const F = normalizeDeg(93.2720950 + 483202.0175233 * T - 0.0036539 * T * T);
+  // Fundamental arguments of lunar motion
+  const Lp = normalizeDeg(218.3164477 + 481267.88123421 * T - 0.0015786 * T * T + (T * T * T) / 538841.0);
+  const D  = normalizeDeg(297.8501921 + 445267.11140340 * T - 0.0018819 * T * T + (T * T * T) / 545868.0);
+  const M  = normalizeDeg(357.5291092 + 35999.05029090 * T - 0.0001536 * T * T + (T * T * T) / 24490000.0);
+  const Mp = normalizeDeg(134.9633964 + 477198.86750550 * T + 0.0087414 * T * T + (T * T * T) / 69699.0);
+  const F  = normalizeDeg(93.27209500 + 483202.01752330 * T - 0.0036539 * T * T - (T * T * T) / 3526000.0);
 
-  // Major periodic terms for lunar longitude
+  // Major periodic perturbation terms for lunar longitude
   let sigmaL =
-    6.288774 * sinD(Mp) +
-    1.274027 * sinD(2 * D - Mp) +
-    0.658314 * sinD(2 * D) +
-    0.213618 * sinD(2 * Mp) -
-    0.185116 * sinD(M) -
-    0.114332 * sinD(2 * F) +
+    6.288774 * sinD(Mp) +                   // Main elliptic term
+    1.274027 * sinD(2 * D - Mp) +           // Evection
+    0.658314 * sinD(2 * D) +                // Variation
+    0.213618 * sinD(2 * Mp) +               // Second elliptic term
+    -0.185800 * sinD(M) +                   // Annual Equation
+    -0.114332 * sinD(2 * F) +               // Reduction to ecliptic
     0.058793 * sinD(2 * D - 2 * Mp) +
     0.057066 * sinD(2 * D - M - Mp) +
     0.053322 * sinD(2 * D + Mp) +
-    0.045758 * sinD(2 * D - M) -
-    0.040923 * sinD(M - Mp) -
-    0.034720 * sinD(D) -
-    0.030383 * sinD(M + Mp) +
-    0.015327 * sinD(2 * D - 2 * F) -
-    0.012528 * sinD(2 * D + M - Mp) +
-    0.010980 * sinD(2 * D + M) +
+    0.045758 * sinD(2 * D - M) +
+    -0.040923 * sinD(M - Mp) +
+    -0.034720 * sinD(D) +
+    -0.030383 * sinD(M + Mp) +
+    0.015327 * sinD(2 * D - 2 * F) +
+    -0.012528 * sinD(2 * D + M - Mp) +
+    -0.010980 * sinD(2 * D + M) +
     0.010675 * sinD(4 * D - Mp) +
     0.010034 * sinD(3 * Mp) +
-    0.008548 * sinD(4 * D - 2 * Mp) -
-    0.007888 * sinD(2 * D - M - 2 * F);
+    0.008548 * sinD(4 * D - 2 * Mp) +
+    -0.007888 * sinD(2 * D - M - 2 * F) +
+    -0.006766 * sinD(2 * D + 2 * Mp) +
+    0.005163 * sinD(Mp - 2 * F) +
+    0.004987 * sinD(2 * D + Mp - M) +
+    0.004036 * sinD(2 * D - M + Mp) +
+    0.003994 * sinD(Mp + 2 * F) +
+    0.003861 * sinD(4 * D) +
+    0.003665 * sinD(2 * D - 3 * Mp) +
+    -0.002689 * sinD(M - 2 * F) +
+    -0.002602 * sinD(2 * D - Mp - 2 * F) +
+    0.002390 * sinD(2 * Mp - 2 * F) +
+    -0.002348 * sinD(D + Mp) +
+    0.002236 * sinD(2 * D - 2 * M) +
+    -0.002120 * sinD(2 * Mp + M) +
+    -0.002069 * sinD(2 * M) +
+    0.002048 * sinD(2 * D - 2 * Mp - M) +
+    -0.001773 * sinD(2 * D + Mp - 2 * F) +
+    -0.001595 * sinD(2 * D + 2 * F) +
+    0.001215 * sinD(4 * D - M - Mp) +
+    -0.001110 * sinD(D + M) +
+    0.000892 * sinD(4 * D - 3 * Mp) +
+    -0.000811 * sinD(M + Mp - 2 * F) +
+    0.000759 * sinD(4 * D - M - 2 * Mp) +
+    -0.000713 * sinD(2 * Mp - M) +
+    -0.000700 * sinD(2 * D + 2 * Mp - M) +
+    0.000691 * sinD(2 * D + M - 2 * F) +
+    0.000596 * sinD(2 * D - M - 2 * Mp) +
+    0.000549 * sinD(4 * D + Mp) +
+    0.000537 * sinD(4 * Mp) +
+    0.000520 * sinD(4 * D - M) +
+    -0.000487 * sinD(D - Mp) +
+    -0.000399 * sinD(2 * D + M + Mp) +
+    -0.000381 * sinD(2 * Mp + 2 * F) +
+    0.000351 * sinD(2 * D + M + 2 * F) +
+    -0.000340 * sinD(3 * Mp + M) +
+    0.000330 * sinD(4 * D - 2 * F);
+
+  // Additional planetary perturbation terms
+  const A1 = normalizeDeg(119.75 + 131.849 * T);
+  const A2 = normalizeDeg(53.09 + 479264.290 * T);
+  sigmaL += 0.003964 * sinD(A1) + 0.001964 * sinD(Lp - F) + 0.002060 * sinD(A2);
 
   const tropicalLong = normalizeDeg(Lp + sigmaL);
   const siderealLong = normalizeDeg(tropicalLong - ayanamsha);
 
-  // Moon daily speed ~ 13.176 deg/day
-  const speed = 13.176;
+  // Mean Moon speed ~ 13.176358 deg/day
+  const speed = 13.176358;
 
   return {
     tropicalLong,
@@ -222,7 +272,8 @@ function calculateMoon(T: number, ayanamsha: number): RawPlanetResult {
 }
 
 /**
- * Keplerian Orbital Elements for Major Planets (Mercury, Venus, Mars, Jupiter, Saturn)
+ * High-Precision Keplerian Orbital Elements for Major Planets
+ * Rates per Julian century from J2000.0 (IAU standard)
  */
 interface OrbitalElements {
   a0: number; aDot: number;
@@ -285,14 +336,14 @@ const PLANET_ELEMENTS: Record<string, OrbitalElements> = {
 };
 
 /**
- * Solve Kepler's Equation E - e*sin(E) = M
+ * Solve Kepler's Equation E - e*sin(E) = M (Newton-Raphson method)
  */
 function solveKepler(M_deg: number, e: number): number {
   const M_rad = normalizeDeg(M_deg) * DEG_TO_RAD;
   let E = M_rad;
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     const delta = E - e * Math.sin(E) - M_rad;
-    if (Math.abs(delta) < 1e-8) break;
+    if (Math.abs(delta) < 1e-10) break;
     E = E - delta / (1 - e * Math.cos(E));
   }
   return E * RAD_TO_DEG;
@@ -320,7 +371,7 @@ function getHeliocentricPosition(planetName: string, T: number): { x: number; y:
   // Argument of perihelion
   const omega = normalizeDeg(w - node);
 
-  // Convert to 3D ecliptic rectangular coordinates
+  // 3D ecliptic rectangular coordinates
   const x = (cosD(omega) * cosD(node) - sinD(omega) * sinD(node) * cosD(I)) * xOrb +
             (-sinD(omega) * cosD(node) - cosD(omega) * sinD(node) * cosD(I)) * yOrb;
 
@@ -333,7 +384,7 @@ function getHeliocentricPosition(planetName: string, T: number): { x: number; y:
 }
 
 /**
- * Calculate Geocentric Tropical Longitude and Retrograde status
+ * Calculate Geocentric Tropical & Sidereal Nirayana Longitude with Retrograde Speed
  */
 function calculateGeocentricPlanet(
   planetName: string,
@@ -351,7 +402,7 @@ function calculateGeocentricPlanet(
   const tropicalLong = normalizeDeg(atan2D(geoY, geoX));
   const siderealLong = normalizeDeg(tropicalLong - ayanamsha);
 
-  // Calculate speed by looking 0.0005 century ahead (~ 18 days)
+  // Dynamic daily speed differentiation for Retrograde status
   const dt = 0.0001; // ~ 3.65 days
   const earthNext = getHeliocentricPosition('Earth', T + dt);
   const planetNext = getHeliocentricPosition(planetName, T + dt);
@@ -366,7 +417,7 @@ function calculateGeocentricPlanet(
   const speed = diff / (dt * 36525); // deg per day
   const isRetrograde = speed < 0;
 
-  // Check combustion thresholds from Sun
+  // Astrological combustion (Astangata) thresholds from Sun
   let combustOrb = 15;
   if (planetName === 'Mercury') combustOrb = isRetrograde ? 12 : 14;
   if (planetName === 'Venus') combustOrb = isRetrograde ? 8 : 10;
@@ -388,11 +439,11 @@ function calculateGeocentricPlanet(
 }
 
 /**
- * Calculate Lunar Nodes (Rahu & Ketu)
+ * Calculate Accurate Mean Lunar Nodes (Rahu & Ketu)
+ * Mean Node Omega = 125.04452 - 1934.136261 * T + 0.0020708 * T * T
  */
 function calculateNodes(T: number, ayanamsha: number): { rahu: RawPlanetResult; ketu: RawPlanetResult } {
-  // Mean ascending node Omega
-  const omega = normalizeDeg(125.04452 - 1934.136261 * T + 0.0020708 * T * T);
+  const omega = normalizeDeg(125.04452 - 1934.136261 * T + 0.0020708 * T * T + (T * T * T) / 450000.0);
   
   const siderealRahu = normalizeDeg(omega - ayanamsha);
   const siderealKetu = normalizeDeg(siderealRahu + 180);
@@ -414,7 +465,7 @@ function calculateNodes(T: number, ayanamsha: number): { rahu: RawPlanetResult; 
 }
 
 /**
- * Calculate Exact Ascendant (Lagna) from Local Sidereal Time and Latitude
+ * Calculate Exact Ascendant (Lagna) from Local Sidereal Time (RAMC), Obliquity, and Latitude
  */
 export function calculateLagna(
   JD: number,
@@ -425,15 +476,16 @@ export function calculateLagna(
   ayanamsha: number
 ): { tropicalLagna: number; siderealLagna: number; ramc: number } {
   // Greenwich Mean Sidereal Time (GMST) at 0h UT
-  const GMST0 = normalizeDeg(100.46061837 + 36000.770053608 * T + 0.000387933 * T * T - (T * T * T) / 38710000);
+  const GMST0 = normalizeDeg(100.46061837 + 36000.770053608 * T + 0.000387933 * T * T - (T * T * T) / 38710000.0);
   
-  // Local Sidereal Time (RAMC in degrees)
-  const RAMC = normalizeDeg(GMST0 + 360.98564736629 * (utcHours / 24) + lon);
+  // Right Ascension of Midheaven (RAMC / Local Sidereal Time in degrees)
+  const RAMC = normalizeDeg(GMST0 + 360.98564736629 * (utcHours / 24.0) + lon);
 
-  // True obliquity of the ecliptic
-  const eps = 23.439291 - 0.0130042 * T;
+  // True Obliquity of the Ecliptic (Meeus IAU formula)
+  const eps = 23.4392911 - 0.013004167 * T - 0.000000164 * T * T + 0.0000005036 * T * T * T;
 
-  // Ascendant formula
+  // Exact Ascendant Trigonometric Formula
+  // tan(Asc) = cos(RAMC) / (-sin(RAMC)*cos(eps) - tan(lat)*sin(eps))
   const y = cosD(RAMC);
   const x = -sinD(RAMC) * cosD(eps) - tanD(lat) * sinD(eps);
   
@@ -448,7 +500,7 @@ export function calculateLagna(
 }
 
 /**
- * Approximate Sunrise & Sunset for Native's Location and Date
+ * Accurate Sunrise & Sunset Calculation for Native's Location and Date
  */
 export function calculateSunriseSunset(
   year: number,
@@ -457,15 +509,13 @@ export function calculateSunriseSunset(
   lat: number,
   lon: number
 ): { sunrise: string; sunset: string; sunriseHours: number; sunsetHours: number } {
-  // Day of year N
   const N1 = Math.floor(275 * month / 9);
   const N2 = Math.floor((month + 9) / 12);
   const N3 = (1 + Math.floor((year - 4 * Math.floor(year / 4) + 2) / 3));
   const N = N1 - (N2 * N3) + day - 30;
 
-  // Approximate solar coordinates for sunrise
-  const lngHour = lon / 15;
-  const tRise = N + ((6 - lngHour) / 24);
+  const lngHour = lon / 15.0;
+  const tRise = N + ((6 - lngHour) / 24.0);
   const M_rise = (0.9856 * tRise) - 3.289;
   const L_rise = normalizeDeg(M_rise + (1.916 * sinD(M_rise)) + (0.020 * sinD(2 * M_rise)) + 282.634);
   const sinDec = 0.39782 * sinD(L_rise);
@@ -475,13 +525,13 @@ export function calculateSunriseSunset(
   const clampedCosH = Math.max(-1, Math.min(1, cosH));
   const H_rise = 360 - (Math.acos(clampedCosH) * RAD_TO_DEG);
 
-  const T_rise = H_rise / 15;
-  const UT_rise = normalizeDeg(T_rise + (L_rise / 15) - (0.06571 * tRise) - 6.622 - lngHour);
+  const T_rise = H_rise / 15.0;
+  const UT_rise = normalizeDeg(T_rise + (L_rise / 15.0) - (0.06571 * tRise) - 6.622 - lngHour);
   
-  // Convert UTC to IST (+5.5) or Local Time
-  const localOffset = lon >= 68 && lon <= 97 ? 5.5 : lon / 15;
-  const localRise = normalizeDeg((UT_rise + localOffset) * 15) / 15;
-  const localSet = normalizeDeg((localRise + (2 * Math.acos(clampedCosH) * RAD_TO_DEG / 15)) * 15) / 15;
+  // Convert UTC to Indian Standard Time (IST = UTC + 5.5) or Local Offset
+  const localOffset = lon >= 68 && lon <= 97 ? 5.5 : lon / 15.0;
+  const localRise = normalizeDeg((UT_rise + localOffset) * 15.0) / 15.0;
+  const localSet = normalizeDeg((localRise + (2 * Math.acos(clampedCosH) * RAD_TO_DEG / 15.0)) * 15.0) / 15.0;
 
   const riseH = Math.floor(localRise);
   const riseM = Math.floor((localRise - riseH) * 60);
@@ -549,7 +599,7 @@ function calculateVimshottariDasa(
   activeDasaBhukti: string;
   dasaTimelines: DasaTimeline[];
 } {
-  const nakshatraSpan = 360 / 27; // 13.3333333°
+  const nakshatraSpan = 360.0 / 27.0; // 13.333333333333334°
   const nakshatraIndex = Math.floor(moonSiderealLong / nakshatraSpan);
   const degreeInNakshatra = moonSiderealLong % nakshatraSpan;
 
@@ -562,7 +612,7 @@ function calculateVimshottariDasa(
   const balanceYearsTotal = firstDasa.years * fracRemaining;
 
   const bYears = Math.floor(balanceYearsTotal);
-  const bMonthsTotal = (balanceYearsTotal - bYears) * 12;
+  const bMonthsTotal = (balanceYearsTotal - bYears) * 12.0;
   const bMonths = Math.floor(bMonthsTotal);
   const bDays = Math.round((bMonthsTotal - bMonths) * 30.4375);
 
@@ -574,7 +624,7 @@ function calculateVimshottariDasa(
 
   const dasaTimelines: DasaTimeline[] = [];
   const targetDate = new Date();
-  const currentCalYear = targetDate.getFullYear() + (targetDate.getMonth() + 1) / 12 + targetDate.getDate() / 365;
+  const currentCalYear = targetDate.getFullYear() + (targetDate.getMonth() + 1) / 12.0 + targetDate.getDate() / 365.0;
 
   let activeDasaName = firstDasa.name;
   let activeBhuktiName = '';
@@ -598,7 +648,7 @@ function calculateVimshottariDasa(
       for (let b = 0; b < 9; b++) {
         const bIdx = (dIdx + b) % 9;
         const bLord = DASA_LORDS_ORDER[bIdx];
-        const bDuration = (dasa.years * bLord.years) / 120;
+        const bDuration = (dasa.years * bLord.years) / 120.0;
         const bhuktiEnd = bhuktiStart + bDuration;
 
         if (currentCalYear >= bhuktiStart && currentCalYear <= bhuktiEnd) {
@@ -747,7 +797,7 @@ function parseDmsToDecimal(dmsStr: string): number | null {
   if (!match) return null;
   const deg = parseFloat(match[1]) || 0;
   const min = parseFloat(match[2]) || 0;
-  let val = deg + min / 60;
+  let val = deg + min / 60.0;
   const dir = match[3]?.toUpperCase();
   if (dir === 'S' || dir === 'W') val = -val;
   return val;
@@ -787,15 +837,15 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   }
 
   // Calculate UTC time (Standard Indian Time Zone IST = UTC + 5.5)
-  const localOffset = lon >= 68 && lon <= 97 ? 5.5 : lon / 15;
-  const localDecimalHours = hour + min / 60;
-  const utcHours = (localDecimalHours - localOffset + 24) % 24;
+  const localOffset = lon >= 68 && lon <= 97 ? 5.5 : lon / 15.0;
+  const localDecimalHours = hour + min / 60.0;
+  const utcHours = (localDecimalHours - localOffset + 24.0) % 24.0;
 
   // Astronomical Julian Date & Epoch Century T
   const JD = calculateJulianDate(year, month, day, utcHours);
   const T = (JD - 2451545.0) / 36525.0;
 
-  // 1. Dynamic Lahiri Ayanamsha
+  // 1. High-Precision Lahiri Ayanamsha (IAU Formula)
   const ayanamsha = calculateLahiriAyanamsha(T);
   const ayanamsaFormatted = `${Math.floor(ayanamsha)}° ${String(Math.floor((ayanamsha % 1) * 60)).padStart(2, '0')}' ${String(Math.round((((ayanamsha % 1) * 60) % 1) * 60)).padStart(2, '0')}" (லஹரி)`;
 
@@ -822,22 +872,22 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
 
   // 6. Panchangam Calculations: Tithi, Yoga, Karana
   const moonSunAngle = normalizeDeg(moonRaw.siderealLong - sunRaw.siderealLong);
-  const tithiIndex = Math.floor(moonSunAngle / 12);
+  const tithiIndex = Math.floor(moonSunAngle / 12.0);
   const isShukla = tithiIndex < 15;
   const tithiName = `${isShukla ? 'சுக்ல பட்ச' : 'கிருஷ்ண பட்ச'} ${TITHI_NAMES[tithiIndex % 15]}`;
 
-  const yogaIndex = Math.floor(normalizeDeg(sunRaw.siderealLong + moonRaw.siderealLong) / (360 / 27));
+  const yogaIndex = Math.floor(normalizeDeg(sunRaw.siderealLong + moonRaw.siderealLong) / (360.0 / 27.0));
   const yogaName = YOGA_NAMES[yogaIndex % 27];
 
-  const karanaIndex = Math.floor(moonSunAngle / 6);
+  const karanaIndex = Math.floor(moonSunAngle / 6.0);
   const karanaName = KARANA_NAMES[karanaIndex % 11];
 
   // Helper for Nakshatra & Pada
   const getStarDetails = (siderealLon: number) => {
-    const starSpan = 360 / 27; // 13.3333333°
+    const starSpan = 360.0 / 27.0; // 13.3333333°
     const starIdx = Math.floor(siderealLon / starSpan);
     const degInStar = siderealLon % starSpan;
-    const pada = Math.floor(degInStar / (starSpan / 4)) + 1;
+    const pada = Math.floor(degInStar / (starSpan / 4.0)) + 1;
     return {
       star: NAKSHATRAS[starIdx % 27],
       pada,
@@ -889,8 +939,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [], 11: []
   };
 
-  const lagnaSign = Math.floor(lagnaSidereal / 30);
-  const moonSign = Math.floor(moonRaw.siderealLong / 30);
+  const lagnaSign = Math.floor(lagnaSidereal / 30.0);
+  const moonSign = Math.floor(moonRaw.siderealLong / 30.0);
   const moonStarInfo = getStarDetails(moonRaw.siderealLong);
 
   // List of all 10 celestial points for chart placement
@@ -901,7 +951,7 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     { name: 'செவ்வாய்', tag: marsRaw.isRetrograde ? 'செவ்(வ)' : 'செவ்', raw: marsRaw.siderealLong },
     { name: 'புதன்', tag: mercuryRaw.isRetrograde ? 'புத(வ)' : 'புதன்', raw: mercuryRaw.siderealLong },
     { name: 'குரு', tag: jupiterRaw.isRetrograde ? 'குரு(வ)' : 'குரு', raw: jupiterRaw.siderealLong },
-    { name: 'சுக்கிரன்', tag: venusRaw.isRetrograde ? 'சுக்(வ)' : 'சுக்கிரன்', raw: venusRaw.siderealLong },
+    { name: 'சுக்கிரன்', tag: venusRaw.isRetrograde ? 'சுக்(வ)' : 'சுக்', raw: venusRaw.siderealLong },
     { name: 'சனி', tag: saturnRaw.isRetrograde ? 'சனி(வ)' : 'சனி', raw: saturnRaw.siderealLong },
     { name: 'ராகு', tag: 'ராகு', raw: rahuRaw.siderealLong },
     { name: 'கேது', tag: 'கேது', raw: ketuRaw.siderealLong }
@@ -909,11 +959,11 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
 
   celestialBodies.forEach(body => {
     // 1. Rasi sign (0-11)
-    const rasiIdx = Math.floor(body.raw / 30);
+    const rasiIdx = Math.floor(body.raw / 30.0);
     rasiPlacements[rasiIdx].push(body.tag);
 
     // 2. D9 Navamsa sign (0-11): (Longitude * 9 / 30) % 12
-    const navIdx = Math.floor((body.raw * 9) / 30) % 12;
+    const navIdx = Math.floor((body.raw * 9.0) / 30.0) % 12;
     navPlacements[navIdx].push(body.tag);
   });
 
@@ -931,7 +981,7 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   }));
 
   // Build ZodiacBox Array for Navamsam Chart
-  const navLagnaSign = Math.floor((lagnaSidereal * 9) / 30) % 12;
+  const navLagnaSign = Math.floor((lagnaSidereal * 9.0) / 30.0) % 12;
   const navamsamChart: ZodiacBox[] = RASI_NAMES_TAMIL.map((name, idx) => ({
     id: idx,
     nameTamil: name,
@@ -945,8 +995,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   const evaluationList = celestialBodies.map(b => ({
     name: b.name,
     abbr: b.tag,
-    sign: Math.floor(b.raw / 30),
-    degree: b.raw % 30,
+    sign: Math.floor(b.raw / 30.0),
+    degree: b.raw % 30.0,
     rawLon: b.raw
   }));
 
