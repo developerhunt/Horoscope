@@ -37,6 +37,14 @@ export interface PlanetaryDegree {
   rawLongitude?: number;
 }
 
+export interface BhuktiTimeline {
+  bhuktiLord: string;
+  startDate: string;
+  endDate: string;
+  duration: string;
+  isCurrent?: boolean;
+}
+
 export interface DasaTimeline {
   dasaLord: string;
   startDate: string;
@@ -44,6 +52,17 @@ export interface DasaTimeline {
   duration: string;
   isCurrent?: boolean;
   activeBhukti?: string;
+  bhuktis?: BhuktiTimeline[];
+}
+
+export interface CurrentDasaBhuktiInfo {
+  dasaLord: string;
+  bhuktiLord: string;
+  dasaStartDate: string;
+  dasaEndDate: string;
+  bhuktiStartDate: string;
+  bhuktiEndDate: string;
+  summaryText: string;
 }
 
 export interface ZodiacBox {
@@ -96,6 +115,7 @@ export interface HoroscopeData {
   basicDetails: BasicDetails;
   planetaryDegrees: PlanetaryDegree[];
   dasaTimelines: DasaTimeline[];
+  currentDasaBhukti?: CurrentDasaBhuktiInfo;
   rasiChart: ZodiacBox[];
   navamsamChart: ZodiacBox[];
   footerInfo: FooterInfo;

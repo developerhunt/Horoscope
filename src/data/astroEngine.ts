@@ -4,6 +4,8 @@ import {
   ZodiacBox,
   PlanetaryDegree,
   DasaTimeline,
+  BhuktiTimeline,
+  CurrentDasaBhuktiInfo,
   NadiAnalysis,
   DSSystemAnalysis,
   PanchangamDetails
@@ -589,91 +591,217 @@ function calculateMaandi(
 // 4. VIMSHOTTARI DASA-BHUKTI ENGINE
 // ==========================================
 
-function calculateVimshottariDasa(
+const MONTH_ABBRS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function formatDateDMMMYYYY(d: Date): string {
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = MONTH_ABBRS[d.getMonth()];
+  const yr = d.getFullYear();
+  return `${day}-${mon}-${yr}`;
+}
+
+const DAYS_PER_YEAR = 365.2425;
+const DAYS_PER_MONTH = 30.436875;
+const MS_PER_DAY = 86400000;
+const MS_PER_YEAR = DAYS_PER_YEAR * MS_PER_DAY; // 31556952000 ms
+
+export function calculateVimshottariDasa(
   moonSiderealLong: number,
   birthYear: number,
   birthMonth: number,
-  birthDay: number
+  birthDay: number,
+  birthHour: number = 6,
+  birthMin: number = 0
 ): {
   janmaDasaIruppu: string;
   activeDasaBhukti: string;
   dasaTimelines: DasaTimeline[];
+  currentDasaBhukti: CurrentDasaBhuktiInfo;
 } {
+  const moonLong = normalizeDeg(moonSiderealLong);
   const nakshatraSpan = 360.0 / 27.0; // 13.333333333333334°
-  const nakshatraIndex = Math.floor(moonSiderealLong / nakshatraSpan);
-  const degreeInNakshatra = moonSiderealLong % nakshatraSpan;
+  const nakshatraIndex = Math.floor(moonLong / nakshatraSpan);
+  const elapsedInNakshatra = moonLong % nakshatraSpan;
 
-  // Dasa lord order starts from Ketu for Ashwini (index 0)
+  // Exact fraction of star left
+  const fractionLeft = (nakshatraSpan - elapsedInNakshatra) / nakshatraSpan;
+
+  // Janma Dasa Lord (Ashwini = 0 -> Ketu)
   const lordIndex = nakshatraIndex % 9;
   const firstDasa = DASA_LORDS_ORDER[lordIndex];
 
-  // Proportion of star remaining
-  const fracRemaining = (nakshatraSpan - degreeInNakshatra) / nakshatraSpan;
-  const balanceYearsTotal = firstDasa.years * fracRemaining;
+  // Exact Dasa Balance at Birth in years
+  const balanceYearsTotal = fractionLeft * firstDasa.years;
 
-  const bYears = Math.floor(balanceYearsTotal);
-  const bMonthsTotal = (balanceYearsTotal - bYears) * 12.0;
-  const bMonths = Math.floor(bMonthsTotal);
-  const bDays = Math.round((bMonthsTotal - bMonths) * 30.4375);
+  // Convert strictly to Years, Months, Days using astronomical constants
+  const totalDays = balanceYearsTotal * DAYS_PER_YEAR;
+  let bYears = Math.floor(balanceYearsTotal);
+  const remDays = totalDays - (bYears * DAYS_PER_YEAR);
+  let bMonths = Math.floor(remDays / DAYS_PER_MONTH);
+  let bDays = Math.round(remDays - (bMonths * DAYS_PER_MONTH));
+
+  if (bDays >= 30) {
+    bMonths += Math.floor(bDays / 30);
+    bDays = bDays % 30;
+  }
+  if (bMonths >= 12) {
+    bYears += Math.floor(bMonths / 12);
+    bMonths = bMonths % 12;
+  }
 
   const janmaDasaIruppu = `ஜென்ம கால தசா இருப்பு: ${firstDasa.name} திசை ${String(bYears).padStart(2, '0')} வருடம் ${String(bMonths).padStart(2, '0')} மாதம் ${String(bDays).padStart(2, '0')} நாள்`;
 
-  // Construct timelines
-  let currYear = birthYear + balanceYearsTotal;
-  let prevYear = birthYear;
+  // Start Date = Native's DOB
+  const birthDate = new Date(birthYear, birthMonth - 1, birthDay, birthHour, birthMin);
+  const birthMs = birthDate.getTime();
+  const nowMs = Date.now();
 
   const dasaTimelines: DasaTimeline[] = [];
-  const targetDate = new Date();
-  const currentCalYear = targetDate.getFullYear() + (targetDate.getMonth() + 1) / 12.0 + targetDate.getDate() / 365.0;
 
-  let activeDasaName = firstDasa.name;
-  let activeBhuktiName = '';
+  let currentDasaLord = firstDasa.name;
+  let currentBhuktiLord = '';
+  let currentDasaStart = '';
+  let currentDasaEnd = '';
+  let currentBhuktiStart = '';
+  let currentBhuktiEnd = '';
+
+  let cursorMs = birthMs;
 
   for (let i = 0; i < 9; i++) {
     const dIdx = (lordIndex + i) % 9;
     const dasa = DASA_LORDS_ORDER[dIdx];
-    const sYear = i === 0 ? prevYear : currYear - dasa.years;
-    const eYear = i === 0 ? prevYear + balanceYearsTotal : sYear + dasa.years;
+
+    const isFirstDasa = (i === 0);
+    const dasaYears = isFirstDasa ? balanceYearsTotal : dasa.years;
+    const dasaStartMs = cursorMs;
+    const dasaEndMs = dasaStartMs + dasaYears * MS_PER_YEAR;
+    cursorMs = dasaEndMs;
+
+    const dasaStartDateObj = new Date(dasaStartMs);
+    const dasaEndDateObj = new Date(dasaEndMs);
+
+    const isCurrentDasa = (nowMs >= dasaStartMs && nowMs < dasaEndMs);
+
+    // Calculate all 9 Bhuktis for this Dasa
+    const bhuktis: BhuktiTimeline[] = [];
     
-    if (i > 0) {
-      currYear = eYear;
-    }
+    // For 1st Dasa: theoretical full start was (dasaEndMs - fullYears * MS_PER_YEAR)
+    const fullDasaYears = dasa.years;
+    const fullStartMs = isFirstDasa ? (dasaEndMs - fullDasaYears * MS_PER_YEAR) : dasaStartMs;
+    let bhuktiCursorMs = fullStartMs;
+    let matchedActiveBhuktiName = '';
 
-    const isCurrent = currentCalYear >= sYear && currentCalYear <= eYear;
-    if (isCurrent) {
-      activeDasaName = dasa.name;
-      
-      // Calculate Active Bhukti
-      let bhuktiStart = sYear;
-      for (let b = 0; b < 9; b++) {
-        const bIdx = (dIdx + b) % 9;
-        const bLord = DASA_LORDS_ORDER[bIdx];
-        const bDuration = (dasa.years * bLord.years) / 120.0;
-        const bhuktiEnd = bhuktiStart + bDuration;
+    for (let b = 0; b < 9; b++) {
+      const bIdx = (dIdx + b) % 9;
+      const bLord = DASA_LORDS_ORDER[bIdx];
+      const bhuktiYears = (fullDasaYears * bLord.years) / 120.0;
+      const bStartMs = bhuktiCursorMs;
+      const bEndMs = bStartMs + bhuktiYears * MS_PER_YEAR;
+      bhuktiCursorMs = bEndMs;
 
-        if (currentCalYear >= bhuktiStart && currentCalYear <= bhuktiEnd) {
-          activeBhuktiName = `${bLord.name} புக்தி`;
-          break;
-        }
-        bhuktiStart = bhuktiEnd;
+      // In 1st dasa, only include bhuktis that end after birthMs
+      if (bEndMs <= birthMs) {
+        continue;
       }
+
+      // Effective start during native's life
+      const effectiveStartMs = Math.max(birthMs, bStartMs);
+      const bStartDateObj = new Date(effectiveStartMs);
+      const bEndDateObj = new Date(bEndMs);
+
+      // Duration formatting
+      const bDurYears = (bEndMs - effectiveStartMs) / MS_PER_YEAR;
+      const bY = Math.floor(bDurYears);
+      const bRemMonths = (bDurYears - bY) * 12.0;
+      const bM = Math.floor(bRemMonths);
+      const bD = Math.round((bRemMonths - bM) * DAYS_PER_MONTH);
+
+      let durStr = '';
+      if (bY > 0) durStr += `${bY}வ `;
+      if (bM > 0) durStr += `${bM}மா `;
+      if (bD > 0 || durStr === '') durStr += `${bD}நா`;
+
+      const isCurrentBhukti = (nowMs >= effectiveStartMs && nowMs < bEndMs);
+
+      if (isCurrentBhukti) {
+        matchedActiveBhuktiName = `${bLord.name} புக்தி`;
+        if (isCurrentDasa) {
+          currentDasaLord = dasa.name;
+          currentBhuktiLord = bLord.name;
+          currentDasaStart = formatDateDMMMYYYY(dasaStartDateObj);
+          currentDasaEnd = formatDateDMMMYYYY(dasaEndDateObj);
+          currentBhuktiStart = formatDateDMMMYYYY(bStartDateObj);
+          currentBhuktiEnd = formatDateDMMMYYYY(bEndDateObj);
+        }
+      }
+
+      bhuktis.push({
+        bhuktiLord: bLord.name,
+        startDate: formatDateDMMMYYYY(bStartDateObj),
+        endDate: formatDateDMMMYYYY(bEndDateObj),
+        duration: durStr.trim(),
+        isCurrent: isCurrentBhukti
+      });
     }
+
+    if (isCurrentDasa && !matchedActiveBhuktiName && bhuktis.length > 0) {
+      // Fallback in case border timestamp: pick first or last
+      const currentOrFirst = bhuktis.find(b => b.isCurrent) || bhuktis[0];
+      matchedActiveBhuktiName = `${currentOrFirst.bhuktiLord} புக்தி`;
+      currentDasaLord = dasa.name;
+      currentBhuktiLord = currentOrFirst.bhuktiLord;
+      currentDasaStart = formatDateDMMMYYYY(dasaStartDateObj);
+      currentDasaEnd = formatDateDMMMYYYY(dasaEndDateObj);
+      currentBhuktiStart = currentOrFirst.startDate;
+      currentBhuktiEnd = currentOrFirst.endDate;
+    }
+
+    const dDurationStr = isFirstDasa
+      ? `${bYears}வ ${bMonths}மா ${bDays}நா`
+      : `${dasa.years} வருடங்கள்`;
 
     dasaTimelines.push({
       dasaLord: dasa.name,
-      startDate: `01-01-${Math.floor(sYear)}`,
-      endDate: `01-01-${Math.floor(eYear)}`,
-      duration: `${i === 0 ? `${bYears}வ ${bMonths}மா` : `${dasa.years} வருடங்கள்`}`,
-      isCurrent
+      startDate: formatDateDMMMYYYY(dasaStartDateObj),
+      endDate: formatDateDMMMYYYY(dasaEndDateObj),
+      duration: dDurationStr,
+      isCurrent: isCurrentDasa,
+      activeBhukti: isCurrentDasa ? matchedActiveBhuktiName : undefined,
+      bhuktis
     });
   }
 
-  const activeDasaBhukti = `நடப்பு திசை & புக்தி: ${activeDasaName} திசை ${activeBhuktiName || 'சுய புக்தி'}`;
+  // If no Dasa was flagged current (e.g. native age > 120 or before birth), set fallback
+  if (!currentBhuktiLord && dasaTimelines.length > 0) {
+    const defaultDasa = dasaTimelines.find(d => d.isCurrent) || dasaTimelines[0];
+    currentDasaLord = defaultDasa.dasaLord;
+    currentDasaStart = defaultDasa.startDate;
+    currentDasaEnd = defaultDasa.endDate;
+    const defaultBhukti = defaultDasa.bhuktis?.[0];
+    if (defaultBhukti) {
+      currentBhuktiLord = defaultBhukti.bhuktiLord;
+      currentBhuktiStart = defaultBhukti.startDate;
+      currentBhuktiEnd = defaultBhukti.endDate;
+    }
+  }
+
+  const activeDasaBhukti = `நடப்பு திசை & புக்தி: ${currentDasaLord} திசை ${currentBhuktiLord ? `${currentBhuktiLord} புக்தி` : 'சுய புக்தி'} (${currentBhuktiEnd ? `${currentBhuktiEnd} வரை` : ''})`;
+
+  const currentDasaBhukti: CurrentDasaBhuktiInfo = {
+    dasaLord: currentDasaLord,
+    bhuktiLord: currentBhuktiLord || currentDasaLord,
+    dasaStartDate: currentDasaStart,
+    dasaEndDate: currentDasaEnd,
+    bhuktiStartDate: currentBhuktiStart,
+    bhuktiEndDate: currentBhuktiEnd,
+    summaryText: activeDasaBhukti
+  };
 
   return {
     janmaDasaIruppu,
     activeDasaBhukti,
-    dasaTimelines
+    dasaTimelines,
+    currentDasaBhukti
   };
 }
 
@@ -923,11 +1051,13 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   });
 
   // 7. Vimshottari Dasa-Bhukti Calculations
-  const { janmaDasaIruppu, activeDasaBhukti, dasaTimelines } = calculateVimshottariDasa(
+  const { janmaDasaIruppu, activeDasaBhukti, dasaTimelines, currentDasaBhukti } = calculateVimshottariDasa(
     moonRaw.siderealLong,
     year,
     month,
-    day
+    day,
+    hour,
+    min
   );
 
   // 8. Rasi & Navamsa Chart Placements
@@ -1056,6 +1186,7 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     basicDetails,
     planetaryDegrees,
     dasaTimelines,
+    currentDasaBhukti,
     rasiChart,
     navamsamChart,
     footerInfo,
