@@ -37,6 +37,28 @@ export const RASI_NAMES_ENGLISH = [
   'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
+export const SIGN_LORDS = [
+  'செவ்வாய்',   // 0: Mesham
+  'சுக்கிரன்',  // 1: Rishabham
+  'புதன்',      // 2: Mithunam
+  'சந்திரன்',    // 3: Katakam
+  'சூரியன்',    // 4: Simham
+  'புதன்',      // 5: Kanni
+  'சுக்கிரன்',  // 6: Thulam
+  'செவ்வாய்',   // 7: Viruchigam
+  'குரு',       // 8: Dhanusu
+  'சனி',        // 9: Makaram
+  'சனி',        // 10: Kumbam
+  'குரு'        // 11: Meenam
+];
+
+export interface PlanetPosition {
+  name: string;
+  sign: number;
+  degree: number;
+  rawLon: number;
+}
+
 export const DASA_LORDS_ORDER = [
   { name: 'கேது', english: 'Ketu', years: 7, abbr: 'கேது' },
   { name: 'சுக்கிரன்', english: 'Venus', years: 20, abbr: 'சுக்' },
@@ -809,6 +831,180 @@ export function calculateVimshottariDasa(
 // 5. NADI & D.S. ASTRO SYSTEM EVALUATION
 // ==========================================
 
+export function generateDSSystemPredictions(
+  positions: PlanetPosition[],
+  dasaInfo: CurrentDasaBhuktiInfo | { dasaLord: string },
+  lagnaRasiIndex: number
+): string[] {
+  const predictions: string[] = [];
+
+  const getPlanet = (nameOrPart: string) =>
+    positions.find(p => p.name === nameOrPart || p.name.includes(nameOrPart));
+
+  // ----------------------------------------------------
+  // RULE 1: THE DASA LAGNA SHIFT (தசாநாதன் லக்னம்) & DEBT/DISEASE
+  // ----------------------------------------------------
+  const currentDasaLord = dasaInfo.dasaLord || 'குரு';
+  const dasaLordObj = getPlanet(currentDasaLord);
+  const dasaLagnaIndex = dasaLordObj ? dasaLordObj.sign : 0;
+  const house6FromDasaLagna = (dasaLagnaIndex + 5) % 12;
+
+  const ketuObj = getPlanet('கேது');
+  const saturnObj = getPlanet('சனி');
+
+  const isKetuIn6 = ketuObj?.sign === house6FromDasaLagna;
+  const isSaturnIn6 = saturnObj?.sign === house6FromDasaLagna;
+
+  if (isKetuIn6 || isSaturnIn6) {
+    predictions.push(
+      "கடன் / நோய் (தசா லக்ன விதி): நடப்பு தசாநாதனுக்கு 6-ஆம் இடத்தில் பாப கிரகங்கள் உள்ளதால், இக்காலகட்டத்தில் தேவையற்ற விரையங்கள், கடன் சுமைகள் அல்லது மருத்துவ செலவுகள் ஏற்பட வாய்ப்புள்ளது."
+    );
+  }
+
+  // ----------------------------------------------------
+  // RULE 2: MARRIAGE TIMING & DELAY (திருமண தாமதம்)
+  // ----------------------------------------------------
+  const marsObj = getPlanet('செவ்வாய்');
+
+  if (marsObj && saturnObj) {
+    const diffSaturnFromMars = (saturnObj.sign - marsObj.sign + 12) % 12;
+    // 1st (diff 0), 4th (diff 3), 7th (diff 6), 8th (diff 7)
+    const saturnAspectHits = [0, 3, 6, 7].includes(diffSaturnFromMars);
+
+    let ketuIn12thFromMars = false;
+    if (ketuObj) {
+      const diffKetuFromMars = (ketuObj.sign - marsObj.sign + 12) % 12;
+      ketuIn12thFromMars = (diffKetuFromMars === 11);
+    }
+
+    if (saturnAspectHits || ketuIn12thFromMars) {
+      predictions.push(
+        "திருமண தாமதம்: களத்திர காரகன் செவ்வாய் பகவானை சனி அல்லது கேது தொடர்பு கொள்வதால், திருமணம் சற்று தாமதமாக நடைபெறும் அமைப்பைக் காட்டுகிறது."
+      );
+    }
+  }
+
+  // ----------------------------------------------------
+  // RULE 3: LOVE VS ARRANGED MARRIAGE (காதல் vs பெரியோர்கள் நிச்சயித்த திருமணம்)
+  // ----------------------------------------------------
+  const lord2Name = SIGN_LORDS[(lagnaRasiIndex + 1) % 12];
+  const lord5Name = SIGN_LORDS[(lagnaRasiIndex + 4) % 12];
+  const lord7Name = SIGN_LORDS[(lagnaRasiIndex + 6) % 12];
+  const lord11Name = SIGN_LORDS[(lagnaRasiIndex + 10) % 12];
+
+  const lord2Obj = getPlanet(lord2Name);
+  const lord5Obj = getPlanet(lord5Name);
+  const lord7Obj = getPlanet(lord7Name);
+  const lord11Obj = getPlanet(lord11Name);
+  const mercuryObj = getPlanet('புதன்');
+
+  const isConjunct = (p1?: { sign: number }, p2?: { sign: number }) =>
+    p1 !== undefined && p2 !== undefined && p1.sign === p2.sign;
+
+  // 2nd or 7th lord conjunct 5th or 11th lord
+  const is2or7With5or11 =
+    isConjunct(lord2Obj, lord5Obj) ||
+    isConjunct(lord2Obj, lord11Obj) ||
+    isConjunct(lord7Obj, lord5Obj) ||
+    isConjunct(lord7Obj, lord11Obj);
+
+  // Mercury conjunct with 2nd, 7th, 5th, or 11th lord
+  const isMercuryWithAny =
+    isConjunct(mercuryObj, lord2Obj) ||
+    isConjunct(mercuryObj, lord7Obj) ||
+    isConjunct(mercuryObj, lord5Obj) ||
+    isConjunct(mercuryObj, lord11Obj);
+
+  const loveMatched = is2or7With5or11 || isMercuryWithAny;
+  const isKetuWithMercury = isConjunct(ketuObj, mercuryObj);
+
+  if (loveMatched && !isKetuWithMercury) {
+    predictions.push(
+      "காதல் திருமணம்: 2, 7-ஆம் அதிபதிகளுடன் 5, 11-ஆம் அதிபதிகள் மற்றும் காதல் கிரகமான புதன் தொடர்பில் உள்ளதால், காதல் திருமணம் நடைபெறும் யோகம் உண்டு."
+    );
+  } else if (loveMatched && isKetuWithMercury) {
+    predictions.push(
+      "காதல் தோல்வி / நிச்சயித்த திருமணம்: காதல் கிரகமான புதனுடன் கேது தொடர்பில் உள்ளதால், காதல் வயப்பட்டாலும் அது கைகூடாமல் ஏமாற்றத்தில் முடிய வாய்ப்புள்ளது. எனவே பெரியோர்கள் நிச்சயித்த திருமணமே நன்மையைத் தரும்."
+    );
+  } else {
+    predictions.push(
+      "திருமண அமைப்பு: கிரக நிலைகளின்படி, பெரியோர்கள் பார்த்து நிச்சயிக்கும் திருமணமே (Arranged Marriage) உங்களுக்கு சிறப்பான, சுமுகமான வாழ்க்கையைத் தரும்."
+    );
+  }
+
+  // ----------------------------------------------------
+  // RULE 4: RAHU-KETU MIDPOINT (ராகு-கேது மையப் புள்ளி)
+  // ----------------------------------------------------
+  const rahuObj = getPlanet('ராகு');
+  const sunObj = getPlanet('சூரியன்');
+  const moonObj = getPlanet('சந்திரன்');
+
+  if (rahuObj && ketuObj) {
+    const rahuDeg = rahuObj.rawLon;
+    const ketuDeg = ketuObj.rawLon;
+    const midpoint1 = (rahuDeg + ((ketuDeg - rahuDeg + 360) % 360) / 2) % 360;
+    const midpoint2 = (midpoint1 + 180) % 360;
+
+    const angularDist = (degA: number, degB: number) => {
+      const diff = Math.abs(degA - degB) % 360;
+      return diff > 180 ? 360 - diff : diff;
+    };
+
+    if (sunObj) {
+      const minSunDist = Math.min(angularDist(sunObj.rawLon, midpoint1), angularDist(sunObj.rawLon, midpoint2));
+      if (minSunDist <= 3.0) {
+        predictions.push(
+          "மையப்புள்ளி விதி: பித்ருகாரகன் சூரிய பகவான் ராகு-கேது மையப்புள்ளியில் சிக்கியுள்ளதால், தந்தையின் உடல்நலத்திலும் அல்லது தந்தை வழி உறவுகளிலும் மிகுந்த கவனம் தேவை."
+        );
+      }
+    }
+
+    if (moonObj) {
+      const minMoonDist = Math.min(angularDist(moonObj.rawLon, midpoint1), angularDist(moonObj.rawLon, midpoint2));
+      if (minMoonDist <= 3.0) {
+        predictions.push(
+          "மையப்புள்ளி விதி: மாத்ருகாரகன் சந்திரன் ராகு-கேது மையப்புள்ளியில் சிக்கியுள்ளதால், தாயாரின் உடல்நலத்திலும், மன அமைதியிலும் கவனம் தேவை."
+        );
+      }
+    }
+  }
+
+  // ----------------------------------------------------
+  // RULE 5: PARIVARTHANAI YOGA (பரிவர்த்தனை ஏமாற்றம்)
+  // ----------------------------------------------------
+  const classicalPlanets = ['சூரியன்', 'சந்திரன்', 'செவ்வாய்', 'புதன்', 'குரு', 'சுக்கிரன்', 'சனி'];
+  let hasParivarthanai = false;
+
+  for (let i = 0; i < classicalPlanets.length; i++) {
+    for (let j = i + 1; j < classicalPlanets.length; j++) {
+      const p1Name = classicalPlanets[i];
+      const p2Name = classicalPlanets[j];
+
+      const p1Obj = getPlanet(p1Name);
+      const p2Obj = getPlanet(p2Name);
+
+      if (p1Obj && p2Obj && p1Obj.sign !== p2Obj.sign) {
+        const lordOfP1Sign = SIGN_LORDS[p1Obj.sign];
+        const lordOfP2Sign = SIGN_LORDS[p2Obj.sign];
+
+        if (lordOfP1Sign === p2Name && lordOfP2Sign === p1Name) {
+          hasParivarthanai = true;
+          break;
+        }
+      }
+    }
+    if (hasParivarthanai) break;
+  }
+
+  if (hasParivarthanai) {
+    predictions.push(
+      "பரிவர்த்தனை ஏமாற்றம்: உங்கள் ஜாதகத்தில் கிரக பரிவர்த்தனை உள்ளதால், ஆரம்பத்தில் ஒரு செயலில் அதிக எதிர்பார்ப்பை தூண்டி, இறுதியில் ஏமாற்றத்தை தரக்கூடும். எந்தவொரு முக்கிய முடிவுகளையும் தகுந்த ஆலோசனைக்குப் பிறகே எடுக்கவும்."
+    );
+  }
+
+  return predictions;
+}
+
 function evaluateNadiAndDSSystem(
   planetaryList: { name: string; abbr: string; sign: number; degree: number; rawLon: number }[],
   currentDasaLord: string
@@ -1132,6 +1328,13 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
 
   const { nadi: nadiAnalysis, ds: dsSystem } = evaluateNadiAndDSSystem(evaluationList, currentDasaLordName);
 
+  // D.S. Astro System Rules Engine Predictions
+  const specialPredictions = generateDSSystemPredictions(
+    evaluationList,
+    currentDasaBhukti,
+    lagnaSign
+  );
+
   // 10. Native Basic Details
   const dobFormatted = input.dob 
     ? `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}-${year}`
@@ -1192,6 +1395,7 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     footerInfo,
     nadiAnalysis,
     dsSystem,
-    panchangam
+    panchangam,
+    specialPredictions
   };
 }

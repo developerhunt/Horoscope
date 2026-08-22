@@ -2,7 +2,7 @@ import React from 'react';
 import { HoroscopeData } from '../types';
 import { SouthIndianChart } from './SouthIndianChart';
 import { PlanetaryTable } from './PlanetaryTable';
-import { Download, Compass, ShieldCheck, Orbit } from 'lucide-react';
+import { Download, Compass, ShieldCheck, Orbit, Sparkles, BookOpen } from 'lucide-react';
 
 interface JathagamLayoutProps {
   data: HoroscopeData;
@@ -17,7 +17,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
   onDownloadPdf,
   isDownloadingPdf = false
 }) => {
-  const { basicDetails, planetaryDegrees, dasaTimelines, rasiChart, navamsamChart, footerInfo, panchangam, dsSystem, nadiAnalysis } = data;
+  const { basicDetails, planetaryDegrees, dasaTimelines, rasiChart, navamsamChart, footerInfo, panchangam, dsSystem, nadiAnalysis, specialPredictions } = data;
 
   return (
     <div className="w-full flex flex-col items-center py-4 px-2">
@@ -199,15 +199,47 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
       </div>
 
       {/* Advanced Vedic Insights Card (Nadi & D.S. Astro System) */}
-      {(nadiAnalysis || dsSystem) && (
+      {(nadiAnalysis || dsSystem || (specialPredictions && specialPredictions.length > 0)) && (
         <div className="w-full max-w-[820px] mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl text-slate-100 no-print font-sans">
           
           <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-4">
             <Compass className="w-4 h-4 text-amber-400" />
             <h2 className="text-sm sm:text-base font-bold font-tamil text-amber-300">
-              நாடி & D.S. ஆஸ்ட்ரோ சிறப்பு கணிப்புகள் (Special Astro Insights)
+              D.S. Astro System & நாடி சிறப்பு ஜோதிட விதிகள் (Special Astro Insights)
             </h2>
           </div>
+
+          {/* D.S. System Special Predictive Rules Output */}
+          {specialPredictions && specialPredictions.length > 0 && (
+            <div className="mb-4 bg-slate-950/80 border border-amber-900/40 rounded-xl p-4 space-y-2">
+              <div className="font-bold text-amber-300 font-tamil flex items-center gap-1.5 text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>D.S. ஆஸ்ட்ரோ சிஸ்டம் சிறப்பு பலன்கள் & விதிகள் (D.S. System Predictions)</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 pt-1">
+                {specialPredictions.map((pred, pIdx) => {
+                  const isPositive = pred.includes('காதல் திருமணம்') || pred.includes('சிறப்பான');
+                  const isCaution = pred.includes('கடன்') || pred.includes('நோய்') || pred.includes('ஏமாற்றம்') || pred.includes('கவனம்') || pred.includes('தாமதம்');
+                  
+                  return (
+                    <div
+                      key={pIdx}
+                      className={`p-2.5 rounded-lg border text-xs leading-relaxed font-tamil flex items-start gap-2 ${
+                        isCaution
+                          ? 'bg-amber-950/20 border-amber-800/40 text-amber-100'
+                          : isPositive
+                          ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-100'
+                          : 'bg-slate-900/80 border-slate-800 text-slate-200'
+                      }`}
+                    >
+                      <span className="text-amber-400 mt-0.5 select-none font-bold">✦</span>
+                      <span>{pred}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             

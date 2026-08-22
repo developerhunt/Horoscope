@@ -122,4 +122,5 @@ export interface HoroscopeData {
   nadiAnalysis?: NadiAnalysis;
   dsSystem?: DSSystemAnalysis;
   panchangam?: PanchangamDetails;
+  specialPredictions?: string[];
 }
