@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { HoroscopeInput, HoroscopeData } from './types';
-import { calculateHoroscope } from './data/astroEngine';
+import { enrichBackendDataWithPredictions } from './data/astroEngine';
 import { InputForm } from './components/InputForm';
 import { JathagamLayout } from './components/JathagamLayout';
 import { exportToPdf } from './utils/pdfExport';
@@ -27,37 +27,38 @@ export default function App() {
 
   const jathagamContainerRef = useRef<HTMLDivElement>(null);
 
-  // Realistic mock API simulation with 2-second delay
-  const simulateApiCall = async (inputData: HoroscopeInput): Promise<HoroscopeData> => {
-    return new Promise((resolve) => {
-      setGenerationStepText('திருக்கணித பஞ்சாங்கம் கணிக்கப்படுகிறது...');
-      
-      setTimeout(() => {
-        setGenerationStepText('கிரக நிலைகள் மற்றும் நவாம்சம் கட்டமைக்கப்படுகிறது...');
-      }, 1000);
-
-      setTimeout(() => {
-        const calculated = calculateHoroscope(inputData);
-        resolve(calculated);
-      }, 2000);
-    });
-  };
-
-  // Handle Form Submission
+  // Handle Form Submission: Fetch from Python Backend & Enrich with D.S. Astro System Rules
   const handleFormSubmit = async (data: HoroscopeInput) => {
     setIsGenerating(true);
     setFormData(data);
+    setGenerationStepText('FastAPI செர்வரிலிருந்து திருக்கணித ஜாதக விபரங்கள் பெறப்படுகிறது...');
 
     try {
-      const calculated = await simulateApiCall(data);
-      setHoroscopeData(calculated);
+      const response = await fetch('http://127.0.0.1:8000/api/v1/generate-horoscope', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned status: ${response.status}`);
+      }
+
+      const calculatedData = await response.json();
+      
+      // Enrich backend astronomical data with our custom D.S. Astro System prediction rules
+      const enrichedData = enrichBackendDataWithPredictions(calculatedData);
+      setHoroscopeData(enrichedData);
       
       // Smooth scroll down to generated A4 jathagam view
       setTimeout(() => {
         jathagamContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 150);
     } catch (error) {
-      console.error('Error generating horoscope:', error);
+      console.error('Backend connection error:', error);
+      alert('Backend is not connected! Please run the FastAPI server.');
     } finally {
       setIsGenerating(false);
       setGenerationStepText('');
