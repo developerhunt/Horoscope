@@ -841,31 +841,237 @@ export function generateDSSystemPredictions(
   const getPlanet = (nameOrPart: string) =>
     positions.find(p => p.name === nameOrPart || p.name.includes(nameOrPart));
 
+  const isConjunct = (p1?: { sign: number }, p2?: { sign: number }) =>
+    p1 !== undefined && p2 !== undefined && p1.sign === p2.sign;
+
   // ----------------------------------------------------
-  // RULE 1: THE DASA LAGNA SHIFT (தசாநாதன் லக்னம்) & DEBT/DISEASE
+  // 1. THE DASA LAGNA SHIFT (தசாநாதன் லக்னம்) - THE CORE
   // ----------------------------------------------------
   const currentDasaLord = dasaInfo.dasaLord || 'குரு';
   const dasaLordObj = getPlanet(currentDasaLord);
   const dasaLagnaIndex = dasaLordObj ? dasaLordObj.sign : 0;
-  const house6FromDasaLagna = (dasaLagnaIndex + 5) % 12;
 
   const ketuObj = getPlanet('கேது');
   const saturnObj = getPlanet('சனி');
+  const marsObj = getPlanet('செவ்வாய்');
+  const rahuObj = getPlanet('ராகு');
+  const mercuryObj = getPlanet('புதன்');
+  const sunObj = getPlanet('சூரியன்');
+  const moonObj = getPlanet('சந்திரன்');
+  const jupiterObj = getPlanet('குரு');
 
-  const isKetuIn6 = ketuObj?.sign === house6FromDasaLagna;
-  const isSaturnIn6 = saturnObj?.sign === house6FromDasaLagna;
+  // ----------------------------------------------------
+  // 2. RULE: DEBT & DISEASE (கடன், நோய் - 6th House from Dasa Lagna)
+  // ----------------------------------------------------
+  const house6FromDasaLagna = (dasaLagnaIndex + 5) % 12;
 
-  if (isKetuIn6 || isSaturnIn6) {
+  if (ketuObj && ketuObj.sign === house6FromDasaLagna) {
     predictions.push(
-      "கடன் / நோய் (தசா லக்ன விதி): நடப்பு தசாநாதனுக்கு 6-ஆம் இடத்தில் பாப கிரகங்கள் உள்ளதால், இக்காலகட்டத்தில் தேவையற்ற விரையங்கள், கடன் சுமைகள் அல்லது மருத்துவ செலவுகள் ஏற்பட வாய்ப்புள்ளது."
+      "கடன் / எதிரி: நடப்பு தசாநாதனுக்கு 6-ஆம் இடத்தில் கேது உள்ளதால், இக்காலகட்டத்தில் தேவையற்ற விரையங்கள், கடன் சுமைகள் அல்லது எதிரிகளால் தொல்லை ஏற்படலாம்."
+    );
+  }
+
+  if (saturnObj && saturnObj.sign === house6FromDasaLagna) {
+    predictions.push(
+      "நோய் / உடல்நலம்: நடப்பு தசாநாதனுக்கு 6-ஆம் இடத்தில் சனி உள்ளதால், இக்காலகட்டத்தில் உடல் நலக்குறைபாடுகள் அல்லது மருத்துவ செலவுகள் ஏற்பட வாய்ப்புள்ளது."
     );
   }
 
   // ----------------------------------------------------
-  // RULE 2: MARRIAGE TIMING & DELAY (திருமண தாமதம்)
+  // 3. RULE: DANGER & ACCIDENTS (கண்டம் & அவமானம் - 8th House from Dasa Lagna)
   // ----------------------------------------------------
-  const marsObj = getPlanet('செவ்வாய்');
+  const house8FromDasaLagna = (dasaLagnaIndex + 7) % 12;
+  const isMarsIn8 = marsObj?.sign === house8FromDasaLagna;
+  const isRahuIn8 = rahuObj?.sign === house8FromDasaLagna;
 
+  if (isMarsIn8 || isRahuIn8) {
+    predictions.push(
+      "எச்சரிக்கை (8-ஆம் பாவகம்): நடப்பு தசாநாதனுக்கு 8-ஆம் இடத்தில் பாப கிரகங்கள் (செவ்வாய்/ராகு) உள்ளதால், வாகனப் பயணங்களில் மிகுந்த கவனம் தேவை. எதிர்பாராத அவமானங்கள் அல்லது விபத்துகளை தவிர்க்க விழிப்புணர்வு அவசியம்."
+    );
+  }
+
+  // ----------------------------------------------------
+  // 4. RULE: FOREIGN TRAVEL / JOB (வெளிநாட்டு வேலை - Dispositor in 3, 6, 8, 12)
+  // ----------------------------------------------------
+  const dasaLordDispositorName = SIGN_LORDS[dasaLagnaIndex];
+  const dasaLordDispositorObj = getPlanet(dasaLordDispositorName);
+
+  if (dasaLordDispositorObj) {
+    const houseFromDasaLagna = (dasaLordDispositorObj.sign - dasaLagnaIndex + 12) % 12 + 1;
+    if ([3, 6, 8, 12].includes(houseFromDasaLagna)) {
+      predictions.push(
+        "இடமாற்றம் / வெளிநாடு: நடப்பு தசாநாதனுக்கு வீடு கொடுத்த கிரகம் மறைவு ஸ்தானங்களில் (3, 6, 8, 12) உள்ளதால், இக்காலகட்டத்தில் சொந்த ஊரை விட்டு வெளியூர் அல்லது வெளிநாடு சென்று பணிபுரியும் யோகம் உண்டு."
+      );
+    }
+  }
+
+  // ----------------------------------------------------
+  // 5. RULE: EDUCATION (கல்வி & புதன் - Sun + Mercury Conjunct)
+  // ----------------------------------------------------
+  if (isConjunct(mercuryObj, sunObj)) {
+    predictions.push(
+      "கல்வி யோகம்: வித்யாகாரகன் புதன், சூரியனுடன் இணைந்துள்ளதால் கல்வியில் நல்ல தேர்ச்சியும், புத்திசாலித்தனமும் உண்டு."
+    );
+  }
+
+  // ----------------------------------------------------
+  // 6. RULE: PROGENY / CHILDBIRTH (புத்திர பாக்கியம், பாலினம், இரட்டை, தத்து)
+  // ----------------------------------------------------
+  const isJupiterAfflicted =
+    isConjunct(jupiterObj, saturnObj) ||
+    isConjunct(jupiterObj, rahuObj) ||
+    isConjunct(jupiterObj, ketuObj);
+
+  if (isJupiterAfflicted) {
+    predictions.push(
+      "புத்திர தாமதம்: புத்திர காரகன் குரு பகவான், பாப கிரகங்களின் (சனி/ராகு/கேது) சேர்க்கை பெற்றுள்ளதால், குழந்தை பாக்கியம் சற்று தாமதமாக வாய்ப்புள்ளது அல்லது மருத்துவ ஆலோசனை தேவைப்படலாம்."
+    );
+  }
+
+  // Child Gender (ஆண் / பெண் குழந்தை யோகம்)
+  if (isConjunct(jupiterObj, ketuObj)) {
+    predictions.push(
+      "ஆண் குழந்தை யோகம்: புத்திர காரகன் குருவுடன் கேது பகவான் சேர்ந்துள்ளதால், ஆண் குழந்தை பிறக்க அதிக வாய்ப்புகள் உள்ளன."
+    );
+  }
+
+  if (isConjunct(jupiterObj, rahuObj)) {
+    predictions.push(
+      "பெண் குழந்தை யோகம்: புத்திர காரகன் குருவுடன் ராகு பகவான் சேர்ந்துள்ளதால், பெண் குழந்தை பிறக்க அதிக வாய்ப்புகள் உள்ளன."
+    );
+  }
+
+  // Twins (இரட்டை குழந்தை யோகம் - லக்னம் & 5-ஆம் அதிபதி உபய ராசிகளில்)
+  const ubayaRasis = [2, 5, 8, 11]; // Gemini(2), Virgo(5), Sagittarius(8), Pisces(11)
+  const lord5Sign = (lagnaRasiIndex + 4) % 12;
+  const lord5PlanetName = SIGN_LORDS[lord5Sign];
+  const lord5PlanetObj = getPlanet(lord5PlanetName);
+
+  if (
+    ubayaRasis.includes(lagnaRasiIndex) &&
+    lord5PlanetObj !== undefined &&
+    ubayaRasis.includes(lord5PlanetObj.sign)
+  ) {
+    predictions.push(
+      "இரட்டை குழந்தை யோகம்: லக்னம் மற்றும் 5-ஆம் அதிபதி உபய ராசிகளில் (இரட்டை தன்மை கொண்ட ராசிகள்) உள்ளதால், இரட்டை குழந்தை பிறக்க வாய்ப்புள்ளது."
+    );
+  }
+
+  // Adoption (தத்து புத்திர யோகம் - 9, 10-ஆம் அதிபதிகள் சேர்க்கை)
+  const lord9PlanetName = SIGN_LORDS[(lagnaRasiIndex + 8) % 12];
+  const lord10PlanetName = SIGN_LORDS[(lagnaRasiIndex + 9) % 12];
+  const lord9PlanetObj = getPlanet(lord9PlanetName);
+  const lord10PlanetObj = getPlanet(lord10PlanetName);
+
+  if (isConjunct(lord9PlanetObj, lord10PlanetObj)) {
+    predictions.push(
+      "தத்து புத்திர யோகம்: 9, 10-ஆம் அதிபதிகள் (தர்ம கர்மாதிபதிகள்) இணைந்துள்ளதால், வாழ்க்கையில் தத்துப்பிள்ளை எடுக்கும் அமைப்பு அல்லது சுவீகாரம் செய்யும் யோகம் உண்டு."
+    );
+  }
+
+  // ----------------------------------------------------
+  // 6b. RULE: CAREER - OWN BUSINESS VS JOB (சொந்தத் தொழில் யோகம்)
+  // ----------------------------------------------------
+  const OWN_HOUSES_MAP: Record<string, number[]> = {
+    'சூரியன்': [4],
+    'சந்திரன்': [3],
+    'செவ்வாய்': [0, 7],
+    'புதன்': [2, 5],
+    'குரு': [8, 11],
+    'சுக்கிரன்': [1, 6],
+    'சனி': [9, 10]
+  };
+
+  const EXALTED_HOUSES_MAP: Record<string, number> = {
+    'சூரியன்': 0,
+    'சந்திரன்': 1,
+    'செவ்வாய்': 9,
+    'புதன்': 5,
+    'குரு': 3,
+    'சுக்கிரன்': 11,
+    'சனி': 6
+  };
+
+  if (lord10PlanetObj) {
+    const isOwnHouse = OWN_HOUSES_MAP[lord10PlanetName]?.includes(lord10PlanetObj.sign);
+    const isExaltedHouse = EXALTED_HOUSES_MAP[lord10PlanetName] === lord10PlanetObj.sign;
+
+    if (isOwnHouse || isExaltedHouse) {
+      predictions.push(
+        "சொந்தத் தொழில் யோகம்: 10-ஆம் அதிபதி பலமாக ஆட்சி அல்லது உச்சம் பெற்றுள்ளதால், பிற்காலத்தில் சொந்த தொழில் செய்து வாழ்க்கையிலும் பொருளாதாரத்திலும் பெரிய வெற்றி பெறுவீர்கள்."
+      );
+    }
+  }
+
+  // ----------------------------------------------------
+  // 7. RULE: RAHU-KETU MIDPOINT (ராகு-கேது மையப் புள்ளி)
+  // ----------------------------------------------------
+  if (rahuObj && ketuObj) {
+    const rahuDeg = rahuObj.rawLon;
+    const ketuDeg = ketuObj.rawLon;
+    const midpoint1 = (rahuDeg + ((ketuDeg - rahuDeg + 360) % 360) / 2) % 360;
+    const midpoint2 = (midpoint1 + 180) % 360;
+
+    const angularDist = (degA: number, degB: number) => {
+      const diff = Math.abs(degA - degB) % 360;
+      return diff > 180 ? 360 - diff : diff;
+    };
+
+    if (sunObj) {
+      const minSunDist = Math.min(angularDist(sunObj.rawLon, midpoint1), angularDist(sunObj.rawLon, midpoint2));
+      if (minSunDist <= 3.0) {
+        predictions.push(
+          "மையப்புள்ளி விதி: பித்ருகாரகன் சூரிய பகவான் ராகு-கேது மையப்புள்ளியில் சிக்கியுள்ளதால், தந்தையின் உடல்நலத்தில் அல்லது தந்தை வழி உறவுகளில் மிகுந்த கவனம் தேவை."
+        );
+      }
+    }
+
+    if (moonObj) {
+      const minMoonDist = Math.min(angularDist(moonObj.rawLon, midpoint1), angularDist(moonObj.rawLon, midpoint2));
+      if (minMoonDist <= 3.0) {
+        predictions.push(
+          "மையப்புள்ளி விதி: மாத்ருகாரகன் சந்திரன் ராகு-கேது மையப்புள்ளியில் சிக்கியுள்ளதால், தாயாரின் உடல்நலத்திலும், மன அமைதியிலும் கவனம் தேவை."
+        );
+      }
+    }
+  }
+
+  // ----------------------------------------------------
+  // 8. RULE: PARIVARTHANAI (பரிவர்த்தனை ஏமாற்றம்)
+  // ----------------------------------------------------
+  const classicalPlanets = ['சூரியன்', 'சந்திரன்', 'செவ்வாய்', 'புதன்', 'குரு', 'சுக்கிரன்', 'சனி'];
+  let hasParivarthanai = false;
+
+  for (let i = 0; i < classicalPlanets.length; i++) {
+    for (let j = i + 1; j < classicalPlanets.length; j++) {
+      const p1Name = classicalPlanets[i];
+      const p2Name = classicalPlanets[j];
+
+      const p1Obj = getPlanet(p1Name);
+      const p2Obj = getPlanet(p2Name);
+
+      if (p1Obj && p2Obj && p1Obj.sign !== p2Obj.sign) {
+        const lordOfP1Sign = SIGN_LORDS[p1Obj.sign];
+        const lordOfP2Sign = SIGN_LORDS[p2Obj.sign];
+
+        if (lordOfP1Sign === p2Name && lordOfP2Sign === p1Name) {
+          hasParivarthanai = true;
+          break;
+        }
+      }
+    }
+    if (hasParivarthanai) break;
+  }
+
+  if (hasParivarthanai) {
+    predictions.push(
+      "பரிவர்த்தனை ஏமாற்றம்: ஜாதகத்தில் கிரக பரிவர்த்தனை உள்ளதால், ஆரம்பத்தில் ஒரு செயலில் அதிக எதிர்பார்ப்பை தூண்டி, இறுதியில் ஏமாற்றத்தை தரக்கூடும். எந்தவொரு முக்கிய முடிவுகளையும் தகுந்த ஆலோசனைக்குப் பிறகே எடுக்கவும்."
+    );
+  }
+
+  // ----------------------------------------------------
+  // 9. RULE: MARRIAGE (திருமண தாமதம் & காதல்/நிச்சயதார்த்தம்)
+  // ----------------------------------------------------
   if (marsObj && saturnObj) {
     const diffSaturnFromMars = (saturnObj.sign - marsObj.sign + 12) % 12;
     // 1st (diff 0), 4th (diff 3), 7th (diff 6), 8th (diff 7)
@@ -884,9 +1090,6 @@ export function generateDSSystemPredictions(
     }
   }
 
-  // ----------------------------------------------------
-  // RULE 3: LOVE VS ARRANGED MARRIAGE (காதல் vs பெரியோர்கள் நிச்சயித்த திருமணம்)
-  // ----------------------------------------------------
   const lord2Name = SIGN_LORDS[(lagnaRasiIndex + 1) % 12];
   const lord5Name = SIGN_LORDS[(lagnaRasiIndex + 4) % 12];
   const lord7Name = SIGN_LORDS[(lagnaRasiIndex + 6) % 12];
@@ -896,10 +1099,6 @@ export function generateDSSystemPredictions(
   const lord5Obj = getPlanet(lord5Name);
   const lord7Obj = getPlanet(lord7Name);
   const lord11Obj = getPlanet(lord11Name);
-  const mercuryObj = getPlanet('புதன்');
-
-  const isConjunct = (p1?: { sign: number }, p2?: { sign: number }) =>
-    p1 !== undefined && p2 !== undefined && p1.sign === p2.sign;
 
   // 2nd or 7th lord conjunct 5th or 11th lord
   const is2or7With5or11 =
@@ -929,76 +1128,6 @@ export function generateDSSystemPredictions(
   } else {
     predictions.push(
       "திருமண அமைப்பு: கிரக நிலைகளின்படி, பெரியோர்கள் பார்த்து நிச்சயிக்கும் திருமணமே (Arranged Marriage) உங்களுக்கு சிறப்பான, சுமுகமான வாழ்க்கையைத் தரும்."
-    );
-  }
-
-  // ----------------------------------------------------
-  // RULE 4: RAHU-KETU MIDPOINT (ராகு-கேது மையப் புள்ளி)
-  // ----------------------------------------------------
-  const rahuObj = getPlanet('ராகு');
-  const sunObj = getPlanet('சூரியன்');
-  const moonObj = getPlanet('சந்திரன்');
-
-  if (rahuObj && ketuObj) {
-    const rahuDeg = rahuObj.rawLon;
-    const ketuDeg = ketuObj.rawLon;
-    const midpoint1 = (rahuDeg + ((ketuDeg - rahuDeg + 360) % 360) / 2) % 360;
-    const midpoint2 = (midpoint1 + 180) % 360;
-
-    const angularDist = (degA: number, degB: number) => {
-      const diff = Math.abs(degA - degB) % 360;
-      return diff > 180 ? 360 - diff : diff;
-    };
-
-    if (sunObj) {
-      const minSunDist = Math.min(angularDist(sunObj.rawLon, midpoint1), angularDist(sunObj.rawLon, midpoint2));
-      if (minSunDist <= 3.0) {
-        predictions.push(
-          "மையப்புள்ளி விதி: பித்ருகாரகன் சூரிய பகவான் ராகு-கேது மையப்புள்ளியில் சிக்கியுள்ளதால், தந்தையின் உடல்நலத்திலும் அல்லது தந்தை வழி உறவுகளிலும் மிகுந்த கவனம் தேவை."
-        );
-      }
-    }
-
-    if (moonObj) {
-      const minMoonDist = Math.min(angularDist(moonObj.rawLon, midpoint1), angularDist(moonObj.rawLon, midpoint2));
-      if (minMoonDist <= 3.0) {
-        predictions.push(
-          "மையப்புள்ளி விதி: மாத்ருகாரகன் சந்திரன் ராகு-கேது மையப்புள்ளியில் சிக்கியுள்ளதால், தாயாரின் உடல்நலத்திலும், மன அமைதியிலும் கவனம் தேவை."
-        );
-      }
-    }
-  }
-
-  // ----------------------------------------------------
-  // RULE 5: PARIVARTHANAI YOGA (பரிவர்த்தனை ஏமாற்றம்)
-  // ----------------------------------------------------
-  const classicalPlanets = ['சூரியன்', 'சந்திரன்', 'செவ்வாய்', 'புதன்', 'குரு', 'சுக்கிரன்', 'சனி'];
-  let hasParivarthanai = false;
-
-  for (let i = 0; i < classicalPlanets.length; i++) {
-    for (let j = i + 1; j < classicalPlanets.length; j++) {
-      const p1Name = classicalPlanets[i];
-      const p2Name = classicalPlanets[j];
-
-      const p1Obj = getPlanet(p1Name);
-      const p2Obj = getPlanet(p2Name);
-
-      if (p1Obj && p2Obj && p1Obj.sign !== p2Obj.sign) {
-        const lordOfP1Sign = SIGN_LORDS[p1Obj.sign];
-        const lordOfP2Sign = SIGN_LORDS[p2Obj.sign];
-
-        if (lordOfP1Sign === p2Name && lordOfP2Sign === p1Name) {
-          hasParivarthanai = true;
-          break;
-        }
-      }
-    }
-    if (hasParivarthanai) break;
-  }
-
-  if (hasParivarthanai) {
-    predictions.push(
-      "பரிவர்த்தனை ஏமாற்றம்: உங்கள் ஜாதகத்தில் கிரக பரிவர்த்தனை உள்ளதால், ஆரம்பத்தில் ஒரு செயலில் அதிக எதிர்பார்ப்பை தூண்டி, இறுதியில் ஏமாற்றத்தை தரக்கூடும். எந்தவொரு முக்கிய முடிவுகளையும் தகுந்த ஆலோசனைக்குப் பிறகே எடுக்கவும்."
     );
   }
 
