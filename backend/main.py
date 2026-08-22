@@ -242,6 +242,79 @@ def format_degree_dms(deg: float) -> str:
         s = 59
     return f"{d:02d}° {m:02d}' {s:02d}\""
 
+KNOWN_CITIES_COORDS = {
+    "மதுரை": (9.9252, 78.1198),
+    "madurai": (9.9252, 78.1198),
+    "சென்னை": (13.0827, 80.2707),
+    "chennai": (13.0827, 80.2707),
+    "madras": (13.0827, 80.2707),
+    "கோயம்புத்தூர்": (11.0168, 76.9558),
+    "கோவை": (11.0168, 76.9558),
+    "coimbatore": (11.0168, 76.9558),
+    "திருச்சிராப்பள்ளி": (10.7905, 78.7047),
+    "திருச்சி": (10.7905, 78.7047),
+    "trichy": (10.7905, 78.7047),
+    "சேலம்": (11.6643, 78.1460),
+    "salem": (11.6643, 78.1460),
+    "திருநெல்வேலி": (8.7139, 77.7567),
+    "நெல்லை": (8.7139, 77.7567),
+    "tirunelveli": (8.7139, 77.7567),
+    "ஈரோடு": (11.3410, 77.7172),
+    "erode": (11.3410, 77.7172),
+    "திருப்பூர்": (11.1085, 77.3411),
+    "tiruppur": (11.1085, 77.3411),
+    "தஞ்சாவூர்": (10.7870, 79.1378),
+    "thanjavur": (10.7870, 79.1378),
+    "வேலூர்": (12.9165, 79.1325),
+    "vellore": (12.9165, 79.1325),
+    "திண்டுக்கல்": (10.3673, 77.9803),
+    "dindigul": (10.3673, 77.9803),
+    "தூத்துக்குடி": (8.7642, 78.1348),
+    "tuticorin": (8.7642, 78.1348),
+    "கன்னியாகுமரி": (8.0883, 77.5385),
+    "kanyakumari": (8.0883, 77.5385),
+    "நாகர்கோவில்": (8.1833, 77.4119),
+    "nagercoil": (8.1833, 77.4119),
+    "புதுச்சேரி": (11.9416, 79.8083),
+    "pondicherry": (11.9416, 79.8083),
+    "பெங்களூரு": (12.9716, 77.5946),
+    "bangalore": (12.9716, 77.5946),
+    "மும்பை": (19.0760, 72.8777),
+    "mumbai": (19.0760, 72.8777),
+    "தில்லி": (28.6139, 77.2090),
+    "delhi": (28.6139, 77.2090),
+}
+
+def parse_coordinate(coord_val: Optional[str], default_val: float, pob: Optional[str] = None, is_lat: bool = True) -> float:
+    if coord_val:
+        s = str(coord_val).strip()
+        import re
+        dms_m = re.search(r"([0-9.]+)\s*°?\s*([0-9.]+)?\s*'?\s*([0-9.]+)?\s*\"?\s*([NSEWnsew])?", s)
+        if dms_m and (dms_m.group(4) or "°" in s):
+            d = float(dms_m.group(1)) if dms_m.group(1) else 0.0
+            m = float(dms_m.group(2)) if dms_m.group(2) else 0.0
+            sec = float(dms_m.group(3)) if dms_m.group(3) else 0.0
+            hem = dms_m.group(4).upper() if dms_m.group(4) else ""
+            res = d + m / 60.0 + sec / 3600.0
+            if hem in ["S", "W"]:
+                res = -res
+            return res
+        clean = re.sub(r"[^\d.-]", "", s.replace(",", "."))
+        try:
+            val = float(clean)
+            if val != 0:
+                return val
+        except ValueError:
+            pass
+
+    if pob:
+        q = pob.lower().strip()
+        for k, v in KNOWN_CITIES_COORDS.items():
+            if k in q:
+                return v[0] if is_lat else v[1]
+
+    return default_val
+
 def get_julian_date(year: int, month: int, day: int, hour: int, minute: int, second: float = 0.0) -> float:
     y = year
     m = month
@@ -257,10 +330,10 @@ def get_lahiri_ayanamsa(jd: float) -> float:
     """
     Standard Chitrapaksha (Lahiri) Ayanamsa Formulation
     T = (JD - 2451545.0) / 36525.0
-    Ayanamsha = 23.858072 + 1.396887 * T + 0.000308 * T * T
+    Ayanamsha = 23.857092 + 1.396971 * T + 0.000308 * T * T
     """
     T = (jd - 2451545.0) / 36525.0
-    return 23.858072 + (1.396887 * T) + (0.000308 * T * T)
+    return 23.857092 + (1.396971 * T) + (0.000308 * T * T)
 
 def get_navamsam_sign(raw_lon: float) -> int:
     norm = normalize_angle(raw_lon)
@@ -331,7 +404,7 @@ def calculate_topocentric_ephemeris(
         # Fallback to IST (+05:30) if timezone string is invalid
         dt_local = datetime(year, month, day, hour, minute)
         total_utc_mins = hour * 60 + minute - 330
-        dt_utc = datetime(year, month, day) + datetime.timedelta(minutes=total_utc_mins)
+        dt_utc = datetime(year, month, day) + timedelta(minutes=total_utc_mins)
 
     ut_year = dt_utc.year
     ut_month = dt_utc.month
@@ -463,9 +536,11 @@ def calculate_topocentric_ephemeris(
     phi = lat * rad
     RAMC_rad = RAMC * rad
 
+    # Standard Spherical Astronomy Formulation for Rising Sign (Ascendant):
+    # tan(lambda) = cos(RAMC) / (-sin(RAMC)*cos(eps) - tan(phi)*sin(eps))
     yLagna = math.cos(RAMC_rad)
     xLagna = -math.sin(RAMC_rad) * math.cos(eps) - math.tan(phi) * math.sin(eps)
-    trop_lagna = normalize_angle(math.atan2(yLagna, -xLagna) * deg)
+    trop_lagna = normalize_angle(math.atan2(yLagna, xLagna) * deg)
     sid_lagna = normalize_angle(trop_lagna - ayanamsa)
 
     planetary_data.append({"name": "லக்னம்", "abbr": "லக்", "rawLon": sid_lagna, "isRetrograde": False})
@@ -822,8 +897,8 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
         tob_display = f"{hour:02d}:{minute:02d} ({h12:02d}:{minute:02d} {period})"
         dob_display = f"{day:02d}-{month:02d}-{year}"
 
-        lat_val = float(payload.lat or "11.0018")
-        lon_val = float(payload.lon or "76.9628")
+        lat_val = parse_coordinate(payload.lat, 9.9252, payload.pob, is_lat=True)
+        lon_val = parse_coordinate(payload.lon, 78.1198, payload.pob, is_lat=False)
 
         # Step 1: Skyfield DE421 Ephemeris Calculation
         ayanamsa, raw_planets = calculate_topocentric_ephemeris(

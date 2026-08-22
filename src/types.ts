@@ -8,6 +8,7 @@ export interface HoroscopeInput {
   motherName?: string;
   lat?: string;
   lon?: string;
+  timezone?: string;
 }
 
 export interface BasicDetails {

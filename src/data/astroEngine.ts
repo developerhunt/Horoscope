@@ -98,6 +98,119 @@ const KARANAS = [
 // 2. MATHEMATICAL & ASTRONOMICAL ENGINE
 // ==========================================
 
+export const KNOWN_CITIES_COORDINATES: Record<string, { lat: number; lon: number }> = {
+  // Major Tamil Nadu & South Indian Cities (Tamil & English)
+  'மதுரை': { lat: 9.9252, lon: 78.1198 },
+  'madurai': { lat: 9.9252, lon: 78.1198 },
+  'சென்னை': { lat: 13.0827, lon: 80.2707 },
+  'chennai': { lat: 13.0827, lon: 80.2707 },
+  'madras': { lat: 13.0827, lon: 80.2707 },
+  'கோயம்புத்தூர்': { lat: 11.0168, lon: 76.9558 },
+  'கோவை': { lat: 11.0168, lon: 76.9558 },
+  'coimbatore': { lat: 11.0168, lon: 76.9558 },
+  'திருச்சிராப்பள்ளி': { lat: 10.7905, lon: 78.7047 },
+  'திருச்சி': { lat: 10.7905, lon: 78.7047 },
+  'trichy': { lat: 10.7905, lon: 78.7047 },
+  'tiruchirappalli': { lat: 10.7905, lon: 78.7047 },
+  'சேலம்': { lat: 11.6643, lon: 78.1460 },
+  'salem': { lat: 11.6643, lon: 78.1460 },
+  'திருநெல்வேலி': { lat: 8.7139, lon: 77.7567 },
+  'நெல்லை': { lat: 8.7139, lon: 77.7567 },
+  'tirunelveli': { lat: 8.7139, lon: 77.7567 },
+  'ஈரோடு': { lat: 11.3410, lon: 77.7172 },
+  'erode': { lat: 11.3410, lon: 77.7172 },
+  'திருப்பூர்': { lat: 11.1085, lon: 77.3411 },
+  'tiruppur': { lat: 11.1085, lon: 77.3411 },
+  'தஞ்சாவூர்': { lat: 10.7870, lon: 79.1378 },
+  'thanjavur': { lat: 10.7870, lon: 79.1378 },
+  'வேலூர்': { lat: 12.9165, lon: 79.1325 },
+  'vellore': { lat: 12.9165, lon: 79.1325 },
+  'திண்டுக்கல்': { lat: 10.3673, lon: 77.9803 },
+  'dindigul': { lat: 10.3673, lon: 77.9803 },
+  'தூத்துக்குடி': { lat: 8.7642, lon: 78.1348 },
+  'tuticorin': { lat: 8.7642, lon: 78.1348 },
+  'thoothukudi': { lat: 8.7642, lon: 78.1348 },
+  'கன்னியாகுமரி': { lat: 8.0883, lon: 77.5385 },
+  'kanyakumari': { lat: 8.0883, lon: 77.5385 },
+  'நாகர்கோவில்': { lat: 8.1833, lon: 77.4119 },
+  'nagercoil': { lat: 8.1833, lon: 77.4119 },
+  'புதுச்சேரி': { lat: 11.9416, lon: 79.8083 },
+  'pondicherry': { lat: 11.9416, lon: 79.8083 },
+  'puducherry': { lat: 11.9416, lon: 79.8083 },
+  'காஞ்சிபுரம்': { lat: 12.8342, lon: 79.7036 },
+  'kanchipuram': { lat: 12.8342, lon: 79.7036 },
+  'கரூர்': { lat: 10.9601, lon: 78.0766 },
+  'karur': { lat: 10.9601, lon: 78.0766 },
+  'விருதுநகர்': { lat: 9.5680, lon: 77.9624 },
+  'virudhunagar': { lat: 9.5680, lon: 77.9624 },
+  'பெங்களூரு': { lat: 12.9716, lon: 77.5946 },
+  'bangalore': { lat: 12.9716, lon: 77.5946 },
+  'bengaluru': { lat: 12.9716, lon: 77.5946 },
+  'ஹைதராபாத்': { lat: 17.3850, lon: 78.4867 },
+  'hyderabad': { lat: 17.3850, lon: 78.4867 },
+  'மும்பை': { lat: 19.0760, lon: 72.8777 },
+  'mumbai': { lat: 19.0760, lon: 72.8777 },
+  'தில்லி': { lat: 28.6139, lon: 77.2090 },
+  'delhi': { lat: 28.6139, lon: 77.2090 },
+  'கொல்கத்தா': { lat: 22.5726, lon: 88.3639 },
+  'kolkata': { lat: 22.5726, lon: 88.3639 }
+};
+
+export function parseCoordinate(coord: string | number | undefined, defaultVal: number, cityName?: string): number {
+  if (coord !== undefined && coord !== null && coord !== '') {
+    if (typeof coord === 'number') return isNaN(coord) ? defaultVal : coord;
+    const str = String(coord).trim();
+    // Check if string contains DMS format e.g., 09° 55' N or 78° 07' E
+    const dmsMatch = str.match(/([0-9.]+)\s*°?\s*([0-9.]+)?\s*'?\s*([0-9.]+)?\s*"?\s*([NSEWnsew])?/);
+    if (dmsMatch && (dmsMatch[4] || str.includes('°'))) {
+      const deg = parseFloat(dmsMatch[1]) || 0;
+      const min = parseFloat(dmsMatch[2]) || 0;
+      const sec = parseFloat(dmsMatch[3]) || 0;
+      const dir = dmsMatch[4]?.toUpperCase();
+      let val = deg + min / 60 + sec / 3600;
+      if (dir === 'S' || dir === 'W') val = -val;
+      return val;
+    }
+    const cleanStr = str.replace(',', '.').replace(/[^\d.-]/g, '');
+    const parsed = parseFloat(cleanStr);
+    if (!isNaN(parsed) && parsed !== 0) return parsed;
+  }
+
+  // Fallback to known city lookup
+  if (cityName && cityName.trim()) {
+    const q = cityName.toLowerCase().trim();
+    for (const [key, coords] of Object.entries(KNOWN_CITIES_COORDINATES)) {
+      if (q.includes(key)) {
+        return defaultVal === 9.9252 ? coords.lat : coords.lon;
+      }
+    }
+  }
+
+  return defaultVal;
+}
+
+export function parseTimezoneOffsetMinutes(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  tzName?: string
+): number {
+  if (!tzName || tzName === 'Asia/Kolkata' || tzName === 'IST' || tzName === 'Asia/Calcutta') {
+    return 330; // Standard Indian Standard Time: UTC+05:30 (330 minutes)
+  }
+
+  try {
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+    const invDate = new Date(utcDate.toLocaleString('en-US', { timeZone: tzName }));
+    const diff = (utcDate.getTime() - invDate.getTime()) / 60000;
+    return -diff;
+  } catch {
+    return 330;
+  }
+}
+
 export function normalizeAngle(deg: number): number {
   let mod = deg % 360;
   if (mod < 0) mod += 360;
@@ -119,7 +232,9 @@ function getJulianDay(year: number, month: number, day: number, hour: number, mi
 
 /**
  * Standard Chitrapaksha (Lahiri) Ayanamsa Calculation
- * Benchmark: 23° 51' 25.53" at J2000.0 (JD 2451545.0) with standard IAU precession rate
+ * Strict Vedic Sidereal Definition:
+ * Benchmark: 23° 51' 25.53" = 23.857092° at J2000.0 (JD 2451545.0)
+ * Precession Rate: 50.290966" / year = 1.396971° / century
  */
 export function getLahiriAyanamsa(jd: number): number {
   const T = (jd - 2451545.0) / 36525.0;
@@ -148,7 +263,7 @@ function solveKepler(M: number, e: number): number {
 /**
  * High-Precision Multi-body Planetary Ephemeris Calculation
  * Converts Keplerian Orbital Elements + Major Periodic Lunar & Planetary Perturbations
- * to exact Topocentric Nirayana Longitudes (0° - 360°).
+ * to exact Topocentric Nirayana Longitudes (0° - 360°) using strict Lahiri Ayanamsa.
  */
 function calculatePlanetaryPositions(
   year: number,
@@ -157,32 +272,21 @@ function calculatePlanetaryPositions(
   hour: number,
   minute: number,
   lat: number,
-  lon: number
+  lon: number,
+  tzOffsetMinutes: number = 330
 ) {
-  // Convert IST (UTC +5:30) to Universal Time (UT)
-  let totalUtMinutes = hour * 60 + minute - 330;
-  let utDay = day;
-  let utMonth = month;
-  let utYear = year;
+  // Convert Local Time to Universal Time (UTC) using exact timezone offset
+  const localUtcMins = hour * 60 + minute - tzOffsetMinutes;
+  const localDateObj = new Date(Date.UTC(year, month - 1, day, 0, localUtcMins, 0));
 
-  if (totalUtMinutes < 0) {
-    totalUtMinutes += 1440;
-    const prevDate = new Date(Date.UTC(year, month - 1, day - 1));
-    utYear = prevDate.getUTCFullYear();
-    utMonth = prevDate.getUTCMonth() + 1;
-    utDay = prevDate.getUTCDate();
-  } else if (totalUtMinutes >= 1440) {
-    totalUtMinutes -= 1440;
-    const nextDate = new Date(Date.UTC(year, month - 1, day + 1));
-    utYear = nextDate.getUTCFullYear();
-    utMonth = nextDate.getUTCMonth() + 1;
-    utDay = nextDate.getUTCDate();
-  }
+  const utYear = localDateObj.getUTCFullYear();
+  const utMonth = localDateObj.getUTCMonth() + 1;
+  const utDay = localDateObj.getUTCDate();
+  const utHour = localDateObj.getUTCHours();
+  const utMin = localDateObj.getUTCMinutes();
+  const utSec = localDateObj.getUTCSeconds();
 
-  const utHour = Math.floor(totalUtMinutes / 60);
-  const utMin = totalUtMinutes % 60;
-
-  const jd = getJulianDay(utYear, utMonth, utDay, utHour, utMin);
+  const jd = getJulianDay(utYear, utMonth, utDay, utHour, utMin, utSec);
   const ayanamsa = getLahiriAyanamsa(jd);
   const d = jd - 2451545.0; // Days from J2000.0
   const T = d / 36525.0;    // Julian centuries from J2000.0
@@ -363,9 +467,11 @@ function calculatePlanetaryPositions(
   const eps = (23.4392911 - 0.0130042 * T) * rad;
   const phi = lat * rad;
 
+  // Standard Spherical Astronomy Formulation for Rising Sign (Ascendant):
+  // tan(lambda) = cos(RAMC) / (-sin(RAMC)*cos(eps) - tan(phi)*sin(eps))
   const yLagna = Math.cos(RAMC_rad);
   const xLagna = -Math.sin(RAMC_rad) * Math.cos(eps) - Math.tan(phi) * Math.sin(eps);
-  const tropLagna = normalizeAngle(Math.atan2(yLagna, -xLagna) * deg);
+  const tropLagna = normalizeAngle(Math.atan2(yLagna, xLagna) * deg);
   const sidLagna = normalizeAngle(tropLagna - ayanamsa);
 
   return {
@@ -1219,11 +1325,12 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   const hour = Number.isNaN(parsedHour) ? 10 : parsedHour;
   const minute = Number.isNaN(parsedMinute) ? 30 : parsedMinute;
 
-  const latNum = parseFloat(input.lat || '11.0018');
-  const lonNum = parseFloat(input.lon || '76.9628');
+  const latNum = parseCoordinate(input.lat, 9.9252, input.pob);
+  const lonNum = parseCoordinate(input.lon, 78.1198, input.pob);
+  const tzOffsetMins = parseTimezoneOffsetMinutes(year, month, day, hour, minute, input.timezone);
 
   // 1. Calculate Astronomical Positions
-  const { ayanamsa, planets } = calculatePlanetaryPositions(year, month, day, hour, minute, latNum, lonNum);
+  const { ayanamsa, planets } = calculatePlanetaryPositions(year, month, day, hour, minute, latNum, lonNum, tzOffsetMins);
 
   // 2. Build Planetary Table (Degrees, Nakshatra, Pada, Retrograde, Combust)
   const planetaryDegrees: PlanetaryDegree[] = [];
