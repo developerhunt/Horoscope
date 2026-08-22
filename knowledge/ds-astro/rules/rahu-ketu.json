@@ -1,0 +1,34 @@
+[
+  {
+    "ruleId": "DS-RAK-001",
+    "category": "rahu-ketu",
+    "title": "ராகு பெருக்கும், கேது தடுக்கும் (Rahu Amplifies, Ketu Restricts)",
+    "description": "Rahu magnifies and expands matters (both auspicious luxuries and chronic sentences). Ketu detaches, reduces, obstructs or leads to renunciation / Moksha.",
+    "source": { "book": "D.S.Astro System", "page": 77, "section": "ராகு கேது ரகசியங்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-RAK-002",
+    "category": "rahu-ketu",
+    "title": "ராகு கேது தசாபுத்தி பலன்கள் மற்றும் வக்ர யோகம் (Rahu-Ketu Dispositor Exaltation/Retrograde)",
+    "description": "If the dispositor or star lord of Rahu/Ketu is retrograde, exalted, or in own sign, Rahu/Ketu Dasa bestows extraordinary wealth and uninhibited success.",
+    "source": { "book": "D.S.Astro System", "page": 78, "section": "ராகு கேது தசாபுத்தி பலன்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-RAK-003",
+    "category": "rahu-ketu",
+    "title": "ராகு கேது மிட்பாயிண்ட் மையப்புள்ளிகள் (Rahu-Ketu Midpoint Karmic Axis)",
+    "description": "Planets located 4 houses away (the perpendicular midpoint axis) from Rahu-Ketu are trapped in the karmic midpoint, creating obstruction in life karakatvas unless saved by exaltation/retrograde.",
+    "source": { "book": "D.S.Astro System", "page": 87, "section": "ராகு, கேது (மிட்பாய்ண்ட்) மையப் புள்ளிகள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-RAK-004",
+    "category": "rahu-ketu",
+    "title": "கேது 12-ல் இருத்தல் கடைசி பிறவி (Ketu in 12th House Final Incarnation)",
+    "description": "Ketu placed in the 12th house from natal Lagna represents Mokshakaraka in the house of liberation, indicating final rebirth / spiritual culmination.",
+    "source": { "book": "D.S.Astro System", "page": 77, "section": "கேது பகவான் 12-ல் இருத்தல்" },
+    "status": "IMPLEMENTED"
+  }
+]

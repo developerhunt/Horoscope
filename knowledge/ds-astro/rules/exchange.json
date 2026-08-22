@@ -1,0 +1,18 @@
+[
+  {
+    "ruleId": "DS-EXC-001",
+    "category": "exchange",
+    "title": "பரிவர்த்தனை யோகம் ஏமாற்றம் தரும் (Parivarthanai Disappointment / Change of Outcome)",
+    "description": "In D.S.Astro System, Parivarthanai (both sign and constellation exchange) yields initial disappointment, changing expected courses or requiring pivoting to an alternative result.",
+    "source": { "book": "D.S.Astro System", "page": 28, "section": "பரிவர்த்தனை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EXC-002",
+    "category": "exchange",
+    "title": "கல்வியில் பரிவர்த்தனை (Education Branch Pivot)",
+    "description": "Exchange involving Mercury or 4th/5th house leads to studying a major different from the originally desired field.",
+    "source": { "book": "D.S.Astro System", "page": 19, "section": "பரிவர்த்தனை முறை - கல்வி" },
+    "status": "IMPLEMENTED"
+  }
+]

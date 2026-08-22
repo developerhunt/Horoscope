@@ -1,0 +1,59 @@
+{
+  "relationshipTypes": [
+    {
+      "id": "DISPOSITOR",
+      "name": "வீடு கொடுத்தவர் தொடர்பு (House Lord / Dispositor)",
+      "description": "The lord of the sign where a planet resides."
+    },
+    {
+      "id": "STAR_LORD",
+      "name": "நட்சத்திர சார தொடர்பு (Star Lord Connection)",
+      "description": "The ruler of the Nakshatra occupied by a planet."
+    },
+    {
+      "id": "ASPECT",
+      "name": "பார்வை தொடர்பு (Planetary Aspect)",
+      "description": "Standard 7th aspect for all planets; special 4th & 8th for Mars, 5th & 9th for Jupiter, 3rd & 10th for Saturn."
+    },
+    {
+      "id": "CONJUNCTION",
+      "name": "சேர்க்கை (Conjunction)",
+      "description": "Planets occupying the same sign or close degree arc."
+    },
+    {
+      "id": "TRIKONA",
+      "name": "திரிகோண தொடர்பு (1-5-9 Trine)",
+      "description": "Planets placed in 1st, 5th, or 9th from each other; activates Uyir Karakatvam."
+    },
+    {
+      "id": "KENDRA",
+      "name": "கேந்திர தொடர்பு (1-4-7-10 Angular)",
+      "description": "Planets placed in 1st, 4th, 7th, or 10th from each other; activates Porul Karakatvam."
+    },
+    {
+      "id": "THREE_ELEVEN",
+      "name": "3-11 தொடர்பு (Effort & Gain)",
+      "description": "Planets in 3rd/11th relationship requiring severe hard work before achievement."
+    },
+    {
+      "id": "SIX_EIGHT",
+      "name": "6-8 தொடர்பு (Dusthana Axis)",
+      "description": "Planets in 6th/8th mutual relationship causing challenges, medical events, or sudden windfalls if exalted."
+    },
+    {
+      "id": "TWO_TWELVE",
+      "name": "2-12 தொடர்பு (Family/Pleasure vs Loss)",
+      "description": "Planets in 2nd/12th mutual relationship."
+    },
+    {
+      "id": "PARIVARTHANAI",
+      "name": "பரிவர்த்தனை (Mutual Exchange)",
+      "description": "Planets exchanging each other's signs or star constellations; indicates change of direction / disappointment."
+    },
+    {
+      "id": "RAHU_KETU_MIDPOINT",
+      "name": "ராகு-கேது மையப்புள்ளி (Midpoint Axis)",
+      "description": "Planets falling on the 4th house perpendicular axis from Rahu-Ketu."
+    }
+  ]
+}

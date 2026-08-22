@@ -1,0 +1,26 @@
+[
+  {
+    "ruleId": "DS-PROP-001",
+    "category": "property",
+    "title": "சொந்த வீடு கட்டும் யோகம் (Own House Construction)",
+    "description": "Moon (signifier of Cancer/4th house/womb/shelter) must be strong and free from malefic afflictions to build and own a house. Venus determines luxury and architectural grandeur.",
+    "source": { "book": "D.S.Astro System", "page": 54, "section": "சொந்த வீடு கட்டும் யோகம் எப்போது" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-PROP-002",
+    "category": "property",
+    "title": "செவ்வாய் 4-ம் பார்வை சொத்து சேர்க்கை (Mars 4th Aspect Real Estate)",
+    "description": "Strong Mars casting its 4th aspect brings acquisition of landed properties, agricultural lands, plots, and real estate assets.",
+    "source": { "book": "D.S.Astro System", "page": 27, "section": "செவ்வாய் 4-ம் பார்வை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-PROP-003",
+    "category": "property",
+    "title": "வீடு பழுது மற்றும் பிரச்சனைகள் (House Repairs / Disruptions)",
+    "description": "Saturn and Ketu connecting with 4th house or 4th lord causes recurring damages, pipe leaks, cracks, and structural repairs in residences.",
+    "source": { "book": "D.S.Astro System", "page": 56, "section": "வீட்டில் பிரச்சனை" },
+    "status": "IMPLEMENTED"
+  }
+]

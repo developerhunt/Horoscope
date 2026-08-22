@@ -1,0 +1,18 @@
+[
+  {
+    "ruleId": "DS-HOU-001",
+    "category": "houses",
+    "title": "12 பாவகங்களில் அந்தரங்க ரகசியங்கள் (12 Houses Secrets)",
+    "description": "Lagna & 7th: Head/Face and spouse's private parts; 2nd & 8th: Family/wealth and hidden matters/excretory; 3rd & 9th: Valor/father; 4th: Mother/chest/nourishment; 5th: Progeny/ancestral karma; 6th: Disease/debt/service; 10th: Karma/profession; 11th: In-laws/gains; 12th: Bed pleasures/moksha.",
+    "source": { "book": "D.S.Astro System", "page": 106, "section": "12 பாவகங்களில் அந்தரங்க ரகசியங்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-HOU-002",
+    "category": "houses",
+    "title": "முதியோர் இல்லத்தில் தள்ளப்படும் நிலை (Old Age Home Indication)",
+    "description": "1st, 5th, 7th, 9th lords afflicted in Dusthanas (6, 8, 12), in Parivarthanai with malefics, or oppressed by malefic planets leads to spending old age in senior care homes.",
+    "source": { "book": "D.S.Astro System", "page": 57, "section": "முதியோர் இல்லத்தில் தள்ளப்படும் நிலை யாருக்கு வரும்?" },
+    "status": "IMPLEMENTED"
+  }
+]

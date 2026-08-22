@@ -1,0 +1,26 @@
+[
+  {
+    "ruleId": "DS-ASP-001",
+    "category": "aspects",
+    "title": "செவ்வாய் 4-ம் பார்வை மற்றும் 8-ம் பார்வை ரகசியம் (Mars 4th & 8th Aspect)",
+    "description": "Mars 4th aspect = Sukha/Property/Mother longevity; Mars 8th aspect = Mangalya/Longevity/Spouse savings/Sudden fortune when strong; causes accident/affliction if weak.",
+    "source": { "book": "D.S.Astro System", "page": 81, "section": "செவ்வாய் பகவானின் விசேஷ பார்வை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-ASP-002",
+    "category": "aspects",
+    "title": "குரு பகவான் 5-ம் பார்வை மற்றும் 9-ம் பார்வை ரகசியம் (Jupiter 5th & 9th Aspect)",
+    "description": "Jupiter 5th aspect = Love, progeny, Kuladeivam blessings, ancestral merit; Jupiter 9th aspect = Renown, authority, political high post, kingly comforts.",
+    "source": { "book": "D.S.Astro System", "page": 82, "section": "குரு பகவானின் 5, 9 பார்வை ரகசியம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-ASP-003",
+    "category": "aspects",
+    "title": "சனி பகவான் 3-ம் பார்வை மற்றும் 10-ம் பார்வை (Saturn 3rd & 10th Aspect)",
+    "description": "Saturn 3rd aspect = Initiating strenuous effort, career beginnings, construction; Saturn 10th aspect = Professional duty (Karma), public service, family rites.",
+    "source": { "book": "D.S.Astro System", "page": 83, "section": "சனி பகவானின் விசேஷப் பார்வை" },
+    "status": "IMPLEMENTED"
+  }
+]

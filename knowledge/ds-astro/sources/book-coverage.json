@@ -1,0 +1,28 @@
+{
+  "bookTitle": "D.S.Astro System",
+  "author": "T. Jeyashankar, Madurai",
+  "academy": "Ayyan Astro Academy, Madurai",
+  "totalPages": 131,
+  "coverage": [
+    { "pageRange": "1-6", "topic": "D.S.Astro Core Methodology & Dasa Lord as Lagna", "ruleIds": ["DS-GEN-001", "DS-GEN-002"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "7-10", "topic": "Uyir & Porul Karakatvams, 1-5-9, Kendra, 3-11, 6-8, 2-12 Relationships", "ruleIds": ["DS-GEN-003", "DS-GEN-004", "DS-GEN-005", "DS-GEN-006", "DS-GEN-007"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "10-11", "topic": "Timing in Dasa/Bhukti, Seasons, Time of Day", "ruleIds": ["DS-ADV-003"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "12", "topic": "Body Parts mapping on 12 Rasis", "ruleIds": ["DS-BOD-001"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "13-14", "topic": "Direction of Alliance, Street Layout, Legs of Signs", "ruleIds": ["DS-TRV-002", "DS-VEH-003"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "15-16", "topic": "Agriculture Land & Crop significations", "ruleIds": ["DS-AGR-001", "DS-AGR-002"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "17-21", "topic": "Education rules, Budhaditya, Medical MBBS, Aviation, CA/Banker", "ruleIds": ["DS-EDU-001", "DS-EDU-002", "DS-EDU-003", "DS-EDU-004", "DS-EDU-005", "DS-EDU-006", "DS-EDU-007", "DS-EDU-008", "DS-EDU-009"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "21-27", "topic": "Marriage timing, Mars Mangalakaraka, 12th lord link, Bhukti timing", "ruleIds": ["DS-MAR-001", "DS-MAR-002", "DS-MAR-003", "DS-MAR-004", "DS-ASP-001"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "28-29", "topic": "Parivarthanai Exchange rules, Disappointment, Alliance origins", "ruleIds": ["DS-EXC-001", "DS-EXC-002", "DS-MAR-006"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "30-35", "topic": "Love marriage, Separation/Divorce, Second marriage, Sensual unions", "ruleIds": ["DS-MAR-005", "DS-MAR-007", "DS-MAR-008", "DS-MAR-009"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "36-42", "topic": "Progeny blessings, Gender rules (15 rules), Adoption, Twins", "ruleIds": ["DS-CHD-001", "DS-CHD-002", "DS-CHD-003", "DS-CHD-004", "DS-CHD-005"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "43-47", "topic": "Career, Central/State Govt, Business, Father business, Job change", "ruleIds": ["DS-CAR-001", "DS-CAR-002", "DS-CAR-003", "DS-CAR-004", "DS-CAR-005", "DS-CAR-007"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "47-51", "topic": "Wealth, Debt, 8th house lottery/windfall, Foreign job & citizenship", "ruleIds": ["DS-FIN-001", "DS-FIN-002", "DS-FIN-003", "DS-FIN-004", "DS-CAR-006", "DS-TRV-001"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "52-57", "topic": "Diseases by 6th lord, Recovery, Own House, Vehicle, In-laws home, Senior home, Orphan", "ruleIds": ["DS-HLT-001", "DS-HLT-002", "DS-HLT-003", "DS-HLT-004", "DS-PROP-001", "DS-PROP-003", "DS-VEH-001", "DS-VEH-002", "DS-MAR-010", "DS-HOU-002", "DS-PAR-003"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "58-60", "topic": "Spouse characteristics, Twins in Ubaya Rasis", "ruleIds": ["DS-MAR-011", "DS-CHD-003"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "61-75", "topic": "Longevity analysis, Parents & Sibling danger, Sthana Balam points table, Maternal Uncle", "ruleIds": ["DS-PAR-001", "DS-PAR-002", "DS-SIB-001", "DS-SIB-002", "DS-SIB-003", "DS-SIB-004"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "76-85", "topic": "Rahu/Ketu secrets, Dispositor exaltation/retrograde, Special aspects", "ruleIds": ["DS-RAK-001", "DS-RAK-002", "DS-RAK-004", "DS-ASP-001", "DS-ASP-002", "DS-ASP-003"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "86-90", "topic": "Chandra-Mangala Yoga, Rahu-Ketu midpoints, Punarphoo Yoga, Accidental Death", "ruleIds": ["DS-ADV-001", "DS-ADV-002", "DS-RAK-003", "DS-HLT-005"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "91-105", "topic": "Deceased chart identification, Child disabilities, Planetary intimate nature", "ruleIds": ["DS-CHD-005", "DS-HLT-001", "DS-HLT-004"], "status": "IMPLEMENTED", "confidence": "HIGH" },
+    { "pageRange": "106-131", "topic": "12 Houses secrets, Private anatomy, Breast health & Lactation, Final blessing", "ruleIds": ["DS-HOU-001", "DS-BOD-002"], "status": "IMPLEMENTED", "confidence": "HIGH" }
+  ]
+}

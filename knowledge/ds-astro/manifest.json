@@ -1,0 +1,30 @@
+{
+  "name": "D.S.Astro System Knowledge Base",
+  "version": "1.0.0",
+  "description": "Permanent machine-readable knowledge base for D.S.Astro System rules extracted from 'DS_Astro_System_Full_Book_Final_Copy.pdf' by T. Jeyashankar, Ayyan Astro Academy, Madurai.",
+  "author": "T. Jeyashankar, Madurai",
+  "academy": "Ayyan Astro Academy",
+  "totalPages": 131,
+  "system": "D.S.Astro Temporary Lagna Methodology",
+  "ruleCategories": [
+    "general",
+    "education",
+    "marriage",
+    "children",
+    "career",
+    "finance",
+    "property",
+    "vehicle",
+    "health",
+    "parents",
+    "siblings",
+    "travel",
+    "agriculture",
+    "rahu-ketu",
+    "exchange",
+    "aspects",
+    "houses",
+    "body-parts",
+    "advanced"
+  ]
+}

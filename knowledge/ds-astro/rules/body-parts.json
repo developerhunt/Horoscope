@@ -1,0 +1,18 @@
+[
+  {
+    "ruleId": "DS-BOD-001",
+    "category": "body-parts",
+    "title": "ராசிகள் மற்றும் உடல் உறுப்புகள் தொடர்பு (Zodiac Signs & Body Organs)",
+    "description": "Mesham=Head, Rishabham=Neck, Mithunam=Shoulders, Katakam=Chest/Lungs, Simham=Heart, Kanni=Stomach, Thulam=Kidneys/Private organs, Viruchigam=Anus/Rectum, Dhanusu=Thighs, Makaram=Knees, Kumbam=Ankles, Meenam=Feet.",
+    "source": { "book": "D.S.Astro System", "page": 12, "section": "உடல் உறுப்புகள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-BOD-002",
+    "category": "body-parts",
+    "title": "மார்பக புற்றுநோய் மற்றும் தாய்ப்பால் சுரப்பு (Breast Cancer & Lactation)",
+    "description": "4th lord afflicted with Mars + Saturn in 4th house with Rahu/Ketu causes breast cysts/cancer. Strong 4th lord with Moon/Venus gives abundant lactation; afflicted 4th lord with Ketu hinders lactation.",
+    "source": { "book": "D.S.Astro System", "page": 119, "section": "மார்பக புற்றுநோய் & தாய்ப்பால்" },
+    "status": "IMPLEMENTED"
+  }
+]

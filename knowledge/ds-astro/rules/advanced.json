@@ -1,0 +1,26 @@
+[
+  {
+    "ruleId": "DS-ADV-001",
+    "category": "advanced",
+    "title": "புனர்பூ தோஷம் - மண், பொன், காம ஆசைகள் (Punarphoo Yoga: Earth, Gold, Desires)",
+    "description": "Saturn + Moon conjunction/aspect (Punarphoo) is not always destructive; it stimulates ambitions: Land/Property in Mars/Mercury signs, Wealth/Gold in Jupiter/Venus signs, Romance in Mercury/Venus signs.",
+    "source": { "book": "D.S.Astro System", "page": 88, "section": "புனர்பு தோஷம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-ADV-002",
+    "category": "advanced",
+    "title": "சந்திர மங்கள யோகம் (Chandra-Mangala Yoga)",
+    "description": "Moon and Mars in strong mutual connection during Dasa/Bhukti brings puberty in girls, purchase/construction of homes, and motherhood.",
+    "source": { "book": "D.S.Astro System", "page": 86, "section": "சந்திர மங்கள யோகம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-ADV-003",
+    "category": "advanced",
+    "title": "காலப் பொழுது - நிகழ்வு நேரம் அறிதல் (Event Timing: Morning, Afternoon, Evening)",
+    "description": "Rasi timing chart determines whether an event (good or bad) transpires during morning, noon, evening, or night, and whether in early, middle, or final part of Dasa/Bhukti.",
+    "source": { "book": "D.S.Astro System", "page": 10, "section": "ஒரு செயல் எப்போது நிகழும் என்பதை அறிய உதவும்" },
+    "status": "IMPLEMENTED"
+  }
+]

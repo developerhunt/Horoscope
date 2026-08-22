@@ -1,0 +1,18 @@
+[
+  {
+    "ruleId": "DS-AGR-001",
+    "category": "agriculture",
+    "title": "விவசாய நிலமும் பயிர் வகைகளும் (Agriculture Land & Crops Mapping)",
+    "description": "Rasi soil mapping: Wetlands/Riverbank (Mesham, Makaram), Forest/Plains (Rishabham, Dhanusu), Wells/Water source (Mithunam, Kumbam). Crops: Sugarcane, Paddy, Creepers, Plants, Big trees.",
+    "source": { "book": "D.S.Astro System", "page": 15, "section": "விவசாயத்திற்கு உதவும் காரணிகள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-AGR-002",
+    "category": "agriculture",
+    "title": "நிலத்தின் மண் வளம் மற்றும் பலன் (Soil Fertility Points)",
+    "description": "Rasis classified into Full strength (முழு பலம்), Half strength (பாதி பலம்), Dry/Arid (வறண்ட), Barren (மலடு).",
+    "source": { "book": "D.S.Astro System", "page": 16, "section": "ஆண்மை / மண் வளம் பற்றி அறிய" },
+    "status": "IMPLEMENTED"
+  }
+]

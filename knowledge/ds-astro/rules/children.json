@@ -1,0 +1,42 @@
+[
+  {
+    "ruleId": "DS-CHD-001",
+    "category": "children",
+    "title": "புத்திர பாக்கியம் மற்றும் புத்திர தோஷம் (Progeny Blessing / Putradosham)",
+    "description": "5th house and Jupiter (Putrakaraka) must be unafflicted by 6th/8th/Badhaka lords and free from Rahu-Ketu eclipsing for smooth child blessings.",
+    "source": { "book": "D.S.Astro System", "page": 36, "section": "குழந்தை பாக்கியம் & புத்திர தோஷம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CHD-002",
+    "category": "children",
+    "title": "குழந்தைகள் ஆணா? பெண்ணா? - 15 முக்கிய விதிகள் (Child Gender Indications)",
+    "description": "5th lord visible in male sign = Male child; in female sign = Female child. 5th lord hidden (3,6,8,12 from 5th): in male sign = Female child; in female sign = Male child. Guru+Ketu = Male child; Guru+Rahu = Female child. Retrograde Guru in Ketu star = Male child; in Rahu star = Female child.",
+    "source": { "book": "D.S.Astro System", "page": 40, "section": "குழந்தைகள் ஆணா? பெண்ணா? (15 விதிகள்)" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CHD-003",
+    "category": "children",
+    "title": "இரட்டை குழந்தை யோகம் (Twins Progeny Rule)",
+    "description": "Lagna or 5th lord placed in Ubaya Rasis (Mithunam, Kanni, Dhanusu, Meenam), or connected with Mercury, Jupiter, Rahu/Ketu leads to twin birth.",
+    "source": { "book": "D.S.Astro System", "page": 60, "section": "இரட்டை குழந்தை யாருக்கு?" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CHD-004",
+    "category": "children",
+    "title": "தத்து புத்திர யோகம் (Child Adoption Rule)",
+    "description": "9th and 10th lords conjunct (Dharma-Karmadhipati) with connection to two out of Sun, Jupiter, Saturn, Ketu indicates adoption of a child.",
+    "source": { "book": "D.S.Astro System", "page": 42, "section": "தத்து புத்திர யோகம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CHD-005",
+    "category": "children",
+    "title": "புத்திர சோகம் மற்றும் குறைபாடுகள் (Child Sorrows / Developmental Issues)",
+    "description": "Afflicted 5th house/Guru with Rahu/Ketu/Saturn or Mercury + (2,3 lords afflicted) causes speech/hearing impediments or developmental delays.",
+    "source": { "book": "D.S.Astro System", "page": 39, "section": "புத்திர சோகம்" },
+    "status": "IMPLEMENTED"
+  }
+]

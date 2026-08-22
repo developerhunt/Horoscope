@@ -1,0 +1,22 @@
+{
+  "specialAspects": [
+    {
+      "planet": "MARS",
+      "aspects": [4, 7, 8],
+      "aspect4Meaning": "சுக பார்வை, சொத்துப் பார்வை - Real estate, vehicle, mother longevity, comfort, wealth.",
+      "aspect8Meaning": "மாங்கல்ய பார்வை, ஆயுள்/அதிர்ஷ்ட பார்வை - Marital knot, spouse savings, unexpected fortune or life crisis if afflicted."
+    },
+    {
+      "planet": "JUPITER",
+      "aspects": [5, 7, 9],
+      "aspect5Meaning": "காதல் பார்வை, புத்திர பாக்கியம் - Love marriage, child blessings, ancestral favor, Kuladeivam grace.",
+      "aspect9Meaning": "பாக்கிய பார்வை, அரசு/பதவி - High status, political success, renown, father blessings."
+    },
+    {
+      "planet": "SATURN",
+      "aspects": [3, 7, 10],
+      "aspect3Meaning": "முயற்சி பார்வை - Self-effort, initiation of career/business, building houses.",
+      "aspect10Meaning": "கர்ம பார்வை - Professional duties, public service, family rituals/rites."
+    }
+  ]
+}

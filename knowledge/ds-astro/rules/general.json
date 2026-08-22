@@ -1,0 +1,58 @@
+[
+  {
+    "ruleId": "DS-GEN-001",
+    "category": "general",
+    "title": "தசா நாதன் இருக்கும் இடமே தற்காலிக லக்னம் (Dasa Lord sign as Temporary Lagna)",
+    "description": "Whatever Dasa is currently operating, the zodiac sign occupied by the Dasa Lord is treated as Lagna for that entire Dasa duration.",
+    "source": { "book": "D.S.Astro System", "page": 6, "section": "நமது ஜோதிட விதிகள் - விதி 1" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-GEN-002",
+    "category": "general",
+    "title": "தசா நாதனுக்கு வீடு கொடுத்தவரே லக்னாதிபதி (Dispositor of Dasa Lord as Temporary Lagna Lord)",
+    "description": "The ruler of the sign where the Dasa Lord is placed becomes the active Lagna Lord. The strength and placement of this dispositor governs the overall outcomes of the Dasa.",
+    "source": { "book": "D.S.Astro System", "page": 6, "section": "நமது ஜோதிட விதிகள் - விதி 2" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-GEN-003",
+    "category": "general",
+    "title": "திரிகோண தொடர்பு (1-5-9) உயிர் காரகத்துவங்களை இயக்கும்",
+    "description": "When the temporary Lagna Lord and the Star Lord of Dasa Lord are in 1-5-9 relationship, it triggers life/relational events: marriage, progeny, fame, honor, relationship harmony.",
+    "source": { "book": "D.S.Astro System", "page": 8, "section": "உயிர் காரகத்துவங்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-GEN-004",
+    "category": "general",
+    "title": "கேந்திர தொடர்பு (1-4-7-10) பொருள் காரகத்துவங்களை இயக்கும்",
+    "description": "When the temporary Lagna Lord and Star Lord are in Kendra relationship, it triggers material events: house, land, vehicle, career, business, acquisition of wealth.",
+    "source": { "book": "D.S.Astro System", "page": 8, "section": "பொருள் காரகத்துவம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-GEN-005",
+    "category": "general",
+    "title": "3-11 தொடர்பு கடுமையான முயற்சிக்குப் பிறகே வெற்றி",
+    "description": "Placement of temporary Lagna Lord and Star Lord in 3/11 axis requires arduous persistent efforts before success is attained in both life and material pursuits.",
+    "source": { "book": "D.S.Astro System", "page": 8, "section": "3, 11 தொடர்பு" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-GEN-006",
+    "category": "general",
+    "title": "6-8 தொடர்பு பலத்தின் அடிப்படையில் நன்மை / தீமை",
+    "description": "6th house with strength yields government employment/jobs; without strength causes debt, disease, enemies. 8th house with strength yields sudden windfall; without strength yields danger/accidents.",
+    "source": { "book": "D.S.Astro System", "page": 9, "section": "6, 8 தொடர்பு" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-GEN-007",
+    "category": "general",
+    "title": "2-12 தொடர்பு குடும்பம் / விரையம்",
+    "description": "2-12 relationship brings marriage, family expansion, cash flow when strong; causes estrangement, divorce, or financial loss when weak.",
+    "source": { "book": "D.S.Astro System", "page": 9, "section": "2, 12 தொடர்பு" },
+    "status": "IMPLEMENTED"
+  }
+]

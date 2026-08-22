@@ -1,0 +1,26 @@
+[
+  {
+    "ruleId": "DS-PAR-001",
+    "category": "parents",
+    "title": "தாயாருக்கு கண்டம் / ஆயுள் (Mother's Longevity & Critical Phases)",
+    "description": "4th lord + Moon placed at Rahu-Ketu midpoint or in trine with Rahu/Ketu indicates critical health phases or danger for mother, unless saved by strong Sthana Balam or benefic aspect.",
+    "source": { "book": "D.S.Astro System", "page": 69, "section": "தாயாருக்கு கண்டம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-PAR-002",
+    "category": "parents",
+    "title": "தந்தைக்கு கண்டம் / ஆயுள் (Father's Longevity & Critical Phases)",
+    "description": "9th lord + Sun placed at Rahu-Ketu midpoint or in mutual trine/conjunction with Rahu/Ketu in Dasa operating indicates severe affliction to father.",
+    "source": { "book": "D.S.Astro System", "page": 70, "section": "தந்தைக்கு கண்டம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-PAR-003",
+    "category": "parents",
+    "title": "தாய் தந்தை இல்லாத அனாதை யோகம் (Loss of Parents / Raised by Relatives)",
+    "description": "4th and 9th houses afflicted by Rahu, Ketu, and Saturn along with weak/debilitated Sun and Moon causes loss of parental care, leading to being raised by relatives or institutions.",
+    "source": { "book": "D.S.Astro System", "page": 57, "section": "தாய் தந்தை இல்லாத அனாதை" },
+    "status": "IMPLEMENTED"
+  }
+]

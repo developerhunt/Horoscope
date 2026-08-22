@@ -1,0 +1,26 @@
+[
+  {
+    "ruleId": "DS-VEH-001",
+    "category": "vehicle",
+    "title": "புதிய சொகுசு வாகனம் வாங்கும் யோகம் (New Luxury Vehicle Acquisition)",
+    "description": "Strong Venus + Rahu conjunction grants acquisition of brand-new luxury 4-wheelers and high-end vehicles.",
+    "source": { "book": "D.S.Astro System", "page": 55, "section": "வாகனம் வாங்கும் யோகம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-VEH-002",
+    "category": "vehicle",
+    "title": "பழைய வாகனம் வாங்குதல் (Used / Second-hand Vehicle)",
+    "description": "Venus connecting with Saturn or Ketu leads to purchasing second-hand or pre-owned vehicles, with recurring minor breakdowns.",
+    "source": { "book": "D.S.Astro System", "page": 55, "section": "பழைய வாகனங்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-VEH-003",
+    "category": "vehicle",
+    "title": "ராசிகளின் கால்களும் வாகன வகைகளும் (Signs Legs and Vehicle Types)",
+    "description": "2-legged signs = 2-wheelers; 3-count signs = 3-wheelers / autos; 4-legged signs = cars/4-wheelers; 8-legged signs = heavy transport vehicles.",
+    "source": { "book": "D.S.Astro System", "page": 14, "section": "ராசிகளின் கால்களும், பிரயாணமும்" },
+    "status": "IMPLEMENTED"
+  }
+]

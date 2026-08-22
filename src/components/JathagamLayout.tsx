@@ -2,7 +2,8 @@ import React from 'react';
 import { HoroscopeData } from '../types';
 import { SouthIndianChart } from './SouthIndianChart';
 import { PlanetaryTable } from './PlanetaryTable';
-import { Download, Compass, ShieldCheck, Orbit, Sparkles, BookOpen } from 'lucide-react';
+import { DSPredictionsDashboard } from './DSPredictionsDashboard';
+import { Download, Compass, ShieldCheck, Orbit, Sparkles } from 'lucide-react';
 
 interface JathagamLayoutProps {
   data: HoroscopeData;
@@ -45,20 +46,19 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
       <div
         ref={containerRef}
         id="a4-jathagam-sheet"
-        className="w-full max-w-[820px] bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-5 sm:p-7 relative font-tamil leading-relaxed select-text"
+        className="w-full max-w-[820px] bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-4 sm:p-6 relative font-tamil leading-relaxed select-text flex flex-col justify-between"
         style={{
-          boxSizing: 'border-box',
-          minHeight: '1050px'
+          boxSizing: 'border-box'
         }}
       >
         {/* Header: Center-aligned "௨" and Main Title inside border */}
-        <div className="text-center mb-3">
+        <div className="text-center mb-2">
           <div className="text-2xl sm:text-3xl font-extrabold text-neutral-950 leading-none select-none tracking-widest">
             ௨
           </div>
-          <div className="mt-2">
-            <div className="inline-block border-2 border-neutral-900 bg-[#F7EED5] px-6 sm:px-10 py-1 shadow-xs">
-              <h1 className="text-base sm:text-lg font-bold text-neutral-950 tracking-wider">
+          <div className="mt-1.5">
+            <div className="inline-block border-2 border-neutral-900 bg-[#F7EED5] px-6 sm:px-10 py-0.5 shadow-xs">
+              <h1 className="text-sm sm:text-base font-bold text-neutral-950 tracking-wider">
                 {data.title || 'திருக்கணிதப்படி ஜாதகம்'}
               </h1>
             </div>
@@ -66,44 +66,44 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
         </div>
 
         {/* Section 1: Basic Details (2-Column Balanced HTML Table) */}
-        <div className="my-2 border border-neutral-900 bg-[#FFFDF7] shadow-xs">
-          <div className="bg-[#EFE6CE] text-center font-bold py-0.5 border-b border-neutral-900 text-[11px] text-neutral-950">
+        <div className="my-1.5 border border-neutral-900 bg-[#FFFDF7] shadow-xs">
+          <div className="bg-[#EFE6CE] text-center font-bold py-0.5 border-b border-neutral-900 text-[10.5px] text-neutral-950">
             ஜாதகர் விபரங்கள் (Basic Details)
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-900 text-[10.5px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-900 text-[10px]">
             
             {/* Left Column: Name, Father, Mother, DOB, TOB, POB, Nakshatram, Rasi */}
             <div className="divide-y divide-neutral-300">
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">{basicDetails.genderLabel}:</span>
                 <span className="font-bold text-neutral-950">{basicDetails.name}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">தகப்பனார்:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.fatherName}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">தாயார்:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.motherName}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">பிறந்த தேதி:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.dob}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">பிறந்த நேரம்:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.tob}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">பிறந்த ஊர்:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.pob}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">நட்சத்திரம்:</span>
                 <span className="font-bold text-amber-950">{basicDetails.nakshatra}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">ஜென்ம ராசி:</span>
                 <span className="font-bold text-amber-950">{basicDetails.rasi}</span>
               </div>
@@ -111,37 +111,37 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
 
             {/* Right Column: Lat/Long, Ayanamsa, Lagna, Sunrise, Thithi, Age, Dasa Details */}
             <div className="divide-y divide-neutral-300">
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">அட்ச / தீர்க்க ரேகை:</span>
-                <span className="font-mono text-[10px] font-medium text-neutral-900">{basicDetails.latLong}</span>
+                <span className="font-mono text-[9.5px] font-medium text-neutral-900">{basicDetails.latLong}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">அயனாம்சம்:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.ayanamsa}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">ஜென்ம லக்னம்:</span>
                 <span className="font-bold text-red-800">{basicDetails.lagna}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">சூரிய உதயம்:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.sunrise}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">திதி:</span>
                 <span className="font-medium text-neutral-900">{basicDetails.thithi}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">யோகம் / கரணம்:</span>
                 <span className="font-medium text-neutral-900">
                   {panchangam ? `${panchangam.nithyaYoga} / ${panchangam.karana}` : 'சித்த யோகம் / பவ கரணம்'}
                 </span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">நடப்பு வயது:</span>
                 <span className="font-medium text-neutral-900">{footerInfo.nadappuVayadu.replace('நடப்பு வயது: ', '')}</span>
               </div>
-              <div className="flex justify-between py-1 px-2.5 hover:bg-[#F9F3DE]">
+              <div className="flex justify-between py-0.5 px-2 hover:bg-[#F9F3DE]">
                 <span className="font-semibold text-neutral-800">தசா இருப்பு:</span>
                 <span className="font-medium text-neutral-900">{footerInfo.janmaDasaIruppu.replace('ஜென்ம கால தசா இருப்பு: ', '')}</span>
               </div>
@@ -151,7 +151,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
         </div>
 
         {/* Section 2: Split Tables (Left: Planetary Degrees, Right: Dasa-Bhukti Timelines) */}
-        <div className="my-2.5">
+        <div className="my-1.5">
           <PlanetaryTable
             planetaryDegrees={planetaryDegrees}
             dasaTimelines={dasaTimelines}
@@ -159,12 +159,12 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
         </div>
 
         {/* Section 3: Two 4x4 CSS Grids for Rasi and Navamsa with merged 2x2 centers & outer bindus */}
-        <div className="my-2.5 border border-neutral-900 bg-[#FFFDF7] p-2 shadow-xs">
-          <div className="bg-[#EDE3C8] text-center font-bold py-1 border-b border-neutral-900 text-[11px] text-neutral-950 font-tamil mb-1.5">
+        <div className="my-1.5 border border-neutral-900 bg-[#FFFDF7] p-2 shadow-xs">
+          <div className="bg-[#EDE3C8] text-center font-bold py-0.5 border-b border-neutral-900 text-[10.5px] text-neutral-950 font-tamil mb-1.5">
             இராசி & நவாம்ச கட்டங்கள் (Chakras)
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center justify-items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 items-center justify-items-center">
             {/* Rasi Chart with Ashtakavarga numbers positioned outside the outer border */}
             <div className="w-full flex flex-col items-center">
               <SouthIndianChart
@@ -188,7 +188,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
         </div>
 
         {/* Footer Summary */}
-        <div className="mt-2.5 border border-neutral-900 bg-[#FAF1DA] p-2 text-[10px] space-y-1">
+        <div className="mt-1.5 border border-neutral-900 bg-[#FAF1DA] p-1.5 text-[9.5px]">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 font-medium text-neutral-900">
             <div>✦ {footerInfo.janmaDasaIruppu}</div>
             <div>✦ {footerInfo.nadappuVayadu}</div>
@@ -218,8 +218,8 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
               </div>
               <div className="grid grid-cols-1 gap-2 pt-1">
                 {specialPredictions.map((pred, pIdx) => {
-                  const isPositive = pred.includes('காதல் திருமணம்') || pred.includes('சிறப்பான');
-                  const isCaution = pred.includes('கடன்') || pred.includes('நோய்') || pred.includes('ஏமாற்றம்') || pred.includes('கவனம்') || pred.includes('தாமதம்');
+                  const isPositive = pred.includes('காதல் திருமணம்') || pred.includes('சிறப்பான') || pred.includes('சொந்தத் தொழில்') || pred.includes('யோகம்');
+                  const isCaution = pred.includes('கடன்') || pred.includes('நோய்') || pred.includes('ஏமாற்றம்') || pred.includes('கவனம்') || pred.includes('தாமதம்') || pred.includes('எச்சரிக்கை');
                   
                   return (
                     <div
@@ -328,6 +328,11 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
 
         </div>
       )}
+
+      {/* D.S. Astro System Comprehensive Rules & Predictions Dashboard */}
+      <div className="w-full max-w-[820px] mt-6 no-print">
+        <DSPredictionsDashboard data={data} />
+      </div>
 
     </div>
   );

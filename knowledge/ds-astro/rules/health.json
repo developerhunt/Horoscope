@@ -1,0 +1,42 @@
+[
+  {
+    "ruleId": "DS-HLT-001",
+    "category": "health",
+    "title": "6-ஆம் அதிபதி மற்றும் நோய்கள் (6th Lord Disease Mapping)",
+    "description": "Sun: Head, hair fall, right eye, spine. Moon: Mental stress, left eye, cold, allergies. Mars: Blood, bone marrow, surgery, teeth. Mercury: Skin, ENT, shoulder nerves. Jupiter: Obesity, diabetes, liver, brain. Venus: Uterus, kidneys, hormonal. Saturn: Leg pain, chronic/mobility. Rahu/Ketu: Tumors, psychiatric, poisoning.",
+    "source": { "book": "D.S.Astro System", "page": 53, "section": "6-ஆம் அதிபதி யார்? அவரால் ஏற்படும் நோய்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-HLT-002",
+    "category": "health",
+    "title": "நோய் எப்போது குணமாகும்? (Disease Recovery Timing)",
+    "description": "Disease persists in Dasa where Dasa Lord's dispositor connects with 6th lord and Saturn. In upcoming Dasa where this contact ceases, complete cure is attained.",
+    "source": { "book": "D.S.Astro System", "page": 52, "section": "நோய் எப்போது குணமாகும்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-HLT-003",
+    "category": "health",
+    "title": "சிறுநீரக கல் நோய் (Kidney Stones Indication)",
+    "description": "Venus + Moon + Saturn mutual connection produces kidney stones, urinary calculi, and renal discomfort.",
+    "source": { "book": "D.S.Astro System", "page": 54, "section": "சிறுநீரக கற்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-HLT-004",
+    "category": "health",
+    "title": "பக்கவாதம் மற்றும் நரம்பு பிரச்சனை (Paralysis / Nerve Disorders)",
+    "description": "Mercury + Ketu connection with Saturn aspect leads to facial paralysis, hemiplegia, or central nerve afflictions.",
+    "source": { "book": "D.S.Astro System", "page": 54, "section": "பக்கவாதம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-HLT-005",
+    "category": "health",
+    "title": "விபத்து மற்றும் ஆயுள் கண்டம் (Accidents & Life Danger)",
+    "description": "Afflicted 8th lord / Lagna lord connecting with Mars + Rahu indicates fire or vehicle accidents. Moon + Venus + Rahu indicates poisoning or suicidal ideation.",
+    "source": { "book": "D.S.Astro System", "page": 90, "section": "அகால மரணம், தர்மரணம்" },
+    "status": "IMPLEMENTED"
+  }
+]

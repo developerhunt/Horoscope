@@ -1,0 +1,34 @@
+[
+  {
+    "ruleId": "DS-SIB-001",
+    "category": "siblings",
+    "title": "சகோதரர்களின் எண்ணிக்கை மற்றும் பல புள்ளிகள் (Sibling Count & Strength Points)",
+    "description": "Evaluate Mars Sthana Balam points (Exalted=6, Moolatrikona=5, Own=4, Friendly=3, Neutral=2, Enemy=1, Deb=0). Add 3rd/11th lord points and subtract Rahu/Ketu/debilitated afflictions.",
+    "source": { "book": "D.S.Astro System", "page": 71, "section": "சகோதரர்களின் எண்ணிக்கை அறிதல்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-SIB-002",
+    "category": "siblings",
+    "title": "இளைய சகோதரருக்கு கண்டம் (Younger Sibling Danger)",
+    "description": "3rd lord + Mars connected to Rahu-Ketu midpoint or in trine with Rahu/Ketu indicates health vulnerability for younger sibling.",
+    "source": { "book": "D.S.Astro System", "page": 68, "section": "சகோதரனுக்கு கண்டம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-SIB-003",
+    "category": "siblings",
+    "title": "மூத்த சகோதரர் இல்லை / கேது 11-ல் அமர்தல் (No Elder Sibling)",
+    "description": "Ketu in 11th house (connected with Saturn/Mandi) indicates having no elder brother.",
+    "source": { "book": "D.S.Astro System", "page": 75, "section": "உடன் பிறந்தவர்கள் ஆணா? பெண்ணா?" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-SIB-004",
+    "category": "siblings",
+    "title": "தாய்மாமன் ஸ்தானம் (Maternal Uncle - 5th House)",
+    "description": "In D.S.Astro System, 5th house and Mercury govern maternal uncle (தாய்மாமன்). Strength of 5th house determines relationship and benefits from maternal uncles.",
+    "source": { "book": "D.S.Astro System", "page": 74, "section": "தாய்மாமன் ஸ்தானம்" },
+    "status": "IMPLEMENTED"
+  }
+]

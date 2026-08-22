@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PlanetaryDegree, DasaTimeline } from '../types';
-import { Sparkles, Calendar, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronRight } from 'lucide-react';
 
 interface PlanetaryTableProps {
   planetaryDegrees: PlanetaryDegree[];
@@ -18,22 +18,22 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
   const currentViewingDasa = dasaTimelines.find(d => d.dasaLord === selectedDasaLord) || activeDasa;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10.5px] leading-tight text-neutral-900">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] leading-tight text-neutral-900 w-full">
       
       {/* Left Side: Planetary Degrees Table (Planet, Degree, Star, Pada) */}
       <div className="flex flex-col border border-neutral-900 bg-[#FFFDF7] shadow-xs">
-        <div className="bg-[#EDE3C8] text-center font-bold py-1 px-2 border-b border-neutral-900 text-[11px] text-amber-950 font-tamil flex items-center justify-center gap-1">
+        <div className="bg-[#EDE3C8] text-center font-bold py-1 px-2 border-b border-neutral-900 text-[10.5px] text-amber-950 font-tamil flex items-center justify-center gap-1">
           <span>கிரக நிலை & பாகை அட்டவணை (Planetary Degrees)</span>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="bg-[#F5EDD5] border-b border-neutral-800 text-[10px] font-bold text-neutral-900">
-                <th className="py-1 px-1.5 border-r border-neutral-400">கிரகம் (Planet)</th>
-                <th className="py-1 px-1.5 border-r border-neutral-400 text-center">பாகை (Degree)</th>
-                <th className="py-1 px-1.5 border-r border-neutral-400">நட்சத்திரம் (Star)</th>
-                <th className="py-1 px-1.5 text-center">பாதம்</th>
+              <tr className="bg-[#F5EDD5] border-b border-neutral-800 text-[9.5px] font-bold text-neutral-900">
+                <th className="py-0.5 px-1.5 border-r border-neutral-400">கிரகம் (Planet)</th>
+                <th className="py-0.5 px-1.5 border-r border-neutral-400 text-center">பாகை (Degree)</th>
+                <th className="py-0.5 px-1.5 border-r border-neutral-400">நட்சத்திரம் (Star)</th>
+                <th className="py-0.5 px-1.5 text-center">பாதம்</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-300">
@@ -53,18 +53,18 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
                     <td className="py-0.5 px-1.5 border-r border-neutral-300 font-medium flex items-center justify-between">
                       <span>{item.planet}</span>
                       {item.isRetrograde && (
-                        <span className="text-[8.5px] text-indigo-800 bg-indigo-100 px-1 rounded font-bold">
+                        <span className="text-[8px] text-indigo-800 bg-indigo-100 px-1 rounded font-bold">
                           (வ)
                         </span>
                       )}
                     </td>
-                    <td className="py-0.5 px-1.5 border-r border-neutral-300 font-mono text-[9.5px] text-center">
+                    <td className="py-0.5 px-1.5 border-r border-neutral-300 font-mono text-[9px] text-center">
                       {item.degree}
                     </td>
-                    <td className="py-0.5 px-1.5 border-r border-neutral-300">
+                    <td className="py-0.5 px-1.5 border-r border-neutral-300 text-[9.5px]">
                       {item.star}
                     </td>
-                    <td className="py-0.5 px-1.5 text-center font-bold text-neutral-800">
+                    <td className="py-0.5 px-1.5 text-center font-bold text-neutral-800 text-[9.5px]">
                       {item.pada}
                     </td>
                   </tr>
@@ -77,13 +77,13 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
 
       {/* Right Side: Dasa-Bhukti Timelines with View Mode Toggle */}
       <div className="flex flex-col border border-neutral-900 bg-[#FFFDF7] shadow-xs">
-        <div className="bg-[#EDE3C8] py-1 px-2 border-b border-neutral-900 text-[11px] text-amber-950 font-tamil flex items-center justify-between">
+        <div className="bg-[#EDE3C8] py-1 px-2 border-b border-neutral-900 text-[10.5px] text-amber-950 font-tamil flex items-center justify-between">
           <span className="font-bold">விம்சோத்தரி தசா-புக்தி அட்டவணை</span>
           <div className="flex items-center gap-1 no-print">
             <button
               type="button"
               onClick={() => setViewMode('dasas')}
-              className={`px-1.5 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-all ${
+              className={`px-1.5 py-0.2 text-[8.5px] font-bold rounded cursor-pointer transition-all ${
                 viewMode === 'dasas'
                   ? 'bg-amber-900 text-amber-100 shadow-xs'
                   : 'bg-amber-200/80 text-amber-900 hover:bg-amber-300'
@@ -97,7 +97,7 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
                 if (activeDasa) setSelectedDasaLord(activeDasa.dasaLord);
                 setViewMode('bhuktis');
               }}
-              className={`px-1.5 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-all flex items-center gap-0.5 ${
+              className={`px-1.5 py-0.2 text-[8.5px] font-bold rounded cursor-pointer transition-all flex items-center gap-0.5 ${
                 viewMode === 'bhuktis'
                   ? 'bg-red-700 text-white shadow-xs'
                   : 'bg-amber-200/80 text-amber-900 hover:bg-amber-300'
@@ -112,13 +112,13 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
         {/* View Mode 1: 9 Dasas Overview */}
         {viewMode === 'dasas' && (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-[10px]">
+            <table className="w-full border-collapse text-left text-[9.5px]">
               <thead>
                 <tr className="bg-[#F5EDD5] border-b border-neutral-800 font-bold text-neutral-900">
-                  <th className="py-1 px-1.5 border-r border-neutral-400">திசை (Dasa)</th>
-                  <th className="py-1 px-1.5 border-r border-neutral-400 text-center">தொடக்கம்</th>
-                  <th className="py-1 px-1.5 border-r border-neutral-400 text-center">முடிவு</th>
-                  <th className="py-1 px-1.5 text-center">கால அளவு</th>
+                  <th className="py-0.5 px-1.5 border-r border-neutral-400">திசை (Dasa)</th>
+                  <th className="py-0.5 px-1.5 border-r border-neutral-400 text-center">தொடக்கம்</th>
+                  <th className="py-0.5 px-1.5 border-r border-neutral-400 text-center">முடிவு</th>
+                  <th className="py-0.5 px-1.5 text-center">கால அளவு</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-300">
@@ -147,25 +147,25 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
                             {dasa.dasaLord} திசை
                           </span>
                           {isCurrent && (
-                            <span className="text-[8px] bg-red-600 text-white px-1 py-0.2 rounded font-bold ml-1 shadow-xs">
+                            <span className="text-[7.5px] bg-red-600 text-white px-1 py-0.2 rounded font-bold ml-1 shadow-xs">
                               நடப்பு
                             </span>
                           )}
                         </div>
                         {isCurrent && dasa.activeBhukti && (
-                          <div className="text-[8.5px] text-red-700 font-semibold mt-0.5 flex items-center gap-0.5">
-                            <Sparkles className="w-2.5 h-2.5 inline text-red-600" />
+                          <div className="text-[8px] text-red-700 font-semibold mt-0.2 flex items-center gap-0.5">
+                            <Sparkles className="w-2 h-2 inline text-red-600" />
                             <span>{dasa.activeBhukti}</span>
                           </div>
                         )}
                       </td>
-                      <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[9px]">
+                      <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[8.5px]">
                         {dasa.startDate}
                       </td>
-                      <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[9px]">
+                      <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[8.5px]">
                         {dasa.endDate}
                       </td>
-                      <td className="py-0.5 px-1.5 text-center text-[9.5px]">
+                      <td className="py-0.5 px-1.5 text-center text-[9px]">
                         {dasa.duration}
                       </td>
                     </tr>
@@ -180,12 +180,12 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
         {viewMode === 'bhuktis' && currentViewingDasa && (
           <div className="flex flex-col">
             {/* Bhukti selector header */}
-            <div className="bg-[#F8EFE0] px-2 py-1 border-b border-neutral-400 flex items-center justify-between text-[10px]">
+            <div className="bg-[#F8EFE0] px-2 py-0.5 border-b border-neutral-400 flex items-center justify-between text-[9.5px]">
               <div className="flex items-center gap-1 font-bold text-amber-950">
-                <span>{currentViewingDasa.dasaLord} திசையின் 9 புக்திகள்:</span>
+                <span>{currentViewingDasa.dasaLord} திசையின் புக்திகள்:</span>
                 {currentViewingDasa.isCurrent && (
-                  <span className="text-[8px] bg-red-600 text-white px-1 py-0.2 rounded font-bold">
-                    நடப்பு திசை
+                  <span className="text-[7.5px] bg-red-600 text-white px-1 py-0.2 rounded font-bold">
+                    நடப்பு
                   </span>
                 )}
               </div>
@@ -194,7 +194,7 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
                   value={currentViewingDasa.dasaLord}
                   onChange={(e) => setSelectedDasaLord(e.target.value)}
                   aria-label="Select Dasa"
-                  className="bg-white border border-neutral-400 rounded px-1 py-0.5 text-[9px] font-bold text-neutral-800"
+                  className="bg-white border border-neutral-400 rounded px-1 py-0.2 text-[8.5px] font-bold text-neutral-800"
                 >
                   {dasaTimelines.map((d, dIdx) => (
                     <option key={dIdx} value={d.dasaLord}>
@@ -206,13 +206,13 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-[10px]">
+              <table className="w-full border-collapse text-left text-[9.5px]">
                 <thead>
                   <tr className="bg-[#F5EDD5] border-b border-neutral-800 font-bold text-neutral-900">
-                    <th className="py-1 px-1.5 border-r border-neutral-400">புக்தி (Bhukti)</th>
-                    <th className="py-1 px-1.5 border-r border-neutral-400 text-center">தொடக்கம்</th>
-                    <th className="py-1 px-1.5 border-r border-neutral-400 text-center">முடிவு</th>
-                    <th className="py-1 px-1.5 text-center">கால அளவு</th>
+                    <th className="py-0.5 px-1.5 border-r border-neutral-400">புக்தி (Bhukti)</th>
+                    <th className="py-0.5 px-1.5 border-r border-neutral-400 text-center">தொடக்கம்</th>
+                    <th className="py-0.5 px-1.5 border-r border-neutral-400 text-center">முடிவு</th>
+                    <th className="py-0.5 px-1.5 text-center">கால அளவு</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-300">
@@ -236,19 +236,19 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
                                 {bhukti.bhuktiLord} புக்தி
                               </span>
                               {isCurrentBhukti && (
-                                <span className="text-[8px] bg-red-600 text-white px-1 py-0.2 rounded font-bold ml-1 shadow-xs animate-pulse">
+                                <span className="text-[7.5px] bg-red-600 text-white px-1 py-0.2 rounded font-bold ml-1 shadow-xs animate-pulse">
                                   நடப்பு
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[9px]">
+                          <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[8.5px]">
                             {bhukti.startDate}
                           </td>
-                          <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[9px]">
+                          <td className="py-0.5 px-1.5 border-r border-neutral-300 text-center font-mono text-[8.5px]">
                             {bhukti.endDate}
                           </td>
-                          <td className="py-0.5 px-1.5 text-center text-[9.5px]">
+                          <td className="py-0.5 px-1.5 text-center text-[9px]">
                             {bhukti.duration}
                           </td>
                         </tr>
@@ -270,10 +270,10 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
               <button
                 type="button"
                 onClick={() => setViewMode('dasas')}
-                className="text-[9px] text-amber-900 font-bold hover:underline cursor-pointer flex items-center justify-end gap-0.5 ml-auto"
+                className="text-[8.5px] text-amber-900 font-bold hover:underline cursor-pointer flex items-center justify-end gap-0.5 ml-auto"
               >
                 <span>முழு திசை அட்டவணைக்குத் திரும்பு</span>
-                <ChevronRight className="w-3 h-3" />
+                <ChevronRight className="w-2.5 h-2.5" />
               </button>
             </div>
           </div>

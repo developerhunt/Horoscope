@@ -1,0 +1,18 @@
+[
+  {
+    "ruleId": "DS-TRV-001",
+    "category": "travel",
+    "title": "பிரயாணம் மற்றும் இடமாற்ற தூரம் (Travel Distance Indication)",
+    "description": "Lagna Lord in 3rd = short travels/neighbouring town; in 6th = inter-state; in 8th = short international; in 12th = overseas trans-continental journeys.",
+    "source": { "book": "D.S.Astro System", "page": 50, "section": "வெளிநாட்டு வேலை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-TRV-002",
+    "category": "travel",
+    "title": "வரன் மற்றும் பயண திசை அறிதல் (Direction of Alliance & Journey)",
+    "description": "Rasi directions: East (Rishabham, Dhanusu), South (Mithunam, Makaram), West (Katakam, Kumbam), North (Mesham, Simham, Kanni, Meenam). Direction indicated by Lagna/7th lord.",
+    "source": { "book": "D.S.Astro System", "page": 13, "section": "வரன் அமையும் இடத்தை அறிய உதவும்" },
+    "status": "IMPLEMENTED"
+  }
+]

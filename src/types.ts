@@ -97,6 +97,33 @@ export interface DSSystemAnalysis {
   dusthanaSummary: string[];
 }
 
+export interface DSPredictionRuleMatch {
+  ruleId: string;
+  title: string;
+  sourcePage: number;
+  section: string;
+}
+
+export interface DSPredictionTiming {
+  dasa: string;
+  bhukti: string;
+  startDate?: string;
+  endDate?: string;
+  window?: string;
+}
+
+export interface DSPredictionItem {
+  category: string;
+  title: string;
+  status: 'strong_indication' | 'moderate_indication' | 'favorable' | 'caution';
+  summary: string;
+  signals: string[];
+  obstructions: string[];
+  timing: DSPredictionTiming;
+  matchedRules: DSPredictionRuleMatch[];
+  reasoning: string;
+}
+
 export interface PanchangamDetails {
   thithi: string;
   paksham: string;
@@ -123,4 +150,5 @@ export interface HoroscopeData {
   dsSystem?: DSSystemAnalysis;
   panchangam?: PanchangamDetails;
   specialPredictions?: string[];
+  dsPredictions?: Record<string, DSPredictionItem>;
 }

@@ -1,0 +1,28 @@
+{
+  "sthanaBalamPoints": {
+    "EXALTED": 6,
+    "MOOLATRIKONA": 5,
+    "OWN_HOUSE": 4,
+    "FRIENDLY": 3,
+    "NEUTRAL": 2,
+    "ENEMY": 1,
+    "DEBILITATED": 0
+  },
+  "rules": [
+    {
+      "id": "STR-001",
+      "name": "Sthana Balam determines polarity of outcomes",
+      "description": "If the dispositor of the Dasa Lord has high Sthana Balam (Exalted/Moolatrikona/Own), auspicious results materialize. If debilitated or heavily afflicted, adversity occurs."
+    },
+    {
+      "id": "STR-002",
+      "name": "Retrograde Exception",
+      "description": "A retrograde planet reverses standard debilitation weakness and behaves as if moving backwards to connect with preceding planets."
+    },
+    {
+      "id": "STR-003",
+      "name": "Rahu-Ketu Strength Transmission",
+      "description": "Rahu and Ketu absorb and amplify the strength of their dispositor and star lord. If the dispositor is exalted, own house, or retrograde, Rahu/Ketu Dasa yields massive fortune."
+    }
+  ]
+}

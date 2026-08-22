@@ -1,0 +1,58 @@
+[
+  {
+    "ruleId": "DS-CAR-001",
+    "category": "career",
+    "title": "உத்தியோகம் vs சொந்த தொழில் (Employment vs Own Business)",
+    "description": "Lagna lord in hidden houses (3,6,8,12) while 6th lord is strong indicates salaried employment. 10th lord exalted or in own house leads to independent business entrepreneurship.",
+    "source": { "book": "D.S.Astro System", "page": 43, "section": "உத்தியோகம் அல்லது வேலை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CAR-002",
+    "category": "career",
+    "title": "மத்திய அரசு வேலை யோகம் (Central Government Employment)",
+    "description": "Mercury connected with Venus or Jupiter, along with Saturn aspecting Sun/Mars or placed in their constellations, grants Central Government job.",
+    "source": { "book": "D.S.Astro System", "page": 44, "section": "மத்திய அரசு வேலை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CAR-003",
+    "category": "career",
+    "title": "மாநில அரசு வேலை யோகம் (State Government Employment)",
+    "description": "Mercury + Sun + Mars + Saturn mutual link (e.g. Mars aspecting Sun/Mercury from Saturn's house/star) grants State Government job.",
+    "source": { "book": "D.S.Astro System", "page": 44, "section": "மாநில அரசு வேலை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CAR-004",
+    "category": "career",
+    "title": "தந்தை வழி தொழில் / குலத்தொழில் (Hereditary / Father's Profession)",
+    "description": "9th & 10th lords (Dharma-Karma) conjunct with Saturn aspect ensures following father's profession, trade, or government compassionate allotment.",
+    "source": { "book": "D.S.Astro System", "page": 46, "section": "தந்தை வழி தொழில் யாருக்கு?" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CAR-005",
+    "category": "career",
+    "title": "அடிக்கடி உத்தியோக மாற்றம் (Frequent Job Changes)",
+    "description": "If Dasa Lord's dispositor is weak or in 6/8 or 2/12 relationship with star lord, every Bhukti brings job transfers or career shifts.",
+    "source": { "book": "D.S.Astro System", "page": 45, "section": "அடிக்கடி உத்தியோக மாற்றம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CAR-006",
+    "category": "career",
+    "title": "வெளிநாட்டு வேலை மற்றும் குடியுரிமை (Foreign Job & Citizenship)",
+    "description": "Lagna lord in 3rd = outside town; 6th = outside state; 8th = neighboring country; 12th = distant overseas country. Rahu link = Islamic countries; Ketu link = Western/Christian countries. Exaltation in 8/12 = permanent citizenship.",
+    "source": { "book": "D.S.Astro System", "page": 49, "section": "வெளிநாட்டில் வேலை & நிரந்தர குடியுரிமை" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-CAR-007",
+    "category": "career",
+    "title": "நிரந்தர தொழில் - 30 முதல் 40 வருடங்கள் ஒரே தொழில் (Long-term Stable Career)",
+    "description": "Sun + Saturn strong connection linking 9th house (father) and 10th house (karma/profession) grants 30-40 years of continuous stable tenure in single career path.",
+    "source": { "book": "D.S.Astro System", "page": 47, "section": "நிரந்தர தொழில்" },
+    "status": "IMPLEMENTED"
+  }
+]

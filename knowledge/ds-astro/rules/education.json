@@ -1,0 +1,74 @@
+[
+  {
+    "ruleId": "DS-EDU-001",
+    "category": "education",
+    "title": "புதன் வித்யா காரகன் - அடிப்படை கல்வி நிர்ணயம் (Mercury Education Rule)",
+    "description": "In D.S.Astro System, Vidyakaraka Mercury alone decides learning ability regardless of natal Lagna. Even with malefic afflictions, education succeeds if Mercury is configured per rules.",
+    "source": { "book": "D.S.Astro System", "page": 17, "section": "கல்வி" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-002",
+    "category": "education",
+    "title": "சூரியன் + புதன் 15 பாகைக்குள் சேர்க்கை - புதாதித்ய யோகம்",
+    "description": "When Sun and Mercury are within 15° in any sign, Budhaditya Yoga forms, conferring sharp intelligence, academic excellence, and degrees.",
+    "source": { "book": "D.S.Astro System", "page": 18, "section": "கல்வி விதிகள் - 1" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-003",
+    "category": "education",
+    "title": "புதன் சூரியனை விட 15 பாகைக்கு மேல் விலகி வக்ரம் பெறுதல்",
+    "description": "If Mercury is ahead of Sun by >15°, Mercury must be retrograde (turning back toward Sun) to grant high educational accomplishments.",
+    "source": { "book": "D.S.Astro System", "page": 18, "section": "கல்வி விதிகள் - 2" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-004",
+    "category": "education",
+    "title": "புதன் சூரியனுக்குப் பின்னால் 15 பாகைக்கு மேல் இருத்தல்",
+    "description": "If Mercury is behind Sun by >15°, fast movement eventually brings them together, leading to academic success after initial difficulties.",
+    "source": { "book": "D.S.Astro System", "page": 18, "section": "கல்வி விதிகள் - 3" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-005",
+    "category": "education",
+    "title": "சூரியன் - புதன் வீடுகள் / நட்சத்திரங்கள் / திரிகோண தொடர்பு",
+    "description": "Dispositors or star lords of Sun and Mercury being in mutual contact, trine (1-5-9), or exchange ensures degree completion.",
+    "source": { "book": "D.S.Astro System", "page": 19, "section": "கல்வி விதிகள் - 4 to 8" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-006",
+    "category": "education",
+    "title": "MBBS / மருத்துவ கல்வி யோகம் (Medical Education)",
+    "description": "Mercury (Education) + Saturn (Disease) + Moon (Body/Mind) connected to 6th house (Virgo/Kanni) or in mutual trine grants admission to medical education (MBBS).",
+    "source": { "book": "D.S.Astro System", "page": 20, "section": "M.B.B.S. மருத்துவம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-007",
+    "category": "education",
+    "title": "மருத்துவ சிறப்பு பிரிவுகள் (Medical Specializations)",
+    "description": "Mars connection = Ortho/Surgery/Dental/Govt Doctor. Sun = Govt Chief/Dean/Eye/Head. Venus = Gynecology/IVF/Obstetrics. Jupiter = Pediatrics/Brain/Lipids. Rahu/Ketu = Virology/Ph.D Research/Anesthesia/Alternative Medicine.",
+    "source": { "book": "D.S.Astro System", "page": 20, "section": "M.B.B.S. மருத்துவம் - சிறப்பு பிரிவுகள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-008",
+    "category": "education",
+    "title": "விமானம் ஓட்டுதல் / Pilot படிப்பு (Aviation Education)",
+    "description": "Strong Mercury + Rahu connection in Air signs (Mithunam, Thulam, Kumbam) leads to Aviation / Commercial Pilot training.",
+    "source": { "book": "D.S.Astro System", "page": 21, "section": "Pilot படிப்பு" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-EDU-009",
+    "category": "education",
+    "title": "ஆசிரியர் / வங்கி / ஆடிட்டிங் கல்வி (Teaching, Banking, CA/Auditing)",
+    "description": "Strong Jupiter or Venus connected with Mercury produces educators, bankers, financial auditors, and Chartered Accountants.",
+    "source": { "book": "D.S.Astro System", "page": 21, "section": "ஆசிரியர், வங்கி, ஆடிட்டர்" },
+    "status": "IMPLEMENTED"
+  }
+]

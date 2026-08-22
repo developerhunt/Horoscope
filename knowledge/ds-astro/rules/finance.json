@@ -1,0 +1,34 @@
+[
+  {
+    "ruleId": "DS-FIN-001",
+    "category": "finance",
+    "title": "யார் கோடீஸ்வரன் - தீவிர பணவரவு யோகம் (Millionaire Wealth Yoga)",
+    "description": "2nd and 11th lords possessing high Sthana Balam (Exalted/Own), in mutual conjunction, trine (1-5-9), or aspect, indicates birth in wealthy family or becoming wealthy in their Dasa/Bhukti.",
+    "source": { "book": "D.S.Astro System", "page": 48, "section": "யார் கோடீஸ்வரன்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-FIN-002",
+    "category": "finance",
+    "title": "பணக்கஷ்டம் மற்றும் பொருளாதார நெருக்கடி (Financial Strain & Crunch)",
+    "description": "2nd and 11th lords debilitated or in 6, 8, 12 mutual relationship from Dasa Lagna leads to financial crises, debt accumulation, and loss of prestige.",
+    "source": { "book": "D.S.Astro System", "page": 47, "section": "பணக்கஷ்டம் பொருளாதார நெருக்கடி" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-FIN-003",
+    "category": "finance",
+    "title": "கடன் எப்போது தீரும்? (Debt Resolution Timing)",
+    "description": "Debt begins when Dasa Lord's dispositor connects with 6th lord and Ketu. In any Dasa where the dispositor is free from 6th lord and Ketu, the debts get cleared completely.",
+    "source": { "book": "D.S.Astro System", "page": 51, "section": "கடன் எப்போது தீரும்?" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-FIN-004",
+    "category": "finance",
+    "title": "8-ம் இடம் தரும் தீவிர அதிர்ஷ்டம் (Sudden Windfall / Lottery / Secret Wealth)",
+    "description": "8th house with high planetary strength confers unexpected wealth, lottery gains, stock market surges, unearned income, and treasure.",
+    "source": { "book": "D.S.Astro System", "page": 49, "section": "தீவிர அதிர்ஷ்டம் அல்லது அவமானம் விபத்து" },
+    "status": "IMPLEMENTED"
+  }
+]

@@ -1,0 +1,90 @@
+[
+  {
+    "ruleId": "DS-MAR-001",
+    "category": "marriage",
+    "title": "செவ்வாய் மங்களகாரகன் - திருமண சூத்திரம் (Mars Marriage Primary Ruler)",
+    "description": "In D.S.Astro System, Mars is the primary Mangalakaraka deciding marriage timing, delay, denial, love, or second marriage. Mars must be strong and free from Saturn, Ketu, Mandi afflictions.",
+    "source": { "book": "D.S.Astro System", "page": 22, "section": "திருமணம் எப்போது நடக்கும்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-002",
+    "category": "marriage",
+    "title": "திருமண தடை மற்றும் தாமத விதிகள் (Marriage Delay / Denial Rules)",
+    "description": "Mars aspected by Saturn delays marriage. If Ketu/Mandi precede Mars and Saturn aspects, marriage is denied. If Saturn precedes Mars and Ketu/Mandi follow, marriage happens past age 40.",
+    "source": { "book": "D.S.Astro System", "page": 22, "section": "திருமண தடை பெற காரணமான கிரகங்கள்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-003",
+    "category": "marriage",
+    "title": "தசாநாதனுடன் செவ்வாய் மற்றும் 12-ம் அதிபதி தொடர்பு (Dasa Marriage Confirmation)",
+    "description": "For marriage to happen in a Dasa, Dasa Lord must connect with Mars AND the 12th lord from Dasa Lord (signifying Ayana Sayana Bhoga / marital bliss), or with their dispositors/star lords.",
+    "source": { "book": "D.S.Astro System", "page": 23, "section": "திருமணம் எப்போது நடக்கும் என்பத பற்றிய சூத்திரம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-004",
+    "category": "marriage",
+    "title": "புத்தி காலங்களில் திருமணம் - திரிகோண மற்றும் இரட்டை 12-ம் அதிபதி விதி (Bhukti Timing)",
+    "description": "Bhukti Lord in trine (1-5-9) to Dasa Lord precipitates marriage early. A mutual link between 12th lord from Dasa Lord and 12th lord from Bhukti Lord guarantees marriage in that Bhukti.",
+    "source": { "book": "D.S.Astro System", "page": 24, "section": "எந்த புத்தி காலங்களில் திருமணம் நடக்கும்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-005",
+    "category": "marriage",
+    "title": "மாற்று மதத்தில் திருமணம் (Interfaith / Inter-religious Marriage)",
+    "description": "2nd or 7th lord connecting strongly with Rahu indicates alliance with Muslim / Islamic partner; with Ketu indicates alliance with Christian partner.",
+    "source": { "book": "D.S.Astro System", "page": 25, "section": "மாற்று மதத்தில் திருமணம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-006",
+    "category": "marriage",
+    "title": "சொந்தத்திலா? அந்நியத்திலா? (Relative vs Outsider Alliance)",
+    "description": "2nd/7th lord with Mars = relative; with Sun = paternal side; with Moon = maternal side; with Mercury = maternal uncle/cousin; with Venus = spouse kin; with Saturn = outsider from workplace; with Rahu = paternal grandfather side; with Ketu = maternal grandmother side.",
+    "source": { "book": "D.S.Astro System", "page": 29, "section": "திருமணம் சொந்தத்தினா? அந்நியத்தினா?" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-007",
+    "category": "marriage",
+    "title": "காதல் திருமணம் யோகம் (Love Marriage)",
+    "description": "2nd and 7th lords connecting with 5th or 11th lord along with Mercury (planet of romance) produces successful love marriage. If Ketu intervenes, romance is broken.",
+    "source": { "book": "D.S.Astro System", "page": 30, "section": "காதல் திருமணம் யாருக்கு அமையும்?" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-008",
+    "category": "marriage",
+    "title": "குடும்ப பிரிவினை / விவாகரத்து (Marital Separation / Divorce)",
+    "description": "2nd lord from natal Lagna or Dasa Lagna connecting with 6th & 8th lords along with Ketu leads to family disputes and divorce. If 2nd lord is exalted/own house, disputes exist without separation.",
+    "source": { "book": "D.S.Astro System", "page": 31, "section": "குடும்ப பிரிவினை விவாகரத்து" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-009",
+    "category": "marriage",
+    "title": "மறுமணம் / இரண்டாவது திருமணம் (Second Marriage / Remarriage)",
+    "description": "Mars trapped in Papakarthari between Saturn ahead and Ketu behind, but receiving Moon's aspect (Chandra-Mangala) indicates success in a second marriage, often with a partner having prior family/child.",
+    "source": { "book": "D.S.Astro System", "page": 33, "section": "மறுமணம் அல்லது இரண்டாவது திருமணம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-010",
+    "category": "marriage",
+    "title": "வீட்டோடு மாப்பிள்ளை யோகம் (Living with In-Laws / Matrilocal)",
+    "description": "11th lord (representing son-in-law/daughter-in-law) residing in 2nd or 4th house or connecting with 2nd/4th lord causes living permanently with in-laws.",
+    "source": { "book": "D.S.Astro System", "page": 56, "section": "வீட்டோடு மாப்பிள்ளை அமையும் யோகம்" },
+    "status": "IMPLEMENTED"
+  },
+  {
+    "ruleId": "DS-MAR-011",
+    "category": "marriage",
+    "title": "துணையின் குணநலன்கள் (Spouse Characteristics)",
+    "description": "7th lord & Venus with Sun/Mars/Jupiter = upright, honorable, intellectual, fiery temperament; with Moon/Mercury/Saturn = sensual, indecisive, varied interests; with Rahu/Ketu = unconventional, intense desires.",
+    "source": { "book": "D.S.Astro System", "page": 58, "section": "தனக்கு வரும் துணையின் குணநலன்கள்" },
+    "status": "IMPLEMENTED"
+  }
+]
