@@ -520,11 +520,12 @@ export function getNakshatraInfo(moonLon: number) {
 
   const padaSpan = nakshatraSpan / 4; // 3° 20'
   const fractionInNakshatra = normalized % nakshatraSpan;
-  const pada = Math.floor(fractionInNakshatra / padaSpan) + 1;
+  const pada = Math.min(4, Math.max(1, Math.floor(fractionInNakshatra / padaSpan) + 1));
 
   // Dasa lord by nakshatra (Vimshottari 9 lord cycle)
   const dasaLordIndex = nakshatraIndex % 9;
   const janmaDasaLordObj = DASA_LORDS_ORDER[dasaLordIndex];
+  const starLord = janmaDasaLordObj.name;
 
   // Remaining proportion of star
   const balanceProportion = (nakshatraSpan - fractionInNakshatra) / nakshatraSpan;
@@ -538,6 +539,7 @@ export function getNakshatraInfo(moonLon: number) {
     nakshatraIndex,
     nakshatraName,
     pada,
+    starLord,
     janmaDasaLordObj,
     dasaLordIndex,
     balanceYears,
@@ -1332,12 +1334,34 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   // 1. Calculate Astronomical Positions
   const { ayanamsa, planets } = calculatePlanetaryPositions(year, month, day, hour, minute, latNum, lonNum, tzOffsetMins);
 
-  // 2. Build Planetary Table (Degrees, Nakshatra, Pada, Retrograde, Combust)
+  // 2. Build Planetary Table (Degrees, Nakshatra, Pada, Star Lord, Retrograde, Combust)
   const planetaryDegrees: PlanetaryDegree[] = [];
   const evaluationList: PlanetPosition[] = [];
 
   const sunObj = planets.find(p => p.name === 'சூரியன்') || planets[0];
   const moonObj = planets.find(p => p.name === 'சந்திரன்') || planets[1];
+  const lagnaObj = planets.find(p => p.name === 'லக்னம்') || planets[planets.length - 1];
+
+  // First add Lagna to Graha Padasaram
+  const lagnaRawLon = normalizeAngle(lagnaObj.rawLon);
+  const lagnaSign = Math.floor(lagnaRawLon / 30) % 12;
+  const lagnaDegInSign = lagnaRawLon % 30;
+  const lagnaNakInfo = getNakshatraInfo(lagnaRawLon);
+
+  planetaryDegrees.push({
+    planet: 'லக்னம்',
+    degree: formatDegreeDMS(lagnaDegInSign),
+    star: lagnaNakInfo.nakshatraName,
+    nakshatra: lagnaNakInfo.nakshatraName,
+    pada: lagnaNakInfo.pada,
+    starLord: lagnaNakInfo.starLord,
+    star_lord: lagnaNakInfo.starLord,
+    rasi: RASI_NAMES_TAMIL[lagnaSign],
+    rasiIndex: lagnaSign,
+    isRetrograde: false,
+    isCombust: false,
+    rawLongitude: lagnaRawLon
+  });
 
   planets.forEach(p => {
     const rawLon = normalizeAngle(p.rawLon);
@@ -1364,7 +1388,12 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
         planet: p.name,
         degree: formatDegreeDMS(degInSign),
         star: nakInfo.nakshatraName,
+        nakshatra: nakInfo.nakshatraName,
         pada: nakInfo.pada,
+        starLord: nakInfo.starLord,
+        star_lord: nakInfo.starLord,
+        rasi: RASI_NAMES_TAMIL[sign],
+        rasiIndex: sign,
         isRetrograde: p.isRetrograde,
         isCombust,
         rawLongitude: rawLon
@@ -1378,8 +1407,6 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   const moonRasiName = RASI_NAMES_TAMIL[moonSign];
 
   // 4. Lagna Info
-  const lagnaObj = planets.find(p => p.name === 'லக்னம்') || planets[planets.length - 1];
-  const lagnaSign = Math.floor(lagnaObj.rawLon / 30) % 12;
   const lagnaRasiName = RASI_NAMES_TAMIL[lagnaSign];
 
   // 5. Ashtakavarga Bindus

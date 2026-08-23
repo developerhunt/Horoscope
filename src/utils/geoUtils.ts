@@ -11,13 +11,21 @@ export function formatDMSCoordinates(lat: number | string, lon: number | string)
   }
 
   const latAbs = Math.abs(latNum);
-  const latDeg = Math.floor(latAbs);
-  const latMin = Math.round((latAbs - latDeg) * 60);
+  let latDeg = Math.floor(latAbs);
+  let latMin = Math.round((latAbs - latDeg) * 60);
+  if (latMin >= 60) {
+    latDeg += 1;
+    latMin = 0;
+  }
   const latHem = latNum >= 0 ? 'N' : 'S';
 
   const lonAbs = Math.abs(lonNum);
-  const lonDeg = Math.floor(lonAbs);
-  const lonMin = Math.round((lonAbs - lonDeg) * 60);
+  let lonDeg = Math.floor(lonAbs);
+  let lonMin = Math.round((lonAbs - lonDeg) * 60);
+  if (lonMin >= 60) {
+    lonDeg += 1;
+    lonMin = 0;
+  }
   const lonHem = lonNum >= 0 ? 'E' : 'W';
 
   const latStr = `${String(latDeg).padStart(2, '0')}° ${String(latMin).padStart(2, '0')}' ${latHem}`;

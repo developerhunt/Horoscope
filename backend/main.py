@@ -142,11 +142,29 @@ class HoroscopeInput(BaseModel):
     lon: Optional[str] = Field(default="78.1198", description="Longitude in decimal degrees")
     timezone: Optional[str] = Field(default="Asia/Kolkata", description="Timezone name")
 
+class PlanetPosition(BaseModel):
+    name: str
+    sign: int
+    degree: float
+    rawLon: float
+    nakshatra: str
+    pada: int
+    star_lord: str
+    starLord: Optional[str] = None
+    rasi: Optional[str] = None
+    isRetrograde: bool = False
+    isCombust: bool = False
+
 class PlanetaryDegree(BaseModel):
     planet: str
     degree: str
     star: str
+    nakshatra: Optional[str] = None
     pada: int
+    star_lord: Optional[str] = None
+    starLord: Optional[str] = None
+    rasi: Optional[str] = None
+    rasi_index: Optional[int] = None
     isRetrograde: bool = False
     isCombust: bool = False
     rawLongitude: float
@@ -178,7 +196,7 @@ class CurrentDasaBhuktiInfo(BaseModel):
 
 class ZodiacBox(BaseModel):
     id: int
-    nameTamil: string = Field(default="") if False else str
+    nameTamil: str = ""
     englishName: str
     planets: List[str] = []
     ashtakavargaBindu: Optional[int] = None
@@ -358,10 +376,11 @@ def get_nakshatra_info(moon_lon: float):
 
     pada_span = star_span / 4.0  # 3° 20'
     fraction_in_star = norm % star_span
-    pada = int(fraction_in_star // pada_span) + 1
+    pada = min(4, max(1, int(fraction_in_star // pada_span) + 1))
 
     dasa_lord_idx = star_idx % 9
     dasa_lord_obj = DASA_LORDS_ORDER[dasa_lord_idx]
+    star_lord = dasa_lord_obj["name"]
 
     # Janma Dasa Balance calculation
     rem_proportion = (star_span - fraction_in_star) / star_span
@@ -374,7 +393,10 @@ def get_nakshatra_info(moon_lon: float):
     return {
         "starIndex": star_idx,
         "starName": star_name,
+        "nakshatra": star_name,
         "pada": pada,
+        "star_lord": star_lord,
+        "starLord": star_lord,
         "dasaLordIndex": dasa_lord_idx,
         "dasaLordObj": dasa_lord_obj,
         "balanceYears": b_years,
@@ -906,16 +928,39 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
             lat=lat_val, lon=lon_val, tz_name=payload.timezone or "Asia/Kolkata"
         )
 
-        # Step 2: Build Planetary Degree Table
+        # Step 2: Build Planetary Degree Table (Graha Padasaram)
         sun_p = next(p for p in raw_planets if p["name"] == "சூரியன்")
         moon_p = next(p for p in raw_planets if p["name"] == "சந்திரன்")
         lagna_p = next(p for p in raw_planets if p["name"] == "லக்னம்")
 
         planetary_degrees: List[PlanetaryDegree] = []
+
+        # 1. Add Lagna
+        lagna_raw_lon = lagna_p["rawLon"]
+        lagna_deg_in_sign = lagna_raw_lon % 30.0
+        lagna_sign_idx = int(lagna_raw_lon // 30) % 12
+        lagna_star_info = get_nakshatra_info(lagna_raw_lon)
+        planetary_degrees.append(PlanetaryDegree(
+            planet="லக்னம்",
+            degree=format_degree_dms(lagna_deg_in_sign),
+            star=lagna_star_info["starName"],
+            nakshatra=lagna_star_info["starName"],
+            pada=lagna_star_info["pada"],
+            star_lord=lagna_star_info["star_lord"],
+            starLord=lagna_star_info["star_lord"],
+            rasi=RASI_NAMES_TAMIL[lagna_sign_idx],
+            rasi_index=lagna_sign_idx,
+            isRetrograde=False,
+            isCombust=False,
+            rawLongitude=round(lagna_raw_lon, 4)
+        ))
+
+        # 2. Add 9 Planets
         for p in raw_planets:
             if p["name"] != "லக்னம்":
                 raw_lon = p["rawLon"]
                 deg_in_sign = raw_lon % 30.0
+                sign_idx = int(raw_lon // 30) % 12
                 star_info = get_nakshatra_info(raw_lon)
                 sun_dist = min(abs(raw_lon - sun_p["rawLon"]), 360.0 - abs(raw_lon - sun_p["rawLon"]))
                 is_combust = p["name"] in ["செவ்வாய்", "புதன்", "குரு", "சுக்கிரன்", "சனி"] and sun_dist <= 8.5
@@ -924,7 +969,12 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
                     planet=p["name"],
                     degree=format_degree_dms(deg_in_sign),
                     star=star_info["starName"],
+                    nakshatra=star_info["starName"],
                     pada=star_info["pada"],
+                    star_lord=star_info["star_lord"],
+                    starLord=star_info["star_lord"],
+                    rasi=RASI_NAMES_TAMIL[sign_idx],
+                    rasi_index=sign_idx,
                     isRetrograde=p["isRetrograde"],
                     isCombust=is_combust,
                     rawLongitude=round(raw_lon, 4)

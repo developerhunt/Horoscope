@@ -7,6 +7,64 @@ interface PlanetaryTableProps {
   dasaTimelines: DasaTimeline[];
 }
 
+const NAKSHATRA_STAR_LORDS: Record<string, string> = {
+  'அஸ்வினி': 'கேது', 'Ashwini': 'கேது',
+  'பரணி': 'சுக்கிரன்', 'Bharani': 'சுக்கிரன்',
+  'கார்த்திகை': 'சூரியன்', 'Krittika': 'சூரியன்',
+  'ரோகிணி': 'சந்திரன்', 'Rohini': 'சந்திரன்',
+  'மிருகசீரிஷம்': 'செவ்வாய்', 'Mrigashira': 'செவ்வாய்',
+  'திருவாதிரை': 'ராகு', 'Ardra': 'ராகு',
+  'புனர்பூசம்': 'குரு', 'Punarvasu': 'குரு',
+  'பூசம்': 'சனி', 'Pushya': 'சனி',
+  'ஆயில்யம்': 'புதன்', 'Ashlesha': 'புதன்',
+  'மகம்': 'கேது', 'Magha': 'கேது',
+  'பூரம்': 'சுக்கிரன்', 'Purva Phalguni': 'சுக்கிரன்',
+  'உத்திரம்': 'சூரியன்', 'Uttara Phalguni': 'சூரியன்',
+  'அஸ்தம்': 'சந்திரன்', 'Hasta': 'சந்திரன்',
+  'சித்திரை': 'செவ்வாய்', 'Chitra': 'செவ்வாய்',
+  'சுவாதி': 'ராகு', 'Swati': 'ராகு',
+  'விசாகம்': 'குரு', 'Vishakha': 'குரு',
+  'அனுஷம்': 'சனி', 'Anuradha': 'சனி',
+  'கேட்டை': 'புதன்', 'Jyeshtha': 'புதன்',
+  'மூலம்': 'கேது', 'Moola': 'கேது',
+  'பூராடம்': 'சுக்கிரன்', 'Purva Ashadha': 'சுக்கிரன்',
+  'உத்திராடம்': 'சூரியன்', 'Uttara Ashadha': 'சூரியன்',
+  'திருவோணம்': 'சந்திரன்', 'Shravana': 'சந்திரன்',
+  'அவிட்டம்': 'செவ்வாய்', 'Dhanishta': 'செவ்வாய்',
+  'சதயம்': 'ராகு', 'Shatabhisha': 'ராகு',
+  'பூரட்டாதி': 'குரு', 'Purva Bhadrapada': 'குரு',
+  'உத்திரட்டாதி': 'சனி', 'Uttara Bhadrapada': 'சனி',
+  'ரேவதி': 'புதன்', 'Revati': 'புதன்'
+};
+
+const RASI_NAMES_TAMIL = [
+  'மேஷம்', 'ரிஷபம்', 'மிதுனம்', 'கடகம்',
+  'சிம்மம்', 'கன்னி', 'துலாம்', 'விருச்சிகம்',
+  'தனுசு', 'மகரம்', 'கும்பம்', 'மீனம்'
+];
+
+function getRasiName(item: PlanetaryDegree): string {
+  if (item.rasi) return item.rasi;
+  if (item.rasiIndex !== undefined && item.rasiIndex >= 0 && item.rasiIndex < 12) {
+    return RASI_NAMES_TAMIL[item.rasiIndex];
+  }
+  if (item.rawLongitude !== undefined) {
+    const s = Math.floor((((item.rawLongitude % 360) + 360) % 360) / 30) % 12;
+    return RASI_NAMES_TAMIL[s];
+  }
+  return '-';
+}
+
+function getStarLord(item: PlanetaryDegree): string {
+  if (item.starLord) return item.starLord;
+  if (item.star_lord) return item.star_lord;
+  const starName = (item.nakshatra || item.star || '').trim();
+  for (const [key, lord] of Object.entries(NAKSHATRA_STAR_LORDS)) {
+    if (starName.includes(key)) return lord;
+  }
+  return '-';
+}
+
 export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
   planetaryDegrees,
   dasaTimelines
@@ -20,52 +78,75 @@ export const PlanetaryTable: React.FC<PlanetaryTableProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] leading-tight text-neutral-900 w-full">
       
-      {/* Left Side: Planetary Degrees Table (Planet, Degree, Star, Pada) */}
+      {/* Left Side: Planetary Degrees & Graha Padasaram Table */}
       <div className="flex flex-col border border-neutral-900 bg-[#FFFDF7] shadow-xs">
         <div className="bg-[#EDE3C8] text-center font-bold py-1 px-2 border-b border-neutral-900 text-[10.5px] text-amber-950 font-tamil flex items-center justify-center gap-1">
-          <span>கிரக நிலை & பாகை அட்டவணை (Planetary Degrees)</span>
+          <span>கிரக நிலை & பாதசாரம் (Graha Padasaram)</span>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="bg-[#F5EDD5] border-b border-neutral-800 text-[9.5px] font-bold text-neutral-900">
-                <th className="py-0.5 px-1.5 border-r border-neutral-400">கிரகம் (Planet)</th>
-                <th className="py-0.5 px-1.5 border-r border-neutral-400 text-center">பாகை (Degree)</th>
-                <th className="py-0.5 px-1.5 border-r border-neutral-400">நட்சத்திரம் (Star)</th>
-                <th className="py-0.5 px-1.5 text-center">பாதம்</th>
+              <tr className="bg-[#F5EDD5] border-b border-neutral-800 text-[9px] font-bold text-neutral-900">
+                <th className="py-0.5 px-1 border-r border-neutral-400">கிரகம்</th>
+                <th className="py-0.5 px-1 border-r border-neutral-400 text-center">ராசி</th>
+                <th className="py-0.5 px-1 border-r border-neutral-400 text-center">பாகை</th>
+                <th className="py-0.5 px-1 border-r border-neutral-400">நட்சத்திரம்</th>
+                <th className="py-0.5 px-1 border-r border-neutral-400 text-center">பாதம்</th>
+                <th className="py-0.5 px-1 text-center">நட்ச. நாதன்</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-300">
               {planetaryDegrees.map((item, idx) => {
-                const isLagna = item.planet.includes('லக்னம்');
+                const isLagna = item.planet.includes('லக்னம்') || item.planet.includes('லக்');
+                const rasiName = getRasiName(item);
+                const starName = item.nakshatra || item.star || '-';
+                const starLord = getStarLord(item);
+
                 return (
                   <tr
                     key={idx}
                     className={`hover:bg-[#F7F0DC] transition-colors ${
                       isLagna
-                        ? 'bg-amber-100/70 font-bold'
+                        ? 'bg-amber-100/80 font-bold'
                         : idx % 2 === 0
                         ? 'bg-white/60'
                         : 'bg-transparent'
                     }`}
                   >
-                    <td className="py-0.5 px-1.5 border-r border-neutral-300 font-medium flex items-center justify-between">
-                      <span>{item.planet}</span>
-                      {item.isRetrograde && (
-                        <span className="text-[8px] text-indigo-800 bg-indigo-100 px-1 rounded font-bold">
-                          (வ)
+                    <td className="py-0.5 px-1 border-r border-neutral-300 font-medium whitespace-nowrap">
+                      <div className="flex items-center justify-between gap-0.5">
+                        <span className={isLagna ? 'text-amber-950 font-bold' : 'text-neutral-900'}>
+                          {item.planet}
                         </span>
-                      )}
+                        <div className="flex items-center gap-0.5">
+                          {item.isRetrograde && (
+                            <span className="text-[7.5px] text-indigo-900 bg-indigo-100 px-0.5 rounded font-bold" title="வக்ரம்">
+                              (வ)
+                            </span>
+                          )}
+                          {item.isCombust && (
+                            <span className="text-[7.5px] text-red-800 bg-red-100 px-0.5 rounded font-bold" title="அஸ்தமனம்">
+                              (அ)
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="py-0.5 px-1.5 border-r border-neutral-300 font-mono text-[9px] text-center">
+                    <td className="py-0.5 px-1 border-r border-neutral-300 text-[9px] text-center font-medium text-amber-950 whitespace-nowrap">
+                      {rasiName}
+                    </td>
+                    <td className="py-0.5 px-1 border-r border-neutral-300 font-mono text-[8.5px] text-center whitespace-nowrap">
                       {item.degree}
                     </td>
-                    <td className="py-0.5 px-1.5 border-r border-neutral-300 text-[9.5px]">
-                      {item.star}
+                    <td className="py-0.5 px-1 border-r border-neutral-300 text-[9px] whitespace-nowrap">
+                      {starName}
                     </td>
-                    <td className="py-0.5 px-1.5 text-center font-bold text-neutral-800 text-[9.5px]">
+                    <td className="py-0.5 px-1 border-r border-neutral-300 text-center font-bold text-neutral-800 text-[9px]">
                       {item.pada}
+                    </td>
+                    <td className="py-0.5 px-1 text-center font-semibold text-neutral-900 text-[9px] whitespace-nowrap">
+                      {starLord}
                     </td>
                   </tr>
                 );

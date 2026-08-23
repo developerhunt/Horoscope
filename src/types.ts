@@ -32,7 +32,12 @@ export interface PlanetaryDegree {
   planet: string;
   degree: string;
   star: string;
+  nakshatra?: string;
   pada: string | number;
+  starLord?: string;
+  star_lord?: string;
+  rasi?: string;
+  rasiIndex?: number;
   isRetrograde?: boolean;
   isCombust?: boolean;
   rawLongitude?: number;
