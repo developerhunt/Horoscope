@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
+  html, body {
+    min-height: 100%;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     font-family: 'Noto Sans Tamil', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 }
@@ -34,6 +38,17 @@
   background: #475569;
 }
 
+/* Page break utilities for multi-page PDF & Print */
+.page-break {
+  page-break-before: always;
+  break-before: page;
+}
+
+.avoid-break {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
 /* Print Specific Rules */
 @media print {
   body {
@@ -51,5 +66,10 @@
     width: 100% !important;
     border: none !important;
   }
+  .page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
 }
+
 

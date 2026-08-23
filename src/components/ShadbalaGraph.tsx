@@ -4,11 +4,18 @@ import { Activity, Award, ShieldCheck, Zap } from 'lucide-react';
 
 interface ShadbalaGraphProps {
   data?: ShadbalaData;
+  shadbala?: ShadbalaData;
   id?: string;
 }
 
-export const ShadbalaGraph: React.FC<ShadbalaGraphProps> = ({ data, id = 'shadbala-section' }) => {
-  if (!data || !data.planets || data.planets.length === 0) {
+export const ShadbalaGraph: React.FC<ShadbalaGraphProps> = ({
+  data,
+  shadbala,
+  id = 'shadbala-section'
+}) => {
+  const activeData = data || shadbala;
+
+  if (!activeData || !activeData.planets || activeData.planets.length === 0) {
     return null;
   }
 
@@ -24,7 +31,7 @@ export const ShadbalaGraph: React.FC<ShadbalaGraphProps> = ({ data, id = 'shadba
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1 text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-xs border border-emerald-300">
-            <Award className="w-3.5 h-3.5" /> முதன்மை பலம்: {data.strongestPlanet}
+            <Award className="w-3.5 h-3.5" /> முதன்மை பலம்: {activeData.strongestPlanet}
           </span>
           <span className="text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-xs border border-neutral-300">
             1 ரூபம் = 60 விரூபங்கள்
@@ -53,7 +60,7 @@ export const ShadbalaGraph: React.FC<ShadbalaGraphProps> = ({ data, id = 'shadba
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-900/10">
-              {data.planets.map((p, idx) => {
+              {activeData.planets.map((p, idx) => {
                 const isSufficient = p.totalRupas >= p.requiredRupas;
                 const ratioPct = Math.min(180, Math.round((p.totalRupas / p.requiredRupas) * 100));
 
@@ -113,7 +120,7 @@ export const ShadbalaGraph: React.FC<ShadbalaGraphProps> = ({ data, id = 'shadba
 
         {/* Visual Strength Bar Comparison */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-amber-900/20">
-          {data.planets.map((p, idx) => {
+          {activeData.planets.map((p, idx) => {
             const pct = Math.min(100, (p.totalRupas / (p.requiredRupas * 1.5)) * 100);
             const isSufficient = p.totalRupas >= p.requiredRupas;
             return (

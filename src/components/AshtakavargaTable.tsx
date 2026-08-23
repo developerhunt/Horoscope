@@ -4,6 +4,7 @@ import { Grid, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface AshtakavargaTableProps {
   data?: AshtakavargaData;
+  ashtakavarga?: AshtakavargaData;
   id?: string;
 }
 
@@ -15,11 +16,13 @@ const RASI_TAMIL_SHORT = [
 
 export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
   data,
+  ashtakavarga,
   id = 'ashtakavarga-section'
 }) => {
   const [activeTab, setActiveTab] = useState<'matrix' | 'summary'>('matrix');
+  const activeData = data || ashtakavarga;
 
-  if (!data || !data.sarvashtakavarga) {
+  if (!activeData || !activeData.sarvashtakavarga) {
     return null;
   }
 
@@ -59,14 +62,14 @@ export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 text-xs">
         <div className="bg-amber-50/60 border border-amber-900/20 p-2 rounded-xs flex items-center justify-between">
           <span className="text-neutral-700">மொத்த பரல்கள்:</span>
-          <span className="font-mono font-bold text-amber-950 text-sm">{data.totalBindus}</span>
+          <span className="font-mono font-bold text-amber-950 text-sm">{activeData.totalBindus}</span>
         </div>
         <div className="bg-emerald-50/60 border border-emerald-300 p-2 rounded-xs flex items-center justify-between">
           <span className="text-emerald-900 flex items-center gap-1">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-700" /> அதிக பலம் (உயர் ராசி):
           </span>
           <span className="font-bold text-emerald-950">
-            {data.highestRasi?.signTamil} ({data.highestRasi?.bindus} பரல்)
+            {activeData.highestRasi?.signTamil} ({activeData.highestRasi?.bindus} பரல்)
           </span>
         </div>
         <div className="bg-red-50/60 border border-red-300 p-2 rounded-xs flex items-center justify-between">
@@ -74,7 +77,7 @@ export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
             <TrendingDown className="w-3.5 h-3.5 text-red-700" /> குறைந்த பரல் ராசி:
           </span>
           <span className="font-bold text-red-950">
-            {data.lowestRasi?.signTamil} ({data.lowestRasi?.bindus} பரல்)
+            {activeData.lowestRasi?.signTamil} ({activeData.lowestRasi?.bindus} பரல்)
           </span>
         </div>
       </div>
@@ -95,8 +98,8 @@ export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-900/10">
-              {data.planetScores &&
-                data.planetScores.map((row, rIdx) => (
+              {activeData.planetScores &&
+                activeData.planetScores.map((row, rIdx) => (
                   <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-amber-50/30'}>
                     <td className="p-1.5 text-left font-bold text-neutral-900 border-r border-amber-900/15">
                       {row.planet}
@@ -124,7 +127,7 @@ export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
                 <td className="p-1.5 text-left border-r border-amber-900/20 font-serif">
                   சர்வாஷ்டகவர்க்கம் (SAV)
                 </td>
-                {data.sarvashtakavarga.map((b, sIdx) => (
+                {activeData.sarvashtakavarga.map((b, sIdx) => (
                   <td
                     key={sIdx}
                     className={`p-1.5 border-r border-amber-900/20 font-mono text-sm ${
@@ -139,7 +142,7 @@ export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
                   </td>
                 ))}
                 <td className="p-1.5 font-extrabold font-mono text-sm bg-amber-300/60">
-                  {data.totalBindus}
+                  {activeData.totalBindus}
                 </td>
               </tr>
             </tbody>
@@ -148,7 +151,7 @@ export const AshtakavargaTable: React.FC<AshtakavargaTableProps> = ({
       ) : (
         /* SAV 12-Sign Grid Cards */
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-          {data.sarvashtakavarga.map((b, sIdx) => {
+          {activeData.sarvashtakavarga.map((b, sIdx) => {
             const isHigh = b >= 30;
             const isLow = b <= 24;
             return (

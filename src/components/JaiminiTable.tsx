@@ -4,11 +4,18 @@ import { Compass, Sparkles } from 'lucide-react';
 
 interface JaiminiTableProps {
   karakas?: JaiminiKaraka[];
+  jaiminiKarakas?: JaiminiKaraka[];
   id?: string;
 }
 
-export const JaiminiTable: React.FC<JaiminiTableProps> = ({ karakas, id = 'jaimini-section' }) => {
-  if (!karakas || karakas.length === 0) {
+export const JaiminiTable: React.FC<JaiminiTableProps> = ({
+  karakas,
+  jaiminiKarakas,
+  id = 'jaimini-section'
+}) => {
+  const activeKarakas = karakas || jaiminiKarakas;
+
+  if (!activeKarakas || activeKarakas.length === 0) {
     return null;
   }
 
@@ -39,7 +46,7 @@ export const JaiminiTable: React.FC<JaiminiTableProps> = ({ karakas, id = 'jaimi
             </tr>
           </thead>
           <tbody className="divide-y divide-amber-900/10">
-            {karakas.map((k, idx) => (
+            {activeKarakas.map((k, idx) => (
               <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-amber-50/30'}>
                 <td className="p-1.5 text-center font-mono font-bold text-amber-900 bg-amber-50 border-r border-amber-900/15">
                   {k.karakaCode}
