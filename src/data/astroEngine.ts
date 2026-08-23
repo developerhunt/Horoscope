@@ -11,7 +11,14 @@ import {
   NadiAnalysis,
   DSSystemAnalysis,
   PanchangamDetails,
-  DSPredictionItem
+  DSPredictionItem,
+  DivisionalChartInfo,
+  AshtakavargaData,
+  AshtakavargaPlanetScore,
+  ShadbalaData,
+  ShadbalaPlanet,
+  JaiminiKaraka,
+  UpagrahaInfo
 } from '../types';
 import { formatDMSCoordinates } from '../utils/geoUtils';
 
@@ -493,22 +500,605 @@ function calculatePlanetaryPositions(
 
 // Navamsam D9 Sign Calculation
 export function getNavamsamSign(rawLon: number): number {
-  const normalized = normalizeAngle(rawLon);
-  const rasiSign = Math.floor(normalized / 30);
-  const navamsamIndexInSign = Math.floor((normalized % 30) / (30 / 9)); // 0 to 8
+  return calculateDivisionalSign(rawLon, 9);
+}
 
-  // Fire signs (0, 4, 8) start at Mesham (0)
-  // Earth signs (1, 5, 9) start at Makaram (9)
-  // Air signs (2, 6, 10) start at Thulam (6)
-  // Water signs (3, 7, 11) start at Katakam (3)
-  const modality = rasiSign % 4;
-  let startSign = 0;
-  if (modality === 0) startSign = 0;
-  else if (modality === 1) startSign = 9;
-  else if (modality === 2) startSign = 6;
-  else if (modality === 3) startSign = 3;
+// ==========================================
+// 1B. DIVISIONAL CHARTS (D1 - D60) ENGINE
+// ==========================================
 
-  return (startSign + navamsamIndexInSign) % 12;
+export const DIVISIONAL_METADATA: Record<string, { division: number; nameTamil: string; nameEnglish: string; significanceTamil: string; significanceEnglish: string }> = {
+  D1: { division: 1, nameTamil: 'இராசி', nameEnglish: 'Rasi', significanceTamil: 'முழுமையான வாழ்க்கை, உடல் நலம், பொது அமைப்பு', significanceEnglish: 'General well-being, physical body, overall life' },
+  D2: { division: 2, nameTamil: 'ஹோரை', nameEnglish: 'Hora', significanceTamil: 'செல்வ வளம், குடும்ப நலம், பொருளாதார நிலை', significanceEnglish: 'Wealth, finances, prosperity and family wealth' },
+  D3: { division: 3, nameTamil: 'திரேக்காணம்', nameEnglish: 'Drekkana', significanceTamil: 'உடன்பிறப்புகள், தைரியம், ஆற்றல், முயற்சிகள்', significanceEnglish: 'Siblings, courage, motivation, third-house matters' },
+  D4: { division: 4, nameTamil: 'சதுர்த்தாம்சம்', nameEnglish: 'Chaturthamsa', significanceTamil: 'நிலம், வீடு, அசையா சொத்துக்கள், அதிர்ஷ்டம்', significanceEnglish: 'Fortune, real estate, property, fixed assets' },
+  D6: { division: 6, nameTamil: 'ஷஷ்டாம்சம்', nameEnglish: 'Shasthamsa', significanceTamil: 'நோய்கள், கடன்கள், எதிரிகள், வழக்குகள்', significanceEnglish: 'Health issues, debts, obstacles, litigation' },
+  D7: { division: 7, nameTamil: 'சப்தாம்சம்', nameEnglish: 'Saptamsa', significanceTamil: 'புத்திர பாக்கியம், வாரிசுகள், குழந்தைகள் யோகம்', significanceEnglish: 'Children, progeny, descendants and legacy' },
+  D8: { division: 8, nameTamil: 'அஷ்டாம்சம்', nameEnglish: 'Ashtamsa', significanceTamil: 'ஆயுள், எதிர்பாராத விபத்துக்கள், ரகசியங்கள்', significanceEnglish: 'Longevity, sudden transformations, hidden energies' },
+  D9: { division: 9, nameTamil: 'நவாம்சம்', nameEnglish: 'Navamsa', significanceTamil: 'திருமணம், வாழ்க்கைத் துணை, தர்மம், அதிர்ஷ்ட பலம்', significanceEnglish: 'Marriage, spouse, dharma, planetary inner strength' },
+  D10: { division: 10, nameTamil: 'தசாம்சம்', nameEnglish: 'Dasamsa', significanceTamil: 'தொழில், வேலை வாய்ப்பு, அரசு மரியாதை, புகழ்', significanceEnglish: 'Career, profession, social status, fame and success' },
+  D11: { division: 11, nameTamil: 'ருத்ராம்சம்', nameEnglish: 'Rudramsa', significanceTamil: 'வெற்றிகள், எதிர்பாராத லாபங்கள், மரண யோகம்', significanceEnglish: 'Gains, sudden windfalls, destructive battles' },
+  D12: { division: 12, nameTamil: 'துவாதசாம்சம்', nameEnglish: 'Dwadasamsa', significanceTamil: 'பெற்றோர்கள், தாய்-தந்தை வழி பூர்வீக ஆசிகள்', significanceEnglish: 'Parents, ancestral karma, lineage blessings' },
+  D16: { division: 16, nameTamil: 'ஷோடசாம்சம்', nameEnglish: 'Shodashamsa', significanceTamil: 'வாகன சுகம், சொகுசு வாழ்க்கை, பயணங்கள்', significanceEnglish: 'Vehicles, conveyances, comforts and luxuries' },
+  D20: { division: 20, nameTamil: 'விம்சாம்சம்', nameEnglish: 'Vimsamsa', significanceTamil: 'ஆன்மீக சக்தி, உபாசனை, தியானம், பக்தி', significanceEnglish: 'Spiritual inclinations, worship, occult devotion' },
+  D24: { division: 24, nameTamil: 'சதுர்விம்சாம்சம்', nameEnglish: 'Chaturvimshamsa', significanceTamil: 'உயர்கல்வி, ஞானம், ஆராய்ச்சி அறிவு, மேதமை', significanceEnglish: 'Higher education, learning, scholarship and intellect' },
+  D27: { division: 27, nameTamil: 'சப்தவிம்சாம்சம்', nameEnglish: 'Bhamsa', significanceTamil: 'உடல் பலம், பலவீனங்கள், உள் வலிமை', significanceEnglish: 'Strengths, vulnerabilities, endurance and stamina' },
+  D30: { division: 30, nameTamil: 'திரிம்சாம்சம்', nameEnglish: 'Trimsamsa', significanceTamil: 'அரிஷ்டங்கள், தோஷங்கள், தீய பலன்கள், பரிகாரங்கள்', significanceEnglish: 'Misfortunes, evils, arishta and dosha analysis' },
+  D60: { division: 60, nameTamil: 'சஷ்டியாம்சம்', nameEnglish: 'Shashtiamsa', significanceTamil: 'பூர்வ புண்ணியம், நுணுக்கமான கர்ம பலன்கள்', significanceEnglish: 'Past-life karma, ultimate fine-tuning of destiny' }
+};
+
+export function calculateDivisionalSign(rawLon: number, division: number): number {
+  const norm = normalizeAngle(rawLon);
+  const rasiSign = Math.floor(norm / 30) % 12;
+  const degInSign = norm % 30.0;
+
+  if (division === 1) return rasiSign;
+
+  if (division === 2) {
+    const isOdd = rasiSign % 2 === 0;
+    return isOdd ? (degInSign < 15.0 ? 4 : 3) : (degInSign < 15.0 ? 3 : 4);
+  }
+
+  if (division === 3) {
+    const part = Math.floor(degInSign / 10.0);
+    return (rasiSign + part * 4) % 12;
+  }
+
+  if (division === 4) {
+    const part = Math.floor(degInSign / 7.5);
+    return (rasiSign + part * 3) % 12;
+  }
+
+  if (division === 6) {
+    const part = Math.floor(degInSign / 5.0);
+    const start = rasiSign % 2 === 0 ? 0 : 6;
+    return (start + part) % 12;
+  }
+
+  if (division === 7) {
+    const part = Math.floor(degInSign / (30.0 / 7.0));
+    const start = rasiSign % 2 === 0 ? rasiSign : (rasiSign + 6) % 12;
+    return (start + part) % 12;
+  }
+
+  if (division === 8) {
+    const part = Math.floor(degInSign / 3.75);
+    const modality = rasiSign % 3;
+    const start = modality === 0 ? 0 : modality === 1 ? 8 : 4;
+    return (start + part) % 12;
+  }
+
+  if (division === 9) {
+    const part = Math.floor(degInSign / (30.0 / 9.0));
+    const element = rasiSign % 4;
+    const start = element === 0 ? 0 : element === 1 ? 9 : element === 2 ? 6 : 3;
+    return (start + part) % 12;
+  }
+
+  if (division === 10) {
+    const part = Math.floor(degInSign / 3.0);
+    const start = rasiSign % 2 === 0 ? rasiSign : (rasiSign + 8) % 12;
+    return (start + part) % 12;
+  }
+
+  if (division === 11) {
+    const part = Math.floor(degInSign / (30.0 / 11.0));
+    const isOdd = rasiSign % 2 === 0;
+    const start = isOdd ? (11 - rasiSign + 12) % 12 : (12 - rasiSign + 12) % 12;
+    return (start + part) % 12;
+  }
+
+  if (division === 12) {
+    const part = Math.floor(degInSign / 2.5);
+    return (rasiSign + part) % 12;
+  }
+
+  if (division === 16) {
+    const part = Math.floor(degInSign / 1.875);
+    const modality = rasiSign % 3;
+    const start = modality === 0 ? 0 : modality === 1 ? 4 : 8;
+    return (start + part) % 12;
+  }
+
+  if (division === 20) {
+    const part = Math.floor(degInSign / 1.5);
+    const modality = rasiSign % 3;
+    const start = modality === 0 ? 0 : modality === 1 ? 8 : 4;
+    return (start + part) % 12;
+  }
+
+  if (division === 24) {
+    const part = Math.floor(degInSign / 1.25);
+    const start = rasiSign % 2 === 0 ? 4 : 3;
+    return (start + part) % 12;
+  }
+
+  if (division === 27) {
+    const part = Math.floor(degInSign / (30.0 / 27.0));
+    const element = rasiSign % 4;
+    const start = element === 0 ? 0 : element === 1 ? 3 : element === 2 ? 6 : 9;
+    return (start + part) % 12;
+  }
+
+  if (division === 30) {
+    const isOdd = rasiSign % 2 === 0;
+    if (isOdd) {
+      if (degInSign < 5.0) return 0;
+      if (degInSign < 10.0) return 10;
+      if (degInSign < 18.0) return 8;
+      if (degInSign < 25.0) return 2;
+      return 6;
+    } else {
+      if (degInSign < 5.0) return 1;
+      if (degInSign < 12.0) return 5;
+      if (degInSign < 20.0) return 11;
+      if (degInSign < 25.0) return 9;
+      return 7;
+    }
+  }
+
+  if (division === 60) {
+    const part = Math.floor(degInSign / 0.5);
+    return (rasiSign + part) % 12;
+  }
+
+  return rasiSign;
+}
+
+export function generateAllDivisionalCharts(
+  planets: { name: string; abbr: string; rawLon: number; isRetrograde?: boolean }[],
+  lagnaLon: number
+): Record<string, DivisionalChartInfo> {
+  const result: Record<string, DivisionalChartInfo> = {};
+  const chartCodes = Object.keys(DIVISIONAL_METADATA);
+
+  for (const code of chartCodes) {
+    const meta = DIVISIONAL_METADATA[code];
+    const div = meta.division;
+    const lagnaDivSign = calculateDivisionalSign(lagnaLon, div);
+
+    const boxes: ZodiacBox[] = [];
+    for (let s = 0; s < 12; s++) {
+      const planetsInSign: string[] = [];
+      if (lagnaDivSign === s) {
+        planetsInSign.push('லக்');
+      }
+
+      planets.forEach(p => {
+        if (p.name !== 'லக்னம்') {
+          const pDivSign = calculateDivisionalSign(p.rawLon, div);
+          if (pDivSign === s) {
+            const retroTag = p.isRetrograde ? '(வ)' : '';
+            planetsInSign.push(`${p.abbr}${retroTag}`);
+          }
+        }
+      });
+
+      boxes.push({
+        id: s,
+        nameTamil: RASI_NAMES_TAMIL[s],
+        englishName: RASI_NAMES_ENGLISH[s],
+        planets: planetsInSign,
+        isLagna: lagnaDivSign === s
+      });
+    }
+
+    result[code] = {
+      code: code as any,
+      nameTamil: meta.nameTamil,
+      nameEnglish: meta.nameEnglish,
+      division: div,
+      significanceTamil: meta.significanceTamil,
+      significanceEnglish: meta.significanceEnglish,
+      boxes
+    };
+  }
+
+  return result;
+}
+
+// ==========================================
+// 1C. JAIMINI 7-KARAKA ENGINE
+// ==========================================
+
+const JAIMINI_META_LIST: { code: any; nameTamil: string; nameEnglish: string; significanceTamil: string; significanceEnglish: string }[] = [
+  { code: 'AK', nameTamil: 'ஆத்மகாரகன்', nameEnglish: 'Atmakaraka', significanceTamil: 'ஆன்மா, சுய ஆளுமை, விதி, ஆன்மீக பலம்', significanceEnglish: 'Soul, self, destiny, core spiritual journey' },
+  { code: 'AmK', nameTamil: 'அமாத்யகாரகன்', nameEnglish: 'Amatyakaraka', significanceTamil: 'தொழில், சமூக அந்தஸ்து, புத்தி, நிர்வாக திறன்', significanceEnglish: 'Career, intellect, ministerial power, intellect' },
+  { code: 'BK', nameTamil: 'ப்ராத்ருகாரகன்', nameEnglish: 'Bhratrikaraka', significanceTamil: 'உடன்பிறப்புகள், குருநாதர், தைரியம், வழிகாட்டுதல்', significanceEnglish: 'Siblings, father, guru, courage, advisors' },
+  { code: 'MK', nameTamil: 'மாத்ருகாரகன்', nameEnglish: 'Matrikaraka', significanceTamil: 'தாய், சுக வாழ்வு, வீடு, மன அமைதி, பாதுகாப்பு', significanceEnglish: 'Mother, domestic peace, comfort, emotional stability' },
+  { code: 'PK', nameTamil: 'புத்ரகாரகன்', nameEnglish: 'Putrakaraka', significanceTamil: 'குழந்தைகள், கல்வி, படைப்பாற்றல், பூர்வ புண்ணியம்', significanceEnglish: 'Progeny, intelligence, learning, past merit' },
+  { code: 'GK', nameTamil: 'ஞானிகாரகன்', nameEnglish: 'Gnatikaraka', significanceTamil: 'தடைகள், நோய்கள், எதிரிகள், உறவு மோதல்கள்', significanceEnglish: 'Obstacles, enemies, disease, competitive tests' },
+  { code: 'DK', nameTamil: 'தாரகாரகன்', nameEnglish: 'Darakaraka', significanceTamil: 'வாழ்க்கைத் துணை, கூட்டுத் தொழில், தாம்பத்யம்', significanceEnglish: 'Spouse, partnership, marital harmony, public relations' }
+];
+
+const PHYSICAL_SEVEN = ['சூரியன்', 'சந்திரன்', 'செவ்வாய்', 'புதன்', 'குரு', 'சுக்கிரன்', 'சனி'];
+const PLANET_ENG_MAP: Record<string, string> = {
+  சூரியன்: 'Sun',
+  சந்திரன்: 'Moon',
+  செவ்வாய்: 'Mars',
+  புதன்: 'Mercury',
+  குரு: 'Jupiter',
+  சுக்கிரன்: 'Venus',
+  சனி: 'Saturn'
+};
+
+export function calculateJaiminiKarakas(
+  planets: { name: string; rawLon: number }[]
+): JaiminiKaraka[] {
+  const filtered = planets
+    .filter(p => PHYSICAL_SEVEN.includes(p.name))
+    .map(p => ({
+      name: p.name,
+      rawLon: p.rawLon,
+      degInSign: normalizeAngle(p.rawLon) % 30.0
+    }))
+    .sort((a, b) => b.degInSign - a.degInSign);
+
+  return filtered.slice(0, 7).map((p, idx) => {
+    const meta = JAIMINI_META_LIST[idx];
+    const signIdx = Math.floor(normalizeAngle(p.rawLon) / 30) % 12;
+    return {
+      karakaCode: meta.code,
+      karakaNameTamil: meta.nameTamil,
+      karakaNameEnglish: meta.nameEnglish,
+      significanceTamil: meta.significanceTamil,
+      significanceEnglish: meta.significanceEnglish,
+      planetTamil: p.name,
+      planetEnglish: PLANET_ENG_MAP[p.name] || p.name,
+      degreeInRasi: Number(p.degInSign.toFixed(4)),
+      degreeFormatted: formatDegreeDMS(p.degInSign),
+      signIndex: signIdx,
+      signTamil: RASI_NAMES_TAMIL[signIdx],
+      rawLongitude: Number(p.rawLon.toFixed(4))
+    };
+  });
+}
+
+// ==========================================
+// 1D. UPAGRAHAS (MANDI & GULIKA)
+// ==========================================
+
+export function calculateUpagrahas(
+  weekday: number,
+  birthHour: number,
+  sunriseHour: number = 6.08,
+  sunsetHour: number = 18.25,
+  lagnaLon: number = 0,
+  sunLon: number = 0
+): UpagrahaInfo[] {
+  const isDay = birthHour >= sunriseHour && birthHour <= sunsetHour;
+  const daySpan = isDay ? sunsetHour - sunriseHour : 24.0 - sunsetHour + sunriseHour;
+  const partDuration = daySpan / 8.0;
+
+  const daySaturnParts = [7, 6, 5, 4, 3, 2, 1];
+  const nightSaturnParts = [5, 4, 3, 2, 1, 7, 6];
+
+  const saturnPart = isDay ? daySaturnParts[weekday % 7] : nightSaturnParts[weekday % 7];
+  const gulikaHours = (saturnPart - 1) * partDuration;
+  const mandiHours = (saturnPart - 0.5) * partDuration;
+
+  const baseHour = isDay ? sunriseHour : sunsetHour;
+  const gulikaClock = (baseHour + gulikaHours) % 24.0;
+  const mandiClock = (baseHour + mandiHours) % 24.0;
+
+  const gulikaLon = normalizeAngle(lagnaLon + (gulikaClock - birthHour) * 15.0);
+  const mandiLon = normalizeAngle(lagnaLon + (mandiClock - birthHour) * 15.0);
+
+  const mandiNak = getNakshatraInfo(mandiLon);
+  const gulikaNak = getNakshatraInfo(gulikaLon);
+
+  const mandiSign = Math.floor(mandiLon / 30) % 12;
+  const gulikaSign = Math.floor(gulikaLon / 30) % 12;
+
+  return [
+    {
+      nameTamil: 'மாந்தி',
+      nameEnglish: 'Mandi',
+      rawLongitude: Number(mandiLon.toFixed(4)),
+      degreeFormatted: formatDegreeDMS(mandiLon % 30.0),
+      signIndex: mandiSign,
+      signTamil: RASI_NAMES_TAMIL[mandiSign],
+      nakshatra: mandiNak.nakshatraName,
+      pada: mandiNak.pada,
+      starLord: mandiNak.starLord,
+      significance: 'சனி உபகிரகம், விஷத்தன்மை, தோஷம், ஆயுள் மற்றும் மறைமுக தடைகள்'
+    },
+    {
+      nameTamil: 'குளிகன்',
+      nameEnglish: 'Gulika',
+      rawLongitude: Number(gulikaLon.toFixed(4)),
+      degreeFormatted: formatDegreeDMS(gulikaLon % 30.0),
+      signIndex: gulikaSign,
+      signTamil: RASI_NAMES_TAMIL[gulikaSign],
+      nakshatra: gulikaNak.nakshatraName,
+      pada: gulikaNak.pada,
+      starLord: gulikaNak.starLord,
+      significance: 'சனி மைந்தன், காரிய தாமதம், சுப காரிய விலக்கு, பூர்வ கர்ம வினை'
+    }
+  ];
+}
+
+// ==========================================
+// 1E. CLASSICAL ASHTAKAVARGA (BAV & SAV)
+// ==========================================
+
+const BAV_RULES: Record<string, Record<string, number[]>> = {
+  'சூரியன்': {
+    'சூரியன்': [1, 2, 4, 7, 8, 9, 10, 11],
+    'சந்திரன்': [3, 6, 10, 11],
+    'செவ்வாய்': [1, 2, 4, 7, 8, 9, 10, 11],
+    'புதன்': [3, 5, 6, 9, 10, 11, 12],
+    'குரு': [5, 6, 9, 11],
+    'சுக்கிரன்': [6, 7, 12],
+    'சனி': [1, 2, 4, 7, 8, 9, 10, 11],
+    'லக்னம்': [3, 4, 6, 10, 11, 12]
+  },
+  'சந்திரன்': {
+    'சூரியன்': [3, 6, 7, 8, 10, 11],
+    'சந்திரன்': [1, 3, 6, 7, 10, 11],
+    'செவ்வாய்': [2, 3, 5, 6, 9, 10, 11],
+    'புதன்': [1, 3, 4, 5, 7, 8, 10, 11],
+    'குரு': [1, 4, 7, 8, 10, 11, 12],
+    'சுக்கிரன்': [3, 4, 5, 7, 9, 10, 11],
+    'சனி': [3, 5, 6, 11],
+    'லக்னம்': [3, 6, 10, 11]
+  },
+  'செவ்வாய்': {
+    'சூரியன்': [3, 5, 6, 10, 11],
+    'சந்திரன்': [3, 6, 11],
+    'செவ்வாய்': [1, 2, 4, 7, 8, 10, 11],
+    'புதன்': [3, 5, 6, 11],
+    'குரு': [6, 10, 11, 12],
+    'சுக்கிரன்': [6, 8, 11, 12],
+    'சனி': [1, 4, 7, 8, 9, 10, 11],
+    'லக்னம்': [1, 3, 6, 10, 11]
+  },
+  'புதன்': {
+    'சூரியன்': [5, 6, 9, 11, 12],
+    'சந்திரன்': [2, 4, 6, 8, 10, 11],
+    'செவ்வாய்': [1, 2, 4, 7, 8, 9, 10, 11],
+    'புதன்': [1, 3, 5, 6, 9, 10, 11, 12],
+    'குரு': [6, 8, 11, 12],
+    'சுக்கிரன்': [1, 2, 3, 4, 5, 8, 9, 11],
+    'சனி': [1, 2, 4, 7, 8, 9, 10, 11],
+    'லக்னம்': [1, 2, 4, 6, 8, 10, 11]
+  },
+  'குரு': {
+    'சூரியன்': [1, 2, 3, 4, 7, 8, 9, 10, 11],
+    'சந்திரன்': [2, 5, 7, 9, 11],
+    'செவ்வாய்': [1, 2, 4, 7, 8, 10, 11],
+    'புதன்': [1, 2, 4, 5, 6, 9, 10, 11],
+    'குரு': [1, 2, 3, 4, 7, 8, 10, 11],
+    'சுக்கிரன்': [2, 5, 6, 9, 10, 11],
+    'சனி': [3, 5, 6, 12],
+    'லக்னம்': [1, 2, 4, 5, 6, 7, 9, 10, 11]
+  },
+  'சுக்கிரன்': {
+    'சூரியன்': [8, 11, 12],
+    'சந்திரன்': [1, 2, 3, 4, 5, 8, 9, 11, 12],
+    'செவ்வாய்': [3, 4, 6, 9, 11, 12],
+    'புதன்': [3, 5, 6, 9, 11],
+    'குரு': [5, 8, 9, 10, 11],
+    'சுக்கிரன்': [1, 2, 3, 4, 5, 8, 9, 10, 11],
+    'சனி': [3, 4, 5, 8, 9, 10, 11],
+    'லக்னம்': [1, 2, 3, 4, 5, 8, 9, 11]
+  },
+  'சனி': {
+    'சூரியன்': [1, 2, 4, 7, 8, 10, 11],
+    'சந்திரன்': [3, 6, 11],
+    'செவ்வாய்': [3, 5, 6, 10, 11, 12],
+    'புதன்': [6, 8, 9, 10, 11, 12],
+    'குரு': [5, 6, 11, 12],
+    'சுக்கிரன்': [6, 11, 12],
+    'சனி': [3, 5, 6, 11],
+    'லக்னம்': [1, 3, 4, 6, 10, 11]
+  }
+};
+
+export function calculateFullAshtakavarga(
+  planets: { name: string; rawLon: number }[],
+  lagnaSign: number
+): AshtakavargaData {
+  const planetSigns: Record<string, number> = { 'லக்னம்': lagnaSign };
+  planets.forEach(p => {
+    if (PHYSICAL_SEVEN.includes(p.name)) {
+      planetSigns[p.name] = Math.floor(normalizeAngle(p.rawLon) / 30) % 12;
+    }
+  });
+
+  const bhinna: Record<string, number[]> = {};
+  const sarvashtakavarga = new Array(12).fill(0);
+  const planetScores: AshtakavargaPlanetScore[] = [];
+
+  PHYSICAL_SEVEN.forEach(target => {
+    const rules = BAV_RULES[target] || {};
+    const bindus = new Array(12).fill(0);
+
+    Object.entries(rules).forEach(([contributor, houses]) => {
+      const refSign = planetSigns[contributor] ?? lagnaSign;
+      houses.forEach(h => {
+        const targetSign = (refSign + h - 1) % 12;
+        bindus[targetSign] += 1;
+      });
+    });
+
+    bhinna[target] = bindus;
+    const totalP = bindus.reduce((a, b) => a + b, 0);
+    planetScores.push({
+      planet: target,
+      planetEnglish: PLANET_ENG_MAP[target] || target,
+      bindus,
+      total: totalP
+    });
+
+    for (let s = 0; s < 12; s++) {
+      sarvashtakavarga[s] += bindus[s];
+    }
+  });
+
+  const totalBindus = sarvashtakavarga.reduce((a, b) => a + b, 0);
+  let maxBindu = -1;
+  let minBindu = 999;
+  let maxSign = 0;
+  let minSign = 0;
+
+  sarvashtakavarga.forEach((b, idx) => {
+    if (b > maxBindu) {
+      maxBindu = b;
+      maxSign = idx;
+    }
+    if (b < minBindu) {
+      minBindu = b;
+      minSign = idx;
+    }
+  });
+
+  return {
+    sarvashtakavarga,
+    bhinnaAshtakavarga: bhinna,
+    planetScores,
+    totalBindus,
+    highestRasi: { signIndex: maxSign, signTamil: RASI_NAMES_TAMIL[maxSign], bindus: maxBindu },
+    lowestRasi: { signIndex: minSign, signTamil: RASI_NAMES_TAMIL[minSign], bindus: minBindu }
+  };
+}
+
+// ==========================================
+// 1F. SHADBALA (PLANETARY STRENGTHS)
+// ==========================================
+
+const REQUIRED_RUPAS: Record<string, number> = {
+  'சூரியன்': 6.5,
+  'சந்திரன்': 6.0,
+  'செவ்வாய்': 5.0,
+  'புதன்': 7.0,
+  'குரு': 6.5,
+  'சுக்கிரன்': 5.5,
+  'சனி': 5.0
+};
+
+const NAISARGIKA_BALA: Record<string, number> = {
+  'சூரியன்': 60.00,
+  'சந்திரன்': 51.43,
+  'சுக்கிரன்': 42.86,
+  'குரு': 34.29,
+  'புதன்': 25.71,
+  'செவ்வாய்': 17.14,
+  'சனி': 8.57
+};
+
+const EXALTATION_DEG: Record<string, number> = {
+  'சூரியன்': 10.0,
+  'சந்திரன்': 33.0,
+  'செவ்வாய்': 298.0,
+  'புதன்': 165.0,
+  'குரு': 95.0,
+  'சுக்கிரன்': 357.0,
+  'சனி': 200.0
+};
+
+const DIG_BALA_OPTIMAL: Record<string, number> = {
+  'குரு': 1,
+  'புதன்': 1,
+  'சந்திரன்': 4,
+  'சுக்கிரன்': 4,
+  'சனி': 7,
+  'சூரியன்': 10,
+  'செவ்வாய்': 10
+};
+
+export function calculateShadbala(
+  planets: { name: string; rawLon: number; isRetrograde?: boolean }[],
+  lagnaSign: number,
+  isDayBirth: boolean = true
+): ShadbalaData {
+  const planetMap = new Map(planets.map(p => [p.name, p]));
+  const sunLon = planetMap.get('சூரியன்')?.rawLon ?? 0;
+  const moonLon = planetMap.get('சந்திரன்')?.rawLon ?? 0;
+
+  const elongation = normalizeAngle(moonLon - sunLon);
+  const pakshaFactor = elongation <= 180 ? elongation / 180 : (360 - elongation) / 180;
+
+  const results: ShadbalaPlanet[] = [];
+
+  PHYSICAL_SEVEN.forEach(name => {
+    const p = planetMap.get(name);
+    if (!p) return;
+
+    const rawLon = p.rawLon;
+    const signIdx = Math.floor(normalizeAngle(rawLon) / 30) % 12;
+    const houseFromLagna = ((signIdx - lagnaSign + 12) % 12) + 1;
+
+    // 1. Sthana Bala
+    const exalt = EXALTATION_DEG[name] ?? 0;
+    const angleDiff = Math.abs(normalizeAngle(rawLon - exalt));
+    const distFromDebility = 180.0 - Math.min(angleDiff, 360.0 - angleDiff);
+    const ucchaBala = (distFromDebility / 180.0) * 60.0;
+
+    let kendradiBala = 15.0;
+    if ([1, 4, 7, 10].includes(houseFromLagna)) kendradiBala = 60.0;
+    else if ([2, 5, 8, 11].includes(houseFromLagna)) kendradiBala = 30.0;
+
+    const sthanaBala = Number((ucchaBala + kendradiBala + 75.0 + ucchaBala * 0.5).toFixed(2));
+
+    // 2. Dig Bala
+    const optHouse = DIG_BALA_OPTIMAL[name] ?? 1;
+    let hDist = Math.abs(houseFromLagna - optHouse);
+    if (hDist > 6) hDist = 12 - hDist;
+    const digBala = Number((60.0 * (1.0 - hDist / 6.0)).toFixed(2));
+
+    // 3. Kaala Bala
+    const isDayPlanet = ['சூரியன்', 'குரு', 'சுக்கிரன்'].includes(name);
+    const dayNightBala = isDayBirth === isDayPlanet ? 50.0 : 25.0;
+    const pakshaBala = ['சந்திரன்', 'சுக்கிரன்', 'குரு'].includes(name) ? 60.0 * pakshaFactor : 60.0 * (1.0 - pakshaFactor);
+    const kaalaBala = Number((70.0 + dayNightBala + pakshaBala).toFixed(2));
+
+    // 4. Chesta Bala
+    let chestaBala = 35.0;
+    if (['சூரியன்', 'சந்திரன்'].includes(name)) chestaBala = 45.0;
+    else if (p.isRetrograde) chestaBala = 60.0;
+
+    // 5. Naisargika Bala
+    const naisargikaBala = NAISARGIKA_BALA[name] ?? 25.0;
+
+    // 6. Drik Bala
+    const drikBala = Number((15.0 + kendradiBala * 0.2).toFixed(2));
+
+    const totalVirupas = Number((sthanaBala + digBala + kaalaBala + chestaBala + naisargikaBala + drikBala).toFixed(2));
+    const totalRupas = Number((totalVirupas / 60.0).toFixed(2));
+    const reqRupas = REQUIRED_RUPAS[name] ?? 6.0;
+    const strengthRatio = Number((totalRupas / reqRupas).toFixed(2));
+    const percentage = Number((strengthRatio * 100.0).toFixed(1));
+
+    results.push({
+      planet: name,
+      planetEnglish: PLANET_ENG_MAP[name] || name,
+      sthanaBala,
+      digBala,
+      kaalaBala,
+      chestaBala,
+      naisargikaBala,
+      drikBala,
+      totalVirupas,
+      totalRupas,
+      requiredRupas: reqRupas,
+      strengthRatio,
+      percentage,
+      rank: 1,
+      isStrong: totalRupas >= reqRupas
+    });
+  });
+
+  results.sort((a, b) => b.totalRupas - a.totalRupas);
+  results.forEach((item, idx) => {
+    item.rank = idx + 1;
+  });
+
+  return {
+    planets: results,
+    strongestPlanet: results[0]?.planet ?? 'குரு',
+    weakestPlanet: results[results.length - 1]?.planet ?? 'சனி'
+  };
 }
 
 // Calculate Nakshatra, Pada and Janma Dasa Balance
@@ -1565,7 +2155,22 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     lagnaSign
   );
 
-  // 13. Footer and Basic Details
+  // 13. Advanced Master Calculations (Phase 4 & 5)
+  const divisionalCharts = generateAllDivisionalCharts(planets, lagnaObj.rawLon);
+  const jaiminiKarakas = calculateJaiminiKarakas(planets);
+  const upagrahas = calculateUpagrahas(
+    new Date(year, month - 1, day).getDay(),
+    hour + minute / 60.0,
+    6.08,
+    18.25,
+    lagnaObj.rawLon,
+    sunObj.rawLon
+  );
+  const ashtakavarga = calculateFullAshtakavarga(planets, lagnaSign);
+  const isDayBirth = (hour + minute / 60.0) >= 6.08 && (hour + minute / 60.0) <= 18.25;
+  const shadbala = calculateShadbala(planets, lagnaSign, isDayBirth);
+
+  // 14. Footer and Basic Details
   const now = new Date();
   const ageYears = Math.max(0, now.getFullYear() - year);
 
@@ -1606,7 +2211,12 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     dsSystem,
     panchangam,
     specialPredictions,
-    dsPredictions
+    dsPredictions,
+    divisionalCharts,
+    ashtakavarga,
+    shadbala,
+    jaiminiKarakas,
+    upagrahas
   };
 }
 
@@ -1662,27 +2272,66 @@ export function enrichBackendDataWithPredictions(backendData: any): HoroscopeDat
   const dasaInfo = backendData.currentDasaBhukti || backendData.dasaInfo || { dasaLord: 'குரு' };
 
   let lagnaRasiIndex = 0;
+  let lagnaLon = 0;
   if (typeof backendData.lagnaRasiIndex === 'number') {
     lagnaRasiIndex = backendData.lagnaRasiIndex % 12;
+    lagnaLon = lagnaRasiIndex * 30 + 15;
   } else if (backendData.basicDetails?.lagna) {
     const lagnaStr = backendData.basicDetails.lagna;
     const matchIdx = RASI_NAMES_TAMIL.findIndex(r => lagnaStr.includes(r));
     if (matchIdx !== -1) {
       lagnaRasiIndex = matchIdx;
+      lagnaLon = matchIdx * 30 + 15;
     }
   } else if (Array.isArray(backendData.rasiChart)) {
     const lagnaBox = backendData.rasiChart.find((box: any) => box.isLagna || box.planets?.includes('லக்னம்') || box.planets?.includes('லக்'));
     if (lagnaBox) {
       lagnaRasiIndex = lagnaBox.id % 12;
+      lagnaLon = lagnaRasiIndex * 30 + 15;
     }
   }
 
   const specialInsights = generateDSSystemPredictions(positions, dasaInfo, lagnaRasiIndex);
   const dsPredictions = backendData.dsPredictions || generateDSPredictionsMap(positions, dasaInfo, lagnaRasiIndex);
 
+  // Check if backend already has advanced calculations, otherwise calculate fallback
+  let divisionalCharts = backendData.divisionalCharts;
+  let ashtakavarga = backendData.ashtakavarga;
+  let shadbala = backendData.shadbala;
+  let jaiminiKarakas = backendData.jaiminiKarakas;
+  let upagrahas = backendData.upagrahas;
+
+  const planetInputList = positions.map(p => ({
+    name: p.name,
+    abbr: p.name.substring(0, 3),
+    rawLon: p.rawLon,
+    isRetrograde: p.isRetrograde
+  }));
+
+  if (!divisionalCharts && planetInputList.length > 0) {
+    divisionalCharts = generateAllDivisionalCharts(planetInputList, lagnaLon);
+  }
+  if (!ashtakavarga && planetInputList.length > 0) {
+    ashtakavarga = calculateFullAshtakavarga(planetInputList, lagnaRasiIndex);
+  }
+  if (!shadbala && planetInputList.length > 0) {
+    shadbala = calculateShadbala(planetInputList, lagnaRasiIndex, true);
+  }
+  if (!jaiminiKarakas && planetInputList.length > 0) {
+    jaiminiKarakas = calculateJaiminiKarakas(planetInputList);
+  }
+  if (!upagrahas) {
+    upagrahas = calculateUpagrahas(0, 12.0, 6.08, 18.25, lagnaLon, 0);
+  }
+
   return {
     ...backendData,
     specialPredictions: specialInsights,
-    dsPredictions
+    dsPredictions,
+    divisionalCharts,
+    ashtakavarga,
+    shadbala,
+    jaiminiKarakas,
+    upagrahas
   };
 }

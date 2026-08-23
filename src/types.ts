@@ -28,6 +28,84 @@ export interface BasicDetails {
   thithi: string;
 }
 
+export interface DivisionalChartInfo {
+  code: 'D1' | 'D2' | 'D3' | 'D4' | 'D6' | 'D7' | 'D8' | 'D9' | 'D10' | 'D11' | 'D12' | 'D16' | 'D20' | 'D24' | 'D27' | 'D30' | 'D60';
+  nameTamil: string;
+  nameEnglish: string;
+  division: number;
+  significanceTamil: string;
+  significanceEnglish: string;
+  boxes: ZodiacBox[];
+}
+
+export interface AshtakavargaPlanetScore {
+  planet: string;
+  planetEnglish: string;
+  bindus: number[]; // 12 values for signs 0 to 11
+  total: number;
+}
+
+export interface AshtakavargaData {
+  sarvashtakavarga: number[]; // 12 numbers for signs 0 to 11 (Mesham to Meenam)
+  bhinnaAshtakavarga: Record<string, number[]>;
+  planetScores: AshtakavargaPlanetScore[];
+  totalBindus: number;
+  highestRasi: { signIndex: number; signTamil: string; bindus: number };
+  lowestRasi: { signIndex: number; signTamil: string; bindus: number };
+}
+
+export interface ShadbalaPlanet {
+  planet: string;
+  planetEnglish: string;
+  sthanaBala: number; // in Virupas
+  digBala: number;
+  kaalaBala: number;
+  chestaBala: number;
+  naisargikaBala: number;
+  drikBala: number;
+  totalVirupas: number;
+  totalRupas: number;
+  requiredRupas: number;
+  strengthRatio: number;
+  percentage: number;
+  rank: number;
+  isStrong: boolean;
+}
+
+export interface ShadbalaData {
+  planets: ShadbalaPlanet[];
+  strongestPlanet: string;
+  weakestPlanet: string;
+}
+
+export interface JaiminiKaraka {
+  karakaCode: 'AK' | 'AmK' | 'BK' | 'MK' | 'PK' | 'GK' | 'DK';
+  karakaNameTamil: string;
+  karakaNameEnglish: string;
+  significanceTamil: string;
+  significanceEnglish: string;
+  planetTamil: string;
+  planetEnglish: string;
+  degreeInRasi: number;
+  degreeFormatted: string;
+  signIndex: number;
+  signTamil: string;
+  rawLongitude: number;
+}
+
+export interface UpagrahaInfo {
+  nameTamil: string;
+  nameEnglish: string;
+  rawLongitude: number;
+  degreeFormatted: string;
+  signIndex: number;
+  signTamil: string;
+  nakshatra: string;
+  pada: number;
+  starLord: string;
+  significance: string;
+}
+
 export interface PlanetaryDegree {
   planet: string;
   degree: string;
@@ -157,4 +235,9 @@ export interface HoroscopeData {
   panchangam?: PanchangamDetails;
   specialPredictions?: string[];
   dsPredictions?: Record<string, DSPredictionItem>;
+  divisionalCharts?: Record<string, DivisionalChartInfo> | DivisionalChartInfo[];
+  ashtakavarga?: AshtakavargaData;
+  shadbala?: ShadbalaData;
+  jaiminiKarakas?: JaiminiKaraka[];
+  upagrahas?: UpagrahaInfo[];
 }

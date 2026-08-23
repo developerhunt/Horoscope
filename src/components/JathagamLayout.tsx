@@ -3,7 +3,12 @@ import { HoroscopeData } from '../types';
 import { SouthIndianChart } from './SouthIndianChart';
 import { PlanetaryTable } from './PlanetaryTable';
 import { DSPredictionsDashboard } from './DSPredictionsDashboard';
-import { Download, Compass, ShieldCheck, Orbit, Sparkles } from 'lucide-react';
+import { ShadbalaGraph } from './ShadbalaGraph';
+import { JaiminiTable } from './JaiminiTable';
+import { AshtakavargaTable } from './AshtakavargaTable';
+import { UpagrahasCard } from './UpagrahasCard';
+import { DivisionalChartsGrid } from './DivisionalChartsGrid';
+import { Download, Compass, ShieldCheck, Orbit, Sparkles, Award } from 'lucide-react';
 
 interface JathagamLayoutProps {
   data: HoroscopeData;
@@ -18,13 +23,29 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
   onDownloadPdf,
   isDownloadingPdf = false
 }) => {
-  const { basicDetails, planetaryDegrees, dasaTimelines, rasiChart, navamsamChart, footerInfo, panchangam, dsSystem, nadiAnalysis, specialPredictions } = data;
+  const {
+    basicDetails,
+    planetaryDegrees,
+    dasaTimelines,
+    rasiChart,
+    navamsamChart,
+    footerInfo,
+    panchangam,
+    dsSystem,
+    nadiAnalysis,
+    specialPredictions,
+    divisionalCharts,
+    ashtakavarga,
+    shadbala,
+    jaiminiKarakas,
+    upagrahas
+  } = data;
 
   return (
     <div className="w-full flex flex-col items-center py-4 px-2">
       
       {/* Top Bar with Download PDF Button */}
-      <div className="w-full max-w-[820px] flex items-center justify-between mb-3 no-print">
+      <div className="w-full max-w-[860px] flex items-center justify-between mb-3 no-print">
         <span className="text-xs text-slate-300 font-medium flex items-center gap-1.5">
           <Orbit className="w-3.5 h-3.5 text-amber-400" />
           <span>திருக்கணித முறைப்படி கணிக்கப்பட்ட ஜாதக கட்டம் (A4 Printable Format)</span>
@@ -46,7 +67,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
       <div
         ref={containerRef}
         id="a4-jathagam-sheet"
-        className="w-full max-w-[820px] bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-4 sm:p-6 relative font-tamil leading-relaxed select-text flex flex-col justify-between"
+        className="w-full max-w-[860px] bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-4 sm:p-6 relative font-tamil leading-relaxed select-text flex flex-col justify-between"
         style={{
           boxSizing: 'border-box'
         }}
@@ -187,6 +208,30 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
           </div>
         </div>
 
+        {/* Mini Highlights: Jaimini AK & Mandi / Gulika */}
+        {(jaiminiKarakas || upagrahas) && (
+          <div className="my-1.5 border border-neutral-900 bg-[#FFFDF7] p-1.5 text-[9.5px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 divide-y sm:divide-y-0 sm:divide-x divide-neutral-300">
+              {jaiminiKarakas && jaiminiKarakas.length > 0 && (
+                <div className="pr-1 flex items-center justify-between">
+                  <span className="font-bold text-amber-950">ஆத்மகாரகன் (AK):</span>
+                  <span className="font-semibold text-neutral-900">
+                    {jaiminiKarakas[0].planetTamil} ({jaiminiKarakas[0].degreeFormatted} - {jaiminiKarakas[0].signTamil})
+                  </span>
+                </div>
+              )}
+              {upagrahas && upagrahas.length > 0 && (
+                <div className="sm:pl-2 flex items-center justify-between">
+                  <span className="font-bold text-amber-950">மாந்தி / குளிகன்:</span>
+                  <span className="font-semibold text-neutral-900">
+                    {upagrahas.map(u => `${u.nameTamil}: ${u.signTamil}`).join(' | ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Footer Summary */}
         <div className="mt-1.5 border border-neutral-900 bg-[#FAF1DA] p-1.5 text-[9.5px]">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 font-medium text-neutral-900">
@@ -198,9 +243,49 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
 
       </div>
 
+      {/* ========================================================================= */}
+      {/* PHASE 4 & PHASE 5 EXTENDED ADVANCED ASTROLOGICAL MODULES (Interactive UI) */}
+      {/* ========================================================================= */}
+
+      <div className="w-full max-w-[860px] mt-6 space-y-6 no-print">
+
+        {/* 1. Divisional Charts Grid (D1 to D60) */}
+        <DivisionalChartsGrid
+          divisionalCharts={divisionalCharts}
+          rasiChart={rasiChart}
+          navamsamChart={navamsamChart}
+          id="divisional-charts-module"
+        />
+
+        {/* 2. Classical Ashtakavarga Full Analysis Table */}
+        <AshtakavargaTable
+          ashtakavarga={ashtakavarga}
+          id="ashtakavarga-module"
+        />
+
+        {/* 3. Shadbala (Sixfold Planetary Strengths) */}
+        <ShadbalaGraph
+          shadbala={shadbala}
+          id="shadbala-module"
+        />
+
+        {/* 4. Jaimini Karakas & Upagrahas Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <JaiminiTable
+            jaiminiKarakas={jaiminiKarakas}
+            id="jaimini-module"
+          />
+          <UpagrahasCard
+            upagrahas={upagrahas}
+            id="upagrahas-module"
+          />
+        </div>
+
+      </div>
+
       {/* Advanced Vedic Insights Card (Nadi & D.S. Astro System) */}
       {(nadiAnalysis || dsSystem || (specialPredictions && specialPredictions.length > 0)) && (
-        <div className="w-full max-w-[820px] mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl text-slate-100 no-print font-sans">
+        <div className="w-full max-w-[860px] mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl text-slate-100 no-print font-sans">
           
           <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-4">
             <Compass className="w-4 h-4 text-amber-400" />
@@ -330,7 +415,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
       )}
 
       {/* D.S. Astro System Comprehensive Rules & Predictions Dashboard */}
-      <div className="w-full max-w-[820px] mt-6 no-print">
+      <div className="w-full max-w-[860px] mt-6 no-print">
         <DSPredictionsDashboard data={data} />
       </div>
 

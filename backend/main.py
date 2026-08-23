@@ -20,6 +20,25 @@ try:
 except ImportError:
     SKYFIELD_AVAILABLE = False
 
+try:
+    from engine.math_utils import (
+        calculate_divisional_sign,
+        generate_all_divisional_charts,
+        calculate_jaimini_karakas,
+        calculate_upagrahas,
+        calculate_ashtakavarga,
+        calculate_shadbala
+    )
+except ImportError:
+    from backend.engine.math_utils import (
+        calculate_divisional_sign,
+        generate_all_divisional_charts,
+        calculate_jaimini_karakas,
+        calculate_upagrahas,
+        calculate_ashtakavarga,
+        calculate_shadbala
+    )
+
 app = FastAPI(
     title="Ayyan Astro Skyfield Engine API",
     description="FastAPI Backend for High-Precision Thirukanidappadi Horoscope & D.S. Astro System Rules using Skyfield DE421",
@@ -234,6 +253,11 @@ class HoroscopeData(BaseModel):
     navamsamChart: List[ZodiacBox]
     footerInfo: FooterInfo
     specialPredictions: List[str]
+    divisionalCharts: Optional[Dict[str, Any]] = None
+    ashtakavarga: Optional[Dict[str, Any]] = None
+    shadbala: Optional[Dict[str, Any]] = None
+    jaiminiKarakas: Optional[List[Dict[str, Any]]] = None
+    upagrahas: Optional[List[Dict[str, Any]]] = None
     # Aliases for direct API consumers
     positions: Optional[List[PlanetaryDegree]] = None
     chart: Optional[List[ZodiacBox]] = None
@@ -1002,8 +1026,11 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
             lagna_rasi_idx=lagna_sign
         )
 
-        # Step 5: Rasi Chart & Navamsam Chart (4x4 Grid Boxes)
-        ashtakavarga_base = [28, 31, 29, 30, 27, 26, 32, 28, 29, 30, 25, 22]
+        # Step 5: Ashtakavarga (Classical Parashara System)
+        ashtakavarga_data = calculate_ashtakavarga(raw_planets, lagna_sign)
+        sarvashtakavarga_bindus = ashtakavarga_data["sarvashtakavarga"]
+
+        # Step 6: Rasi Chart & Navamsam Chart (4x4 Grid Boxes)
         rasi_chart: List[ZodiacBox] = []
         for s in range(12):
             planets_in_s = []
@@ -1019,7 +1046,7 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
                 nameTamil=RASI_NAMES_TAMIL[s],
                 englishName=RASI_NAMES_ENGLISH[s],
                 planets=planets_in_s,
-                ashtakavargaBindu=ashtakavarga_base[s],
+                ashtakavargaBindu=sarvashtakavarga_bindus[s],
                 isLagna=(lagna_sign == s)
             ))
 
@@ -1041,6 +1068,32 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
                 planets=nav_planets_in_s,
                 isLagna=(lagna_nav_sign == s)
             ))
+
+        # Step 7: All Divisional Charts (D1 to D60)
+        divisional_charts = generate_all_divisional_charts(raw_planets, lagna_raw_lon)
+
+        # Step 8: Jaimini Karakas (7-Karaka System)
+        jaimini_karakas = calculate_jaimini_karakas(raw_planets)
+
+        # Step 9: Upagrahas (Mandi & Gulika)
+        weekday_sun0 = (birth_dt.weekday() + 1) % 7  # 0=Sunday ... 6=Saturday
+        birth_hour_float = hour + minute / 60.0
+        upagrahas_list = calculate_upagrahas(
+            weekday=weekday_sun0,
+            birth_hour=birth_hour_float,
+            sunrise_hour=6.08,
+            sunset_hour=18.25,
+            lagna_lon=lagna_raw_lon,
+            sun_lon=sun_p["rawLon"]
+        )
+
+        # Step 10: Shadbala (Sixfold Planetary Strengths)
+        is_day_birth = (6.08 <= birth_hour_float <= 18.25)
+        shadbala_data = calculate_shadbala(
+            raw_planets=raw_planets,
+            lagna_sign=lagna_sign,
+            is_day_birth=is_day_birth
+        )
 
         # Basic Details & Footer Info
         now_dt = datetime.now()
@@ -1080,6 +1133,11 @@ def generate_horoscope_endpoint(payload: HoroscopeInput):
             navamsamChart=navamsam_chart,
             footerInfo=footer_info,
             specialPredictions=special_predictions,
+            divisionalCharts=divisional_charts,
+            ashtakavarga=ashtakavarga_data,
+            shadbala=shadbala_data,
+            jaiminiKarakas=jaimini_karakas,
+            upagrahas=upagrahas_list,
             positions=planetary_degrees,
             chart=rasi_chart,
             navamsa=navamsam_chart,
