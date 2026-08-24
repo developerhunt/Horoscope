@@ -1,31 +1,24 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { toJpeg } from 'html-to-image';
+
+// Logical section IDs for 4 distinct pages
+const SECTION_PAGE_IDS = [
+  'a4-jathagam-sheet-page-1', // Page 1: Basic Info, Planetary Positions, Dasa & Rasi/Navamsa Charts
+  'a4-jathagam-sheet-page-2', // Page 2: Shodasavarga Divisional Charts Grid (D1 to D60)
+  'a4-jathagam-sheet-page-3', // Page 3: Ashtakavarga Matrix & Shadbala Strengths
+  'a4-jathagam-sheet-page-4'  // Page 4: Jaimini 7-Karaka & Upagrahas
+];
 
 export async function exportToPdf(
-  element: HTMLElement,
+  containerElement: HTMLElement,
   fileName: string = 'Tamil_Jathagam.pdf'
 ): Promise<boolean> {
   try {
-    // Primary High-Fidelity Multi-Page Engine with html2canvas
     const scrollYBefore = window.scrollY;
     const scrollXBefore = window.scrollX;
+    window.scrollTo(0, 0);
 
-    const canvas = await html2canvas(element, {
-      scale: 2, // 300 DPI high resolution
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#FDF7E3',
-      scrollY: -window.scrollY,
-      scrollX: -window.scrollX,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight
-    });
-
-    // Restore scroll position
-    window.scrollTo(scrollXBefore, scrollYBefore);
-
+    // Initialize jsPDF with standard A4 portrait format (210 x 297 mm)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -35,106 +28,89 @@ export async function exportToPdf(
 
     const pdfWidth = 210; // A4 width in mm
     const pdfHeight = 297; // A4 height in mm
+    const margin = 5; // 5mm page margin
+    const printableWidth = pdfWidth - margin * 2; // 200mm
+    const printableHeight = pdfHeight - margin * 2; // 287mm
 
-    // Calculate canvas pixel height corresponding to one A4 page
-    const pageCanvasHeight = Math.floor((canvas.width / pdfWidth) * pdfHeight);
-    const totalPages = Math.ceil(canvas.height / pageCanvasHeight);
+    // Find the 4 target page elements step-by-step
+    const pageElements: HTMLElement[] = [];
 
-    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-      if (pageIndex > 0) {
+    for (const pageId of SECTION_PAGE_IDS) {
+      const el = document.getElementById(pageId) || containerElement.querySelector<HTMLElement>(`#${pageId}`);
+      if (el) {
+        pageElements.push(el);
+      }
+    }
+
+    // Fallback: If section IDs are not found directly, query all page containers inside
+    if (pageElements.length === 0) {
+      const queriedPages = containerElement.querySelectorAll<HTMLElement>('[id^="a4-jathagam-sheet-page-"]');
+      if (queriedPages.length > 0) {
+        queriedPages.forEach(p => pageElements.push(p));
+      } else {
+        pageElements.push(containerElement);
+      }
+    }
+
+    let pagesExported = 0;
+
+    for (let i = 0; i < pageElements.length; i++) {
+      const pageEl = pageElements[i];
+
+      // Capture single logical section cleanly
+      const canvas = await html2canvas(pageEl, {
+        scale: 2, // High resolution (300 DPI equivalent)
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#FDF7E3',
+        ignoreElements: (element) => {
+          return (
+            element.getAttribute('data-html2canvas-ignore') === 'true' ||
+            element.classList.contains('no-print')
+          );
+        }
+      });
+
+      // Add new page for each section after the first
+      if (pagesExported > 0) {
         pdf.addPage('a4', 'portrait');
       }
 
-      const sourceY = pageIndex * pageCanvasHeight;
-      const sourceHeight = Math.min(pageCanvasHeight, canvas.height - sourceY);
+      // Fill background parchment tone on entire A4 sheet
+      pdf.setFillColor(253, 247, 227); // #FDF7E3
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
 
-      // Create temporary canvas for this exact A4 slice
-      const pageCanvas = document.createElement('canvas');
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = pageCanvasHeight;
-      const pageCtx = pageCanvas.getContext('2d');
+      // Proportional dimension scaling to prevent any stretching
+      const canvasAspect = canvas.width / canvas.height;
+      let targetWidth = printableWidth;
+      let targetHeight = targetWidth / canvasAspect;
 
-      if (pageCtx) {
-        // Fill authentic Vedic parchment background
-        pageCtx.fillStyle = '#FDF7E3';
-        pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-
-        // Draw the exact slice from master canvas
-        pageCtx.drawImage(
-          canvas,
-          0,
-          sourceY,
-          canvas.width,
-          sourceHeight,
-          0,
-          0,
-          canvas.width,
-          sourceHeight
-        );
-
-        const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
-        pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      // If calculated height exceeds printable height, constrain by height
+      if (targetHeight > printableHeight) {
+        targetHeight = printableHeight;
+        targetWidth = targetHeight * canvasAspect;
       }
+
+      // Center the captured section neatly within the A4 page margins
+      const posX = margin + (printableWidth - targetWidth) / 2;
+      const posY = margin + (printableHeight - targetHeight) / 2;
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imgData, 'JPEG', posX, posY, targetWidth, targetHeight, undefined, 'FAST');
+
+      pagesExported++;
     }
+
+    // Restore scroll position
+    window.scrollTo(scrollXBefore, scrollYBefore);
 
     pdf.save(fileName);
     return true;
   } catch (error) {
-    console.warn('html2canvas multi-page export failed, attempting html-to-image fallback:', error);
-
-    // Fallback: html-to-image with multi-page calculation
-    try {
-      const imgData = await toJpeg(element, {
-        quality: 0.95,
-        pixelRatio: 2,
-        backgroundColor: '#FDF7E3',
-        cacheBust: true,
-        fontEmbedCSS: '',
-        style: {
-          margin: '0',
-          transform: 'none'
-        }
-      });
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-
-      const pdfWidth = 210;
-      const pdfHeight = 297;
-
-      const img = new Image();
-      img.src = imgData;
-      await new Promise(resolve => {
-        img.onload = resolve;
-      });
-
-      const naturalWidth = img.naturalWidth || element.offsetWidth;
-      const naturalHeight = img.naturalHeight || element.offsetHeight;
-      const scaledHeight = (naturalHeight * pdfWidth) / naturalWidth;
-
-      let heightLeft = scaledHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight, undefined, 'FAST');
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position -= pdfHeight;
-        pdf.addPage('a4', 'portrait');
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight, undefined, 'FAST');
-        heightLeft -= pdfHeight;
-      }
-
-      pdf.save(fileName);
-      return true;
-    } catch (fallbackError) {
-      console.error('All PDF export attempts failed:', fallbackError);
-      return false;
-    }
+    console.error('Multi-page section PDF export failed:', error);
+    return false;
   }
 }
+
 

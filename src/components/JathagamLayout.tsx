@@ -304,25 +304,46 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
         <div className="page-break w-full my-2 border-b border-dashed border-slate-700/50 no-print" />
 
         {/* ========================================================================= */}
-        {/* PAGE 4: JAIMINI KARAKAS, UPAGRAHAS & NADI / D.S. PREDICTIONS */}
+        {/* PAGE 4: JAIMINI KARAKAS & UPAGRAHAS */}
         {/* ========================================================================= */}
         <div
           id="a4-jathagam-sheet-page-4"
           className="w-full bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-4 sm:p-6 font-tamil leading-relaxed select-text space-y-4"
           style={{ boxSizing: 'border-box' }}
         >
-          {/* Jaimini Karakas & Upagrahas Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <JaiminiTable
-              jaiminiKarakas={jaiminiKarakas}
-              id="jaimini-module"
-            />
-            <UpagrahasCard
-              upagrahas={upagrahas}
-              id="upagrahas-module"
-            />
+          {/* Header Title for Page 4 */}
+          <div className="text-center border-b-2 border-neutral-900 pb-2">
+            <div className="text-xl sm:text-2xl font-extrabold text-neutral-950 leading-none select-none tracking-widest mb-1">
+              ௨
+            </div>
+            <div className="inline-block border border-neutral-900 bg-[#F7EED5] px-4 py-0.5 shadow-xs">
+              <h2 className="text-xs sm:text-sm font-bold text-neutral-950 tracking-wider">
+                ஜைமினி காரகங்கள் & உபகிரகங்கள் (Jaimini Karakas & Upagrahas)
+              </h2>
+            </div>
           </div>
 
+          {/* Jaimini Karakas Table */}
+          <JaiminiTable
+            jaiminiKarakas={jaiminiKarakas}
+            id="jaimini-module"
+          />
+
+          {/* Upagrahas Card (Mandi & Gulika) */}
+          <UpagrahasCard
+            upagrahas={upagrahas}
+            id="upagrahas-module"
+          />
+        </div>
+
+        {/* ========================================================================= */}
+        {/* D.S. ASTRO SYSTEM & PREDICTIONS (EXCLUDED FROM PDF EXPORT) */}
+        {/* ========================================================================= */}
+        <div
+          data-html2canvas-ignore="true"
+          id="ds-astro-system-predictions-container"
+          className="w-full space-y-6 mt-4 no-print"
+        >
           {/* Advanced Vedic Insights Card (Nadi & D.S. Astro System) */}
           {(nadiAnalysis || dsSystem || (specialPredictions && specialPredictions.length > 0)) && (
             <div className="bg-[#FFFDF5] border border-amber-900/30 rounded-xs p-4 shadow-xs text-neutral-900 font-tamil">

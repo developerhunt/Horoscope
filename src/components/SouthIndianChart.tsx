@@ -52,19 +52,19 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
   ) => {
     return (
       <div
-        className={`relative flex flex-col justify-between p-1 bg-[#FFFDF5] text-neutral-900 ${gridPositionClass} w-full h-full min-h-[60px] sm:min-h-[68px] overflow-visible`}
+        className={`relative flex flex-col items-center justify-between p-1 bg-[#FFFDF5] text-neutral-900 ${gridPositionClass} w-full h-full overflow-hidden text-center leading-tight select-none`}
       >
         {/* Ashtakavarga Bindus (பரல்கள்) OUTSIDE the outer border via CSS absolute positioning */}
         {showAshtakavarga && box.ashtakavargaBindu !== undefined && binduPlacement && (
           <div
-            className={`absolute z-20 text-[10px] font-bold text-amber-950 select-none pointer-events-none ${
+            className={`absolute z-20 text-[9px] sm:text-[10px] font-bold text-amber-950 select-none pointer-events-none ${
               binduPlacement === 'top'
-                ? '-top-4 left-1/2 -translate-x-1/2 bg-[#FDF7E3] px-1 rounded-xs border border-amber-900/20'
+                ? '-top-3.5 left-1/2 -translate-x-1/2 bg-[#FDF7E3] px-1 rounded-xs border border-amber-900/20 shadow-2xs'
                 : binduPlacement === 'bottom'
-                ? '-bottom-4 left-1/2 -translate-x-1/2 bg-[#FDF7E3] px-1 rounded-xs border border-amber-900/20'
+                ? '-bottom-3.5 left-1/2 -translate-x-1/2 bg-[#FDF7E3] px-1 rounded-xs border border-amber-900/20 shadow-2xs'
                 : binduPlacement === 'left'
-                ? '-left-4.5 top-1/2 -translate-y-1/2 bg-[#FDF7E3] px-0.5 rounded-xs border border-amber-900/20'
-                : '-right-4.5 top-1/2 -translate-y-1/2 bg-[#FDF7E3] px-0.5 rounded-xs border border-amber-900/20'
+                ? '-left-3.5 top-1/2 -translate-y-1/2 bg-[#FDF7E3] px-0.5 rounded-xs border border-amber-900/20 shadow-2xs'
+                : '-right-3.5 top-1/2 -translate-y-1/2 bg-[#FDF7E3] px-0.5 rounded-xs border border-amber-900/20 shadow-2xs'
             }`}
           >
             {box.ashtakavargaBindu}
@@ -72,19 +72,19 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
         )}
 
         {/* Sign Name Header */}
-        <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-semibold text-neutral-700 border-b border-neutral-300 pb-0.5 leading-none">
+        <div className="w-full flex items-center justify-between text-[8px] sm:text-[9px] md:text-[10px] font-semibold text-neutral-700 border-b border-neutral-300/80 pb-0.5 leading-none">
           <span className="truncate">{box.nameTamil}</span>
           {box.isLagna && (
-            <span className="text-[8.5px] font-bold text-red-700 bg-red-100 px-0.5 rounded leading-none shrink-0">
+            <span className="text-[7.5px] sm:text-[8.5px] font-bold text-red-700 bg-red-100 px-0.5 rounded leading-none shrink-0">
               லக்
             </span>
           )}
         </div>
 
-        {/* Planet abbreviations positioned inside cell */}
-        <div className="flex flex-wrap gap-x-1 gap-y-0.5 items-center justify-center py-0.5 my-auto content-center">
+        {/* Planet abbreviations positioned inside cell - flex layout preventing text overlap */}
+        <div className="flex flex-wrap gap-x-1 gap-y-0.5 items-center justify-center py-0.5 my-auto content-center w-full overflow-hidden break-words text-center leading-tight">
           {box.planets.length === 0 ? (
-            <span className="text-[9px] text-neutral-300 select-none">-</span>
+            <span className="text-[8px] sm:text-[9px] text-neutral-300 select-none">-</span>
           ) : (
             box.planets.map((planet, pIdx) => {
               const isLagnaTag = planet.includes('லக்');
@@ -92,7 +92,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
               return (
                 <span
                   key={pIdx}
-                  className={`text-[9.5px] sm:text-[10.5px] font-bold leading-tight px-0.5 ${
+                  className={`text-[8.5px] sm:text-[9.5px] md:text-[10.5px] font-bold leading-tight px-0.5 whitespace-nowrap ${
                     isLagnaTag
                       ? 'text-red-700 underline font-extrabold'
                       : isRetro
@@ -111,10 +111,10 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
   };
 
   return (
-    <div id={id} className="relative p-3.5 flex flex-col items-center w-full">
-      {/* 4x4 Grid Container (12 Outer Boxes + 1 Center Merged 2x2 Box) */}
+    <div id={id} className="relative p-2 sm:p-3 flex flex-col items-center w-full">
+      {/* 4x4 Grid Container (12 Outer Boxes + 1 Center Merged 2x2 Box) with aspect-square and strictly equal fractions */}
       <div className="w-full max-w-[340px] sm:max-w-[360px] aspect-square border-2 border-neutral-900 bg-neutral-900 p-0.5 shadow-md">
-        <div className="w-full h-full grid grid-cols-4 grid-rows-4 bg-neutral-900 gap-[1px]">
+        <div className="w-full h-full grid grid-cols-[repeat(4,minmax(0,1fr))] grid-rows-[repeat(4,minmax(0,1fr))] aspect-square bg-neutral-900 gap-[1px]">
           
           {/* ROW 1: Pisces, Aries, Taurus, Gemini */}
           {renderCell(pisces, 'col-start-1 row-start-1', 'top')}
@@ -126,12 +126,12 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
           {renderCell(aquarius, 'col-start-1 row-start-2', 'left')}
 
           {/* CENTER MERGED BOX: Spans 2 Columns and 2 Rows */}
-          <div className="col-start-2 col-span-2 row-start-2 row-span-2 bg-[#FAF1D6] flex flex-col items-center justify-center p-2 text-center border border-neutral-400 select-none shadow-inner">
-            <div className="text-base sm:text-xl font-extrabold text-neutral-950 font-tamil tracking-wider">
+          <div className="col-start-2 col-span-2 row-start-2 row-span-2 bg-[#FAF1D6] flex flex-col items-center justify-center p-1.5 sm:p-2 text-center border border-neutral-400 select-none shadow-inner overflow-hidden">
+            <div className="text-sm sm:text-lg md:text-xl font-extrabold text-neutral-950 font-tamil tracking-wider leading-tight">
               {title}
             </div>
-            <div className="text-[9px] text-amber-950/70 font-sans uppercase tracking-widest mt-0.5">
-              {title === 'இராசி' ? 'Rasi Chakra' : 'Navamsa Chakra'}
+            <div className="text-[8px] sm:text-[9px] text-amber-950/70 font-sans uppercase tracking-widest mt-0.5 truncate max-w-full">
+              {title === 'இராசி' ? 'Rasi Chakra' : title === 'நவாம்சம்' ? 'Navamsa Chakra' : 'Divisional Chart'}
             </div>
           </div>
 
