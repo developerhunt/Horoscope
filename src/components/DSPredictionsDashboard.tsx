@@ -22,7 +22,8 @@ import {
   TreePine,
   Plane,
   ShieldAlert,
-  GitBranch
+  GitBranch,
+  Flame
 } from 'lucide-react';
 
 interface DSPredictionsDashboardProps {
@@ -41,6 +42,7 @@ const CATEGORY_TABS = [
   { id: 'health', label: 'உடல்நலம் (Health)', icon: Activity },
   { id: 'agriculture', label: 'விவசாயம் & மண் (Agriculture)', icon: TreePine },
   { id: 'travel', label: 'பயணம் & வெளிநாடு (Travel)', icon: Plane },
+  { id: 'intimacy', label: 'அந்தரங்கம் & ஒழுக்கம் (Intimacy & Morality)', icon: Flame },
   { id: 'body-parts', label: 'உடல் உறுப்பு ரகசியம் (Body Secrets)', icon: ShieldAlert },
   { id: 'rahu-ketu', label: 'ராகு-கேது அச்சு (Rahu-Ketu)', icon: Sparkles }
 ];
@@ -85,6 +87,11 @@ const PREDEFINED_QUESTIONS = [
     q: 'வெளியூர் / வெளிநாட்டு பயணம் மற்றும் வரன் எந்த திசையில் அமையும்?',
     category: 'travel',
     subtext: '12-ஆம் மறைவு ஸ்தானம், திசைகள் மற்றும் பிரயாண தூர விதி (DS-TRV)'
+  },
+  {
+    q: 'அந்தரங்க தாம்பத்திய ஒழுக்கம், கற்பு நெறி & கள்ளத்தொடர்பு விழிப்புணர்வு நிலை என்ன?',
+    category: 'intimacy',
+    subtext: 'செவ்வாய்-சுக்கிரன் கட்டுப்பாடு, 4-8-12 மறைவு ஸ்தானங்கள் & சந்திரன்-புதன்-சுக்கிரன் சேர்க்கை (DS-INT)'
   }
 ];
 

@@ -21,6 +21,7 @@ import {
   UpagrahaInfo
 } from '../types';
 import { formatDMSCoordinates } from '../utils/geoUtils';
+import { evaluatePremiumChart } from './dsKnowledgeBase';
 
 // ==========================================
 // 1. CONSTANTS & METADATA
@@ -2250,17 +2251,21 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     lagnaSign
   );
 
-  const dsPredictions = generateDSPredictionsMap(
+  const dsPredictions = evaluatePremiumChart(
     evaluationList,
     currentDasaBhukti,
     lagnaSign,
+    dasaTimelines,
+    input.gender,
     'dasa'
   );
 
-  const subLagnaPredictions = generateDSPredictionsMap(
+  const subLagnaPredictions = evaluatePremiumChart(
     evaluationList,
     currentDasaBhukti,
     lagnaSign,
+    dasaTimelines,
+    input.gender,
     'bhukti'
   );
 
