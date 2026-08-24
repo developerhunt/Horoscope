@@ -9,6 +9,7 @@ export interface HoroscopeInput {
   lat?: string;
   lon?: string;
   timezone?: string;
+  nodeCalculation?: 'mean' | 'true';
 }
 
 export interface BasicDetails {
@@ -235,6 +236,7 @@ export interface HoroscopeData {
   panchangam?: PanchangamDetails;
   specialPredictions?: string[];
   dsPredictions?: Record<string, DSPredictionItem>;
+  subLagnaPredictions?: Record<string, DSPredictionItem>;
   divisionalCharts?: Record<string, DivisionalChartInfo> | DivisionalChartInfo[];
   ashtakavarga?: AshtakavargaData;
   shadbala?: ShadbalaData;

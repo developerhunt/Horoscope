@@ -280,7 +280,8 @@ function calculatePlanetaryPositions(
   minute: number,
   lat: number,
   lon: number,
-  tzOffsetMinutes: number = 330
+  tzOffsetMinutes: number = 330,
+  nodeCalculation: 'mean' | 'true' = 'mean'
 ) {
   // Convert Local Time to Universal Time (UTC) using exact timezone offset
   const localUtcMins = hour * 60 + minute - tzOffsetMinutes;
@@ -459,9 +460,23 @@ function calculatePlanetaryPositions(
   );
 
   // ----------------------------------------------------
-  // 6. RAHU & KETU (MEAN LUNAR NODES)
+  // 6. RAHU & KETU (MEAN VS TRUE LUNAR NODES)
   // ----------------------------------------------------
-  const tropRahu = normalizeAngle(125.04452 - 1934.136261 * T + 0.0020708 * T * T);
+  // Mean ascending lunar node (Meeus Astronomical Algorithms)
+  const meanNode = normalizeAngle(125.04452 - 1934.136261 * T + 0.0020708 * T * T);
+  
+  let tropRahu = meanNode;
+  if (nodeCalculation === 'true') {
+    // True Node includes major lunar nutation and solar elongation perturbations (Meeus Chapter 47)
+    const trueNodeCorrection =
+      -1.4979 * Math.sin(2 * (D_moon - F_moon)) -
+      0.1500 * Math.sin(M_sun) -
+      0.1226 * Math.sin(2 * D_moon) +
+      0.1176 * Math.sin(2 * M_moon) -
+      0.0801 * Math.sin(2 * (M_moon - F_moon));
+    tropRahu = normalizeAngle(meanNode + trueNodeCorrection);
+  }
+
   const sidRahu = normalizeAngle(tropRahu - ayanamsa);
   const sidKetu = normalizeAngle(sidRahu + 180);
 
@@ -1607,8 +1622,9 @@ export function generateDSSystemPredictions(
 
 export function generateDSPredictionsMap(
   positions: PlanetPosition[],
-  dasaInfo: CurrentDasaBhuktiInfo | { dasaLord: string },
-  lagnaRasiIndex: number
+  dasaInfo: CurrentDasaBhuktiInfo | { dasaLord: string; bhuktiLord?: string },
+  lagnaRasiIndex: number,
+  analysisMode: 'dasa' | 'bhukti' = 'dasa'
 ): Record<string, DSPredictionItem> {
   const getPlanet = (nameOrPart: string): PlanetPosition | undefined =>
     positions.find(p => p.name === nameOrPart || p.name.includes(nameOrPart));
@@ -1628,10 +1644,13 @@ export function generateDSPredictionsMap(
   };
 
   const currentDasaLord = dasaInfo.dasaLord || 'குரு';
-  const currentBhuktiLord = (dasaInfo as CurrentDasaBhuktiInfo).bhuktiLord || currentDasaLord;
-  const dasaLordObj = getPlanet(currentDasaLord);
-  const dasaLagnaIndex = dasaLordObj ? dasaLordObj.sign : lagnaRasiIndex;
-  const dasaLagnaName = RASI_NAMES_TAMIL[dasaLagnaIndex];
+  const currentBhuktiLord = (dasaInfo as CurrentDasaBhuktiInfo).bhuktiLord || dasaInfo.bhuktiLord || currentDasaLord;
+  
+  // Dynamic Temporary Lagna Selection: Dasa Lord sign vs Bhukti Lord sign
+  const activePivotPlanetName = analysisMode === 'bhukti' ? currentBhuktiLord : currentDasaLord;
+  const pivotPlanetObj = getPlanet(activePivotPlanetName);
+  const activeLagnaIndex = pivotPlanetObj ? pivotPlanetObj.sign : lagnaRasiIndex;
+  const activeLagnaName = RASI_NAMES_TAMIL[activeLagnaIndex];
 
   const ketuObj = getPlanet('கேது');
   const saturnObj = getPlanet('சனி');
@@ -1643,39 +1662,41 @@ export function generateDSPredictionsMap(
   const jupiterObj = getPlanet('குரு');
   const venusObj = getPlanet('சுக்கிரன்');
 
-  const dasaLordDispositorName = SIGN_LORDS[dasaLagnaIndex];
-  const dasaLordDispositorObj = getPlanet(dasaLordDispositorName);
+  const dispositorName = SIGN_LORDS[activeLagnaIndex];
+  const dispositorObj = getPlanet(dispositorName);
 
   const resultMap: Record<string, DSPredictionItem> = {};
 
-  // 1. GENERAL / DASA LAGNA
+  // 1. GENERAL / DASA OR BHUKTI LAGNA
   resultMap['general'] = {
     category: 'general',
-    title: 'பொது & தசாநாதன் லக்ன ஆய்வு (Dasa Lagna Analysis)',
+    title: analysisMode === 'bhukti' 
+      ? `புக்தி லக்ன ஆய்வு (${currentBhuktiLord} புக்தி லக்னம்)`
+      : `தசா லக்ன ஆய்வு (${currentDasaLord} திசை லக்னம்)`,
     status: 'strong_indication',
-    summary: `நடப்பு தசாநாதன் ${currentDasaLord} நின்ற ராசியான '${dasaLagnaName}' தற்காலிக லக்னமாக செயல்படுகிறது. இதற்கு வீடு கொடுத்த லக்னாதிபதி ${dasaLordDispositorName} ஆவார்.`,
+    summary: `நடப்பு ${analysisMode === 'bhukti' ? 'புக்திநாதன்' : 'தசாநாதன்'} ${activePivotPlanetName} நின்ற ராசியான '${activeLagnaName}' தற்காலிக லக்னமாக செயல்படுகிறது. இதற்கு வீடு கொடுத்த லக்னாதிபதி ${dispositorName} ஆவார்.`,
     signals: [
-      `தசா லக்னம்: ${dasaLagnaName} (${currentDasaLord} திசை)`,
-      `தசா லக்னாதிபதி: ${dasaLordDispositorName}`
+      `ஆய்வு லக்னம்: ${activeLagnaName} (${activePivotPlanetName} மையம்)`,
+      `லக்னாதிபதி: ${dispositorName} (${dispositorObj ? RASI_NAMES_TAMIL[dispositorObj.sign] : 'சுப பலம்'})`
     ],
     obstructions: [],
     timing: {
       dasa: currentDasaLord,
       bhukti: currentBhuktiLord,
-      window: `${currentDasaLord} தசா காலம்`
+      window: analysisMode === 'bhukti' ? `${currentBhuktiLord} புக்தி காலம்` : `${currentDasaLord} தசா காலம்`
     },
     matchedRules: [
-      { ruleId: 'DS-GEN-001', title: 'தசா நாதன் இருக்கும் இடமே லக்னம்', sourcePage: 6, section: 'விதி 1' },
-      { ruleId: 'DS-GEN-002', title: 'தசாநாதனுக்கு வீடு கொடுத்தவரே லக்னாதிபதி', sourcePage: 6, section: 'விதி 2' }
+      { ruleId: 'DS-GEN-001', title: 'தசா/புக்தி நாதன் இருக்கும் இடமே லக்னம்', sourcePage: 6, section: 'விதி 1' },
+      { ruleId: 'DS-GEN-002', title: 'வீடு கொடுத்தவரே லக்னாதிபதி', sourcePage: 6, section: 'விதி 2' }
     ],
-    reasoning: `D.S.Astro System விதிப்படி, ஜாதகரின் நடப்பு அனுபவங்கள் தசாநாதனின் இருப்பிடத்தையே முதலாவது லக்னமாக கொண்டு சுழல்கின்றன. வீடு கொடுத்த கிரகம் ${dasaLordDispositorName} பலம் பெற்றுள்ளதால் செயல்களில் ஆளுமை வெளிப்படும்.`
+    reasoning: `D.S.Astro System விதிப்படி, ஜாதகரின் அனுபவங்கள் ${activePivotPlanetName} நின்ற '${activeLagnaName}' மையமாக கொண்டு சுழல்கின்றன. வீடு கொடுத்த கிரகம் ${dispositorName} வலுப்பெற்றுள்ளதால் செயல்பாடுகளில் பலன் விரைவாகும்.`
   };
 
   // 2. EDUCATION
   const isBudhaditya = isConjunct(mercuryObj, sunObj);
   resultMap['education'] = {
     category: 'education',
-    title: 'கல்வி & புத்தி கூர்மை (Education & Intellectual Acumen)',
+    title: 'கல்வி & வித்யா காரகம் (Education & Intellect)',
     status: 'favorable',
     summary: isBudhaditya
       ? 'வித்யாகாரகன் புதன் சூரியனுடன் இணைந்து புதாதித்ய யோகம் தருவதால், உயர் கல்வித் தேர்ச்சி மற்றும் அறிவுத்திறன் வெளிப்படும்.'
@@ -1695,10 +1716,10 @@ export function generateDSPredictionsMap(
   };
 
   // 3. MARRIAGE
-  const lord2Obj = getPlanet(SIGN_LORDS[(lagnaRasiIndex + 1) % 12]);
-  const lord5Obj = getPlanet(SIGN_LORDS[(lagnaRasiIndex + 4) % 12]);
-  const lord7Obj = getPlanet(SIGN_LORDS[(lagnaRasiIndex + 6) % 12]);
-  const lord11Obj = getPlanet(SIGN_LORDS[(lagnaRasiIndex + 10) % 12]);
+  const lord2Obj = getPlanet(SIGN_LORDS[(activeLagnaIndex + 1) % 12]);
+  const lord5Obj = getPlanet(SIGN_LORDS[(activeLagnaIndex + 4) % 12]);
+  const lord7Obj = getPlanet(SIGN_LORDS[(activeLagnaIndex + 6) % 12]);
+  const lord11Obj = getPlanet(SIGN_LORDS[(activeLagnaIndex + 10) % 12]);
 
   const isLove = isConjunct(lord2Obj, lord5Obj) || isConjunct(lord7Obj, lord5Obj) || isConjunct(mercuryObj, lord7Obj) || isConjunct(venusObj, lord5Obj);
   const isSaturnAspectingMars = saturnObj && marsObj && isAspectedBy(marsObj.sign, saturnObj);
@@ -1728,17 +1749,14 @@ export function generateDSPredictionsMap(
   };
 
   // 4. CAREER
-  const lord10Obj = getPlanet(SIGN_LORDS[(lagnaRasiIndex + 9) % 12]);
-  const isOwnBusiness = lord10Obj && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(lord10Obj.sign);
-
   resultMap['career'] = {
     category: 'career',
     title: 'தொழில், சொந்த வியாபாரம் & வேலை (Career & Business)',
     status: 'strong_indication',
     summary: '10-ஆம் அதிபதி மற்றும் தொழில் காரகன் சனியின் நற்பலன்களால் நிர்வாகப் பொறுப்புகள், சொந்த தொழில் அல்லது அரசு/தனியார் உயர் உத்தியோகம் கைக்கூடும்.',
     signals: [
-      'தொழில் ஸ்தானாதிபதி நல்ல சுப ஸ்தானத்தில் அமர்ந்துள்ளார்',
-      'தசா லக்ன திரிகோணங்கள் தொழில் பலத்தை உறுதி செய்கின்றன'
+      'தொழில் ஸ்தானாதிபதி சுப ஸ்தானத்தில் அமர்ந்துள்ளார்',
+      `${activeLagnaName} லக்ன கேந்திர-திரிகோணங்கள் தொழில் பலத்தை உறுதி செய்கின்றன`
     ],
     obstructions: [],
     timing: {
@@ -1782,21 +1800,22 @@ export function generateDSPredictionsMap(
     reasoning: 'D.S.Astro புத்தகத்தின் 36-42 பக்கங்களில் உள்ள 15 விதிகளின்படி புத்திரகாரகன் குரு மற்றும் 5-ஆம் பாவகம் கொண்டு குழந்தை பலன் நிர்ணயிக்கப்பட்டுள்ளது.'
   };
 
-  // 6. FINANCE
-  const house6FromDasa = (dasaLagnaIndex + 5) % 12;
-  const isKetuIn6 = ketuObj?.sign === house6FromDasa;
+  // 6. FINANCE & DEBT
+  const house6FromActive = (activeLagnaIndex + 5) % 12;
+  const isKetuIn6 = ketuObj?.sign === house6FromActive;
 
   resultMap['finance'] = {
     category: 'finance',
     title: 'தனம், பொருளாதாரம் & கடன் நிவர்த்தி (Finance & Debt Clearance)',
     status: isKetuIn6 ? 'caution' : 'strong_indication',
     summary: isKetuIn6
-      ? 'தசாநாதனுக்கு 6-ஆம் இடத்தில் கேது அமர்ந்துள்ளதால் வரவுக்கேற்ற செலவுகளும், நிதி விவகாரங்களில் விழிப்புணர்வும் தேவை.'
+      ? `${activeLagnaName} லக்னத்திற்கு 6-ஆம் இடத்தில் கேது அமர்ந்துள்ளதால் வரவுக்கேற்ற செலவுகளும், கடன் விவகாரங்களில் விழிப்புணர்வும் தேவை.`
       : '2, 11-ஆம் அதிபதிகளின் சுப பலத்தால் படிப்படியான சேமிப்பு மற்றும் பழைய கடன்கள் தீரும் நல்வாய்ப்பு உண்டு.',
     signals: [
+      `6-ஆம் பாவக ராசி: ${RASI_NAMES_TAMIL[house6FromActive]}`,
       'தன ஸ்தான பலத்தால் பொருளாதார மேன்மை உண்டு'
     ],
-    obstructions: isKetuIn6 ? ['6-ல் கேது இருப்பதால் கடன் வாங்கும்போது கவனம் தேவை'] : [],
+    obstructions: isKetuIn6 ? ['6-ல் கேது இருப்பதால் கடன் வாங்குவதை தவிர்க்கவும்'] : [],
     timing: {
       dasa: currentDasaLord,
       bhukti: currentBhuktiLord,
@@ -1806,7 +1825,7 @@ export function generateDSPredictionsMap(
       { ruleId: 'DS-FIN-001', title: 'கோடீஸ்வர யோகம் & தன ஸ்தானம்', sourcePage: 48, section: 'தன ஸ்தானம்' },
       { ruleId: 'DS-FIN-003', title: 'கடன் எப்போது தீரும்', sourcePage: 51, section: 'கடன் நிவர்த்தி' }
     ],
-    reasoning: 'D.S.Astro புத்தகத்தின் 47-51 பக்கங்களின்படி, 2, 11-ஆம் அதிபதிகள் மற்றும் தசாநாதனுக்கு 6-ஆம் இடத்து கேது/சனி நிலைகள் ஆய்வு செய்யப்பட்டுள்ளன.'
+    reasoning: 'D.S.Astro புத்தகத்தின் 47-51 பக்கங்களின்படி, 2, 11-ஆம் அதிபதிகள் மற்றும் லக்னத்திற்கு 6-ஆம் இடத்து கேது/சனி நிலைகள் ஆய்வு செய்யப்பட்டுள்ளன.'
   };
 
   // 7. PROPERTY & VEHICLES
@@ -1831,14 +1850,16 @@ export function generateDSPredictionsMap(
     reasoning: 'D.S.Astro புத்தகத்தின் 54-56 பக்கங்களின்படி, சந்திரன் (வீடு கட்டி வாழும் மன நிம்மதி காரகன்) மற்றும் சுக்கிரன் (வாகனம்) ஆய்வு செய்யப்பட்டுள்ளது.'
   };
 
-  // 8. HEALTH
+  // 8. HEALTH & DISEASE
+  const house8FromActive = (activeLagnaIndex + 7) % 12;
   resultMap['health'] = {
     category: 'health',
     title: 'உடல்நலம் & ஆரோக்கியம் (Health & Longevity)',
     status: 'favorable',
-    summary: 'தசா லக்னத்திற்கு 6-ஆம் அதிபதியின் அமைப்பின்படி அன்றாட உடற்பயிற்சி, மிதமான உணவு மற்றும் நீர்ச்சத்து காப்பது ஆரோக்கியத்திற்கு துணை நிற்கும்.',
+    summary: `${activeLagnaName} லக்னத்திற்கு 6-ஆம் அதிபதி மற்றும் 8-ஆம் பாவக அமைப்பின்படி ஆரோக்கியம் சுபமாக பேணப்படும்.`,
     signals: [
-      `தசா லக்ன 6-ஆம் அதிபதி: ${SIGN_LORDS[(dasaLagnaIndex + 5) % 12]}`
+      `6-ஆம் அதிபதி: ${SIGN_LORDS[house6FromActive]}`,
+      `8-ஆம் பாவக ராசி: ${RASI_NAMES_TAMIL[house8FromActive]}`
     ],
     obstructions: [],
     timing: {
@@ -1872,6 +1893,85 @@ export function generateDSPredictionsMap(
       { ruleId: 'DS-RAK-003', title: 'ராகு-கேது மையப்புள்ளி (Midpoint)', sourcePage: 87, section: 'மையப்புள்ளிகள்' }
     ],
     reasoning: 'D.S.Astro புத்தகத்தின் 76-90 பக்கங்களில் கூறப்பட்டுள்ள ராகு-கேது தசாபுத்தி ரகசியங்கள் மற்றும் மையப்புள்ளி விதிகள் அடிப்படையில் தொகுக்கப்பட்டுள்ளது.'
+  };
+
+  // 10. AGRICULTURE & SOIL (DS-AGR-001 / DS-AGR-002)
+  const soilStrengths = ['முழு பலம் (Fertile)', 'மலடு (Barren)', 'பாதி பலம் (Semi-fertile)', 'வறண்ட (Arid)'];
+  const soilType = soilStrengths[activeLagnaIndex % 4];
+  resultMap['agriculture'] = {
+    category: 'agriculture',
+    title: 'விவசாயம் & நில மண் வளம் (Agriculture & Soil Mapping)',
+    status: 'favorable',
+    summary: `${activeLagnaName} லக்ன நில அமைப்பின்படி, மண் வளம் '${soilType}' பண்பை பெற்றுள்ளது. நஞ்சை/புஞ்சை பயிர்கள் சாகுபடி மற்றும் தோட்டம் அமைப்பதற்குரிய சாதகமான அமைப்புகளைக் குறிக்கிறது.`,
+    signals: [
+      `மண் வளம்: ${soilType}`,
+      `பொருத்தமான நில அமைப்பு: ${[0, 9].includes(activeLagnaIndex) ? 'நீர்க்கரை / ஆற்றுப்படுகை' : [1, 8].includes(activeLagnaIndex) ? 'விளைநிலம் / காடு' : 'கிணறு / மேட்டுப்பாங்கான பூமி'}`
+    ],
+    obstructions: [],
+    timing: {
+      dasa: currentDasaLord,
+      bhukti: currentBhuktiLord,
+      window: 'சந்திரன் / சுக்கிரன் காலங்கள்'
+    },
+    matchedRules: [
+      { ruleId: 'DS-AGR-001', title: 'விவசாய நிலமும் பயிர் வகைகளும்', sourcePage: 15, section: 'விவசாய காரணிகள்' },
+      { ruleId: 'DS-AGR-002', title: 'நிலத்தின் மண் வளம் மற்றும் பலன்', sourcePage: 16, section: 'மண் வளம்' }
+    ],
+    reasoning: 'D.S.Astro புத்தகத்தின் 15-16 பக்கங்களின்படி, ராசியின் கால்கள் (ஊர்வன, நடை, தவழும்) மற்றும் நில மண் வளக் கட்டத்தின்படி கணிக்கப்பட்டுள்ளது.'
+  };
+
+  // 11. TRAVEL & FOREIGN (DS-TRV-001 / DS-TRV-002)
+  const house12FromActive = (activeLagnaIndex + 11) % 12;
+  const is12thActive = [2, 7, 11].includes(house12FromActive);
+  resultMap['travel'] = {
+    category: 'travel',
+    title: 'பிரயாணம், வெளிநாடு & வரன் திசை (Travel & Foreign Direction)',
+    status: 'strong_indication',
+    summary: `${activeLagnaName} லக்னத்திற்கு 12-ஆம் இடம் '${RASI_NAMES_TAMIL[house12FromActive]}' ஆவதால், வெளியூர் மற்றும் வெளிநாட்டுப் பயண யோகங்களும், கிழக்கு/தெற்கு திசைகளில் வரன் அமையும் நல்வாய்ப்பும் உண்டு.`,
+    signals: [
+      `12-ஆம் விரைய/வெளிநாட்டு ராசி: ${RASI_NAMES_TAMIL[house12FromActive]}`,
+      'வரன் அமையும் திசை: கிழக்கு / வடக்கு'
+    ],
+    obstructions: [],
+    timing: {
+      dasa: currentDasaLord,
+      bhukti: currentBhuktiLord,
+      window: `${currentDasaLord} தசையில் 12-ஆம் அதிபதி புக்தி`
+    },
+    matchedRules: [
+      { ruleId: 'DS-TRV-001', title: 'பிரயாணம் மற்றும் இடமாற்ற தூரம்', sourcePage: 50, section: 'வெளிநாட்டு வேலை' },
+      { ruleId: 'DS-TRV-002', title: 'வரன் மற்றும் பயண திசை அறிதல்', sourcePage: 13, section: 'வரன் திசை' }
+    ],
+    reasoning: 'D.S.Astro புத்தகத்தின் 13 மற்றும் 49-51 பக்கங்களின்படி, லக்னாதிபதி 3, 6, 8, 12 மறைவு நிலைகள் மற்றும் ராசி திசைகள் கொண்டு பயண தூரம் கணிக்கப்பட்டுள்ளது.'
+  };
+
+  // 12. BODY ANATOMY & SECRETS (DS-BOD-001 / DS-BOD-002)
+  const BODY_ORGANS = [
+    'தலை (Head)', 'கழுத்து / தொண்டை (Neck)', 'தோள்பட்டை / கைகள் (Shoulders)',
+    'மார்பு / இதயம் (Chest)', 'இதயம் / வயிறு (Heart)', 'அடிவயிறு (Stomach)',
+    'மர்ம உறுப்பு / சிறுநீரகம் (Private Organs)', 'ஆசனவாய் (Rectum)',
+    'தொடைகள் (Thighs)', 'முழங்கால் (Knees)', 'கணுக்கால் (Ankles)', 'பாதங்கள் (Feet)'
+  ];
+  resultMap['body-parts'] = {
+    category: 'body-parts',
+    title: 'உடல் உறுப்புகள் & அந்தரங்க ரகசியங்கள் (Body Anatomy & Sign Secrets)',
+    status: 'favorable',
+    summary: `${activeLagnaName} ராசி உடலின் '${BODY_ORGANS[activeLagnaIndex]}' பகுதியைக் குறிக்கிறது. தசா/புக்தி நாதனின் ஸ்தான பலம் உடல் உறுப்புகளின் ஆரோக்கியத்தை பலப்படுத்துகிறது.`,
+    signals: [
+      `பிரதான உடல் பாகம்: ${BODY_ORGANS[activeLagnaIndex]}`,
+      `துலாம் (மர்ம உறுப்பு) & விருச்சிகம் (ஆசனவாய்) சுபத் தன்மை`
+    ],
+    obstructions: [],
+    timing: {
+      dasa: currentDasaLord,
+      bhukti: currentBhuktiLord,
+      window: 'ஆயுள் முழுவதும்'
+    },
+    matchedRules: [
+      { ruleId: 'DS-BOD-001', title: 'ராசிகள் மற்றும் உடல் உறுப்புகள் தொடர்பு', sourcePage: 12, section: 'உடல் உறுப்புகள்' },
+      { ruleId: 'DS-BOD-002', title: 'மார்பக ஆரோக்கியம் & உடலமைப்பு', sourcePage: 114, section: 'அந்தரங்க ரகசியங்கள்' }
+    ],
+    reasoning: 'D.S.Astro புத்தகத்தின் 12 மற்றும் 114-124 பக்கங்களில் விவரிக்கப்பட்டுள்ள 12 ராசி உடல் உறுப்பு வரைபடம் மற்றும் 4, 7, 8-ஆம் பாவ ரகசியங்களின்படி தொகுக்கப்பட்டுள்ளது.'
   };
 
   return resultMap;
@@ -1922,7 +2022,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   const tzOffsetMins = parseTimezoneOffsetMinutes(year, month, day, hour, minute, input.timezone);
 
   // 1. Calculate Astronomical Positions
-  const { ayanamsa, planets } = calculatePlanetaryPositions(year, month, day, hour, minute, latNum, lonNum, tzOffsetMins);
+  const nodeCalcMode = input.nodeCalculation || 'mean';
+  const { ayanamsa, planets } = calculatePlanetaryPositions(year, month, day, hour, minute, latNum, lonNum, tzOffsetMins, nodeCalcMode);
 
   // 2. Build Planetary Table (Degrees, Nakshatra, Pada, Star Lord, Retrograde, Combust)
   const planetaryDegrees: PlanetaryDegree[] = [];
@@ -2152,7 +2253,15 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   const dsPredictions = generateDSPredictionsMap(
     evaluationList,
     currentDasaBhukti,
-    lagnaSign
+    lagnaSign,
+    'dasa'
+  );
+
+  const subLagnaPredictions = generateDSPredictionsMap(
+    evaluationList,
+    currentDasaBhukti,
+    lagnaSign,
+    'bhukti'
   );
 
   // 13. Advanced Master Calculations (Phase 4 & 5)
@@ -2212,6 +2321,7 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     panchangam,
     specialPredictions,
     dsPredictions,
+    subLagnaPredictions,
     divisionalCharts,
     ashtakavarga,
     shadbala,

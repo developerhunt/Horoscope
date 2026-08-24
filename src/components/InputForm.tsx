@@ -29,12 +29,16 @@ export const InputForm: React.FC<InputFormProps> = ({
     tob: '',
     pob: '',
     lat: undefined,
-    lon: undefined
+    lon: undefined,
+    nodeCalculation: 'mean'
   },
   onSubmit,
   isGenerating = false
 }) => {
-  const [formData, setFormData] = useState<HoroscopeInput>(initialValues);
+  const [formData, setFormData] = useState<HoroscopeInput>({
+    ...initialValues,
+    nodeCalculation: initialValues.nodeCalculation || 'mean'
+  });
   
   // Place of Birth Autocomplete & Geocoding State
   const [isCityOpen, setIsCityOpen] = useState(false);
@@ -436,8 +440,50 @@ export const InputForm: React.FC<InputFormProps> = ({
             )}
           </div>
 
-          {/* Submit Button with Loading State */}
-          <div className="pt-3">
+            {/* Row 5: Rahu / Ketu Calculation Setting (Mean vs True Node) */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-950/60 border border-slate-800 px-3.5 py-2.5 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-200 font-tamil">
+                    ராகு / கேது கணித முறை:
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="nodeCalculation"
+                      value="mean"
+                      checked={formData.nodeCalculation !== 'true'}
+                      onChange={() => setFormData(p => ({ ...p, nodeCalculation: 'mean' }))}
+                      className="w-3.5 h-3.5 accent-amber-500 bg-slate-900 border-slate-700 cursor-pointer"
+                    />
+                    <span className="text-xs font-tamil text-slate-300 group-hover:text-amber-300 transition-colors">
+                      சராசரி (Mean Node)
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="nodeCalculation"
+                      value="true"
+                      checked={formData.nodeCalculation === 'true'}
+                      onChange={() => setFormData(p => ({ ...p, nodeCalculation: 'true' }))}
+                      className="w-3.5 h-3.5 accent-amber-500 bg-slate-900 border-slate-700 cursor-pointer"
+                    />
+                    <span className="text-xs font-tamil text-slate-300 group-hover:text-amber-300 transition-colors">
+                      உண்மை (True Node)
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button with Loading State */}
+            <div className="pt-3">
             <button
               type="submit"
               disabled={isGenerating}

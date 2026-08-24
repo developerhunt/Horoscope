@@ -18,7 +18,11 @@ import {
   Activity,
   Layers,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  TreePine,
+  Plane,
+  ShieldAlert,
+  GitBranch
 } from 'lucide-react';
 
 interface DSPredictionsDashboardProps {
@@ -27,7 +31,7 @@ interface DSPredictionsDashboardProps {
 
 const CATEGORY_TABS = [
   { id: 'all', label: 'அனைத்தும் (All)', icon: Layers },
-  { id: 'general', label: 'தசா லக்னம் (Dasa Lagna)', icon: Compass },
+  { id: 'general', label: 'லக்ன ஆய்வு (Lagna Analysis)', icon: Compass },
   { id: 'education', label: 'கல்வி & வித்யா (Education)', icon: GraduationCap },
   { id: 'marriage', label: 'திருமணம் (Marriage)', icon: Heart },
   { id: 'career', label: 'தொழில் & உத்தியோகம் (Career)', icon: Briefcase },
@@ -35,6 +39,9 @@ const CATEGORY_TABS = [
   { id: 'finance', label: 'தனம் & கடன் (Finance)', icon: Coins },
   { id: 'property', label: 'வீடு & வாகனம் (Property & Vehicle)', icon: Home },
   { id: 'health', label: 'உடல்நலம் (Health)', icon: Activity },
+  { id: 'agriculture', label: 'விவசாயம் & மண் (Agriculture)', icon: TreePine },
+  { id: 'travel', label: 'பயணம் & வெளிநாடு (Travel)', icon: Plane },
+  { id: 'body-parts', label: 'உடல் உறுப்பு ரகசியம் (Body Secrets)', icon: ShieldAlert },
   { id: 'rahu-ketu', label: 'ராகு-கேது அச்சு (Rahu-Ketu)', icon: Sparkles }
 ];
 
@@ -62,12 +69,22 @@ const PREDEFINED_QUESTIONS = [
   {
     q: 'பழைய கடன்கள் எப்போது தீரும்?',
     category: 'finance',
-    subtext: 'தசா லக்னத்திற்கு 6-ஆம் இடத்து கேது மற்றும் தன ஸ்தானம்'
+    subtext: 'தசா/புக்தி லக்னத்திற்கு 6-ஆம் இடத்து கேது மற்றும் தன ஸ்தானம்'
   },
   {
     q: 'குழந்தை பாக்கியம் மற்றும் பாலினம் எவ்வாறு அமையும்?',
     category: 'children',
     subtext: 'புத்திரகாரகன் குருவுடன் ராகு/கேது சேர்க்கை & 5-ஆம் அதிபதி'
+  },
+  {
+    q: 'விவசாய நிலம், தோட்டம் அமைத்தல் மற்றும் மண் வளம் எவ்வாறு இருக்கும்?',
+    category: 'agriculture',
+    subtext: 'ராசிகளின் கால்கள், சந்திரன்-சுக்கிரன் பலம் & மண் வள விதிகள் (DS-AGR)'
+  },
+  {
+    q: 'வெளியூர் / வெளிநாட்டு பயணம் மற்றும் வரன் எந்த திசையில் அமையும்?',
+    category: 'travel',
+    subtext: '12-ஆம் மறைவு ஸ்தானம், திசைகள் மற்றும் பிரயாண தூர விதி (DS-TRV)'
   }
 ];
 
@@ -76,18 +93,23 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
   const [expandedReasoning, setExpandedReasoning] = useState<Record<string, boolean>>({});
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
+  const [subLagnaMode, setSubLagnaMode] = useState<'dasa' | 'bhukti'>('dasa');
 
-  const dsPredictions = data.dsPredictions || {};
   const currentDasa = data.currentDasaBhukti?.dasaLord || 'குரு';
   const currentBhukti = data.currentDasaBhukti?.bhuktiLord || 'சுக்கிரன்';
   const dasaLagna = data.dsSystem?.dasaLagnaSign || data.basicDetails?.lagna || '';
+
+  // Determine active prediction map based on toggle
+  const activePredictionsMap = subLagnaMode === 'bhukti' && data.subLagnaPredictions
+    ? data.subLagnaPredictions
+    : data.dsPredictions || {};
 
   const toggleReasoning = (catKey: string) => {
     setExpandedReasoning(prev => ({ ...prev, [catKey]: !prev[catKey] }));
   };
 
   // Convert map to list
-  const predictionsList: DSPredictionItem[] = Object.values(dsPredictions);
+  const predictionsList: DSPredictionItem[] = Object.values(activePredictionsMap);
 
   const filteredPredictions = predictionsList.filter(item => {
     if (activeTab !== 'all' && item.category !== activeTab) return false;
@@ -106,14 +128,14 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
     <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-2xl text-slate-100 font-sans space-y-6">
       
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
               <Compass className="w-5 h-5" />
             </span>
             <h2 className="text-base sm:text-lg font-bold font-tamil text-amber-300">
-              D.S. Astro System • நூல்வழி தசாநாதன் லக்ன ஆய்வு
+              D.S. Astro System • நூல்வழி தசா / புக்தி லக்ன ஆய்வு
             </h2>
           </div>
           <p className="text-xs text-slate-400 font-tamil mt-1">
@@ -121,12 +143,43 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
           </p>
         </div>
 
-        {/* Current Core Snapshot Badge */}
-        <div className="flex items-center gap-2 bg-slate-950/80 border border-amber-900/50 px-3 py-1.5 rounded-xl text-xs font-tamil">
-          <span className="text-slate-400">நடப்பு தசா லக்னம்:</span>
-          <span className="text-amber-300 font-bold">{dasaLagna}</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-amber-400 font-medium">{currentDasa} திசை - {currentBhukti} புக்தி</span>
+        {/* Controls: Sub-Lagna Pivot Toggle & Current Dasa Snapshot */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Sub-Lagna Switcher (Dasa Lagna vs Bhukti Sub-Lagna) */}
+          <div className="bg-slate-950 border border-slate-700/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setSubLagnaMode('dasa')}
+              className={`px-3 py-1 rounded-lg text-xs font-tamil font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                subLagnaMode === 'dasa'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>தசா லக்னம் (Dasa Lagna)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSubLagnaMode('bhukti')}
+              className={`px-3 py-1 rounded-lg text-xs font-tamil font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                subLagnaMode === 'bhukti'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <GitBranch className="w-3.5 h-3.5" />
+              <span>புக்தி லக்னம் (Bhukti Sub-Lagna)</span>
+            </button>
+          </div>
+
+          {/* Current Core Snapshot Badge */}
+          <div className="flex items-center gap-2 bg-slate-950/80 border border-amber-900/50 px-3 py-1.5 rounded-xl text-xs font-tamil">
+            <span className="text-slate-400">மைய லக்னம்:</span>
+            <span className="text-amber-300 font-bold">{dasaLagna}</span>
+            <span className="text-slate-600">|</span>
+            <span className="text-amber-400 font-medium">{currentDasa} திசை - {currentBhukti} புக்தி</span>
+          </div>
         </div>
       </div>
 
@@ -140,7 +193,7 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
           <span className="text-[11px] text-slate-500 font-tamil">நூல் விதிகளின்படி துல்லிய பதில்</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {PREDEFINED_QUESTIONS.map((item, idx) => {
             const isSelected = selectedQuestion === item.q;
             return (
@@ -285,10 +338,10 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
                 {/* Matched Rules Citations from Book */}
                 {item.matchedRules && item.matchedRules.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[11px] text-slate-400 font-tamil flex items-center gap-1">
+                    <div className="text-[11px] text-slate-400 font-tamil flex items-center gap-1">
                       <BookOpen className="w-3 h-3 text-amber-400" />
                       <span>நூல் மேற்கோள்:</span>
-                    </span>
+                    </div>
                     {item.matchedRules.map((rule, rIdx) => (
                       <span
                         key={rIdx}
