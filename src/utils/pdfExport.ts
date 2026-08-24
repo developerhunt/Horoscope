@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 // Logical section IDs for 4 distinct pages
@@ -57,20 +57,39 @@ export async function exportToPdf(
     for (let i = 0; i < pageElements.length; i++) {
       const pageEl = pageElements[i];
 
-      // Capture single logical section cleanly
-      const canvas = await html2canvas(pageEl, {
-        scale: 2, // High resolution (300 DPI equivalent)
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
+      // Convert the specific page element to high-res JPEG using html-to-image
+      // This natively supports modern CSS like oklch(), aspect-square, grid fractions without errors
+      const imgData = await toJpeg(pageEl, {
+        quality: 0.95,
+        pixelRatio: 2,
         backgroundColor: '#FDF7E3',
-        ignoreElements: (element) => {
-          return (
-            element.getAttribute('data-html2canvas-ignore') === 'true' ||
-            element.classList.contains('no-print')
-          );
+        cacheBust: true,
+        fontEmbedCSS: '',
+        filter: (node: Node) => {
+          if (node.nodeType === 1) {
+            const el = node as HTMLElement;
+            if (
+              el.getAttribute('data-html2canvas-ignore') === 'true' ||
+              el.classList?.contains('no-print')
+            ) {
+              return false;
+            }
+          }
+          return true;
         }
       });
+
+      // Load image to determine native aspect ratio
+      const img = new Image();
+      img.src = imgData;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // continue even if error
+      });
+
+      const naturalWidth = img.naturalWidth || pageEl.offsetWidth || 800;
+      const naturalHeight = img.naturalHeight || pageEl.offsetHeight || 1100;
+      const canvasAspect = naturalWidth / naturalHeight;
 
       // Add new page for each section after the first
       if (pagesExported > 0) {
@@ -82,7 +101,6 @@ export async function exportToPdf(
       pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
 
       // Proportional dimension scaling to prevent any stretching
-      const canvasAspect = canvas.width / canvas.height;
       let targetWidth = printableWidth;
       let targetHeight = targetWidth / canvasAspect;
 
@@ -96,7 +114,6 @@ export async function exportToPdf(
       const posX = margin + (printableWidth - targetWidth) / 2;
       const posY = margin + (printableHeight - targetHeight) / 2;
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       pdf.addImage(imgData, 'JPEG', posX, posY, targetWidth, targetHeight, undefined, 'FAST');
 
       pagesExported++;
@@ -112,5 +129,3 @@ export async function exportToPdf(
     return false;
   }
 }
-
-
