@@ -74,20 +74,65 @@ export const RASI_SOIL_MAP: Record<number, { soil: string; nature: string; landT
   11: { soil: 'பாதி பலம் (Semi-fertile)', nature: 'நடை / 2 கால்கள்', landType: 'ஊர் / நீர்நிலை', crop: 'செடி' }
 };
 
-// 12 Rasis Body Anatomy Map (Book Page 12, 114-124)
-export const RASI_ANATOMY_MAP: Record<number, { organ: string; organEnglish: string; secretSignificance: string }> = {
-  0: { organ: 'தலை, முகம்', organEnglish: 'Head & Face', secretSignificance: 'ஆன்ம காரகம், மூளை இயக்கம், தலைமை குணம்' },
-  1: { organ: 'கழுத்து, தொண்டை', organEnglish: 'Neck & Throat', secretSignificance: 'குரல் வளம், தைராய்டு, உணவுப்பாதை' },
-  2: { organ: 'தோள்பட்டை, கைகள்', organEnglish: 'Shoulders & Arms', secretSignificance: 'நரம்பு இயக்கம், செயல் திறன், இளமை' },
-  3: { organ: 'மார்பகம், இதயம்', organEnglish: 'Chest & Breast', secretSignificance: 'தாய்ப்பால் சுரப்பு (சந்திரன்), மார்பக தசைப்பிடிப்பு' },
-  4: { organ: 'இதயம், முதுகுத்தண்டு', organEnglish: 'Heart & Spine', secretSignificance: 'ரத்த ஓட்டம், தண்டுவடம், பிடிவாதம்' },
-  5: { organ: 'வயிறு, இடுப்பு மேல் பகுதி', organEnglish: 'Upper Abdomen & Waist', secretSignificance: 'செரிமானம், இடுப்பு மச்சம் (கேது), கன்னி தன்மை' },
-  6: { organ: 'மர்ம உறுப்பு, பிறப்புறுப்பு, சிறுநீரகம்', organEnglish: 'Private Organs & Kidney', secretSignificance: 'காம உறைவிடம் (சுக்கிரன்), ராகு சேர்ந்தால் பெரிய உறுப்பு, கேது சேர்ந்தால் சிறிய உறுப்பு' },
-  7: { organ: 'ஆசனவாய், கழிவு உறுப்பு', organEnglish: 'Rectum & Excretory Organs', secretSignificance: 'மூலம்/பவுத்திரம் (சனி/செவ்வாய்), ரகசிய மறைவிட காம ஈடுபாடுகள்' },
-  8: { organ: 'தொடைகள், இடுப்பு மூட்டு', organEnglish: 'Thighs & Hip Joints', secretSignificance: 'குருவின் தசைப்பிடிப்பு, எலும்பு பலம்' },
-  9: { organ: 'முழங்கால்கள்', organEnglish: 'Knees', secretSignificance: 'சனி காரகம், மூட்டு இயக்கம், உடல் உழைப்பு' },
-  10: { organ: 'கணுக்கால், கால்கள்', organEnglish: 'Ankles & Lower Legs', secretSignificance: 'கால் நரம்புகள், ரத்த ஓட்டம், ஊனம்/வலி' },
-  11: { organ: 'பாதங்கள்', organEnglish: 'Feet', secretSignificance: 'மோட்ச ஸ்தானம், அயன சயன சுகம், தூக்கம்' }
+// 12 Rasis Body Anatomy Map & Gender-Aware Anatomy Resolver (Book Page 12, 114-124)
+export interface RasiAnatomyInfo {
+  organ: string;
+  organEnglish: string;
+  secretSignificance: string;
+}
+
+export function getRasiAnatomy(sign: number, gender: string = 'ஆண்'): RasiAnatomyInfo {
+  const isFemale = gender === 'பெண்' || gender?.toLowerCase() === 'female' || gender === 'f';
+
+  switch (sign) {
+    case 0: // மேஷம் (Aries)
+      return { organ: 'தலை, முகம்', organEnglish: 'Head & Face', secretSignificance: 'ஆன்ம காரகம், மூளை இயக்கம், தலைமை குணம்' };
+    case 1: // ரிஷபம் (Taurus)
+      return { organ: 'கழுத்து, தொண்டை', organEnglish: 'Neck & Throat', secretSignificance: 'குரல் வளம், தைராய்டு, உணவுப்பாதை' };
+    case 2: // மிதுனம் (Gemini)
+      return { organ: 'தோள்பட்டை, கைகள், சுவாசப்பை', organEnglish: 'Shoulders, Arms & Respiratory tract', secretSignificance: 'நரம்பு இயக்கம், செயல் திறன், இளமை' };
+    case 3: // கடகம் (Cancer)
+      return isFemale
+        ? { organ: 'மார்பகம், இதயம், கர்ப்பப்பை', organEnglish: 'Breast, Heart & Uterus', secretSignificance: 'தாய்ப்பால் சுரப்பு (சந்திரன்), மார்பக ஆரோக்கியம்' }
+        : { organ: 'மார்புப் பகுதி, இதயம், நுரையீரல்', organEnglish: 'Chest, Heart & Lungs', secretSignificance: 'உடல் சோர்வு, நெஞ்சு சளி, சுவாச பலம்' };
+    case 4: // சிம்மம் (Leo)
+      return { organ: 'இதயம், முதுகுத்தண்டு', organEnglish: 'Heart & Spine', secretSignificance: 'ரத்த ஓட்டம், தண்டுவடம், பிடிவாதம்' };
+    case 5: // கன்னி (Virgo)
+      return { organ: 'வயிறு, இடுப்பு மேல் பகுதி, குடல்', organEnglish: 'Upper Abdomen, Intestines & Waist', secretSignificance: 'செரிமானம், இடுப்பு மச்சம் (கேது), கன்னி தன்மை' };
+    case 6: // துலாம் (Libra)
+      return isFemale
+        ? { organ: 'சிறுநீரகம், மாதவிடாய்/கர்ப்பப்பை, மர்ம உறுப்பு', organEnglish: 'Kidneys, Private & Female Reproductive Organs', secretSignificance: 'காம உறைவிடம் (சுக்கிரன்), கர்ப்பப்பை நலம், ஹார்மோன் சமநிலை' }
+        : { organ: 'சிறுநீரகம், ஆண்மை உறுப்புகள், மர்ம உறுப்பு', organEnglish: 'Kidneys, Private & Male Reproductive Organs', secretSignificance: 'காம உறைவிடம் (சுக்கிரன்), ராகு/கேது சேர்க்கை பலன், சுக்கில வீரியம்' };
+    case 7: // விருச்சிகம் (Scorpio)
+      return isFemale
+        ? { organ: 'ஆசனவாய், கழிவு உறுப்பு, இடுப்பெலும்பு', organEnglish: 'Rectum, Excretory & Pelvic Organs', secretSignificance: 'மூலம்/பவுத்திரம் (சனி/செவ்வாய்), இடுப்பு மற்றும் ரகசிய மறைவிட உறுப்புகள்' }
+        : { organ: 'ஆசனவாய், கழிவு உறுப்பு, புரோஸ்டேட்', organEnglish: 'Rectum, Excretory & Pelvic Organs', secretSignificance: 'மூலம்/பவுத்திரம் (சனி/செவ்வாய்), ரகசிய மறைவிட உறுப்புகள்' };
+    case 8: // தனுசு (Sagittarius)
+      return { organ: 'தொடைகள், இடுப்பு மூட்டு', organEnglish: 'Thighs & Hip Joints', secretSignificance: 'குருவின் தசைப்பிடிப்பு, எலும்பு பலம்' };
+    case 9: // மகரம் (Capricorn)
+      return { organ: 'முழங்கால்கள்', organEnglish: 'Knees', secretSignificance: 'சனி காரகம், மூட்டு இயக்கம், உடல் உழைப்பு' };
+    case 10: // கும்பம் (Aquarius)
+      return { organ: 'கணுக்கால், கால்கள்', organEnglish: 'Ankles & Lower Legs', secretSignificance: 'கால் நரம்புகள், ரத்த ஓட்டம், ஊனம்/வலி' };
+    case 11: // மீனம் (Pisces)
+      return { organ: 'பாதங்கள்', organEnglish: 'Feet', secretSignificance: 'மோட்ச ஸ்தானம், அயன சயன சுகம், தூக்கம்' };
+    default:
+      return { organ: 'பொதுவான உடல் உறுப்பு', organEnglish: 'General Anatomy', secretSignificance: 'ஆரோக்கிய பராமரிப்பு' };
+  }
+}
+
+export const RASI_ANATOMY_MAP: Record<number, RasiAnatomyInfo> = {
+  0: getRasiAnatomy(0, 'ஆண்'),
+  1: getRasiAnatomy(1, 'ஆண்'),
+  2: getRasiAnatomy(2, 'ஆண்'),
+  3: getRasiAnatomy(3, 'ஆண்'),
+  4: getRasiAnatomy(4, 'ஆண்'),
+  5: getRasiAnatomy(5, 'ஆண்'),
+  6: getRasiAnatomy(6, 'ஆண்'),
+  7: getRasiAnatomy(7, 'ஆண்'),
+  8: getRasiAnatomy(8, 'ஆண்'),
+  9: getRasiAnatomy(9, 'ஆண்'),
+  10: getRasiAnatomy(10, 'ஆண்'),
+  11: getRasiAnatomy(11, 'ஆண்')
 };
 
 // Directional Rules for Travel & Spouse Place (Book Page 13)
@@ -372,7 +417,7 @@ export function evaluatePremiumChart(
   const isFemale = gender === 'பெண்' || gender?.toLowerCase() === 'female' || gender === 'f';
   const isMale = !isFemale;
 
-  const anatomyData = RASI_ANATOMY_MAP[activeLagna];
+  const anatomyData = getRasiAnatomy(activeLagna, isFemale ? 'பெண்' : 'ஆண்');
   const lord6Name = SIGN_LORDS[house6Sign];
   const lord6Obj = getP(lord6Name);
 
