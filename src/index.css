@@ -57,7 +57,7 @@
     padding: 0 !important;
     margin: 0 !important;
   }
-  .no-print {
+  .no-print, .privacy-hide-print, #pred-intimacy {
     display: none !important;
   }
   .print-only-page {
@@ -70,6 +70,12 @@
     page-break-before: always !important;
     break-before: page !important;
   }
+}
+
+/* During PDF generation state */
+body.pdf-generating .privacy-hide-print,
+body.pdf-generating #pred-intimacy {
+  display: none !important;
 }
 
 

@@ -2267,7 +2267,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     dasaTimelines,
     input.gender,
     'dasa',
-    userAge
+    userAge,
+    input.dob
   );
 
   const subLagnaPredictions = evaluatePremiumChart(
@@ -2277,7 +2278,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     dasaTimelines,
     input.gender,
     'bhukti',
-    userAge
+    userAge,
+    input.dob
   );
 
   // 13. Advanced Master Calculations (Phase 4 & 5)

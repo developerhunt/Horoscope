@@ -1,5 +1,5 @@
 import React from 'react';
-import { HoroscopeData } from '../types';
+import { HoroscopeData, DSPredictionItem } from '../types';
 import { SouthIndianChart } from './SouthIndianChart';
 import { PlanetaryTable } from './PlanetaryTable';
 import { DSPredictionsDashboard } from './DSPredictionsDashboard';
@@ -8,7 +8,7 @@ import { JaiminiTable } from './JaiminiTable';
 import { AshtakavargaTable } from './AshtakavargaTable';
 import { UpagrahasCard } from './UpagrahasCard';
 import { DivisionalChartsGrid } from './DivisionalChartsGrid';
-import { Download, Compass, ShieldCheck, Orbit, Sparkles } from 'lucide-react';
+import { Download, Compass, ShieldCheck, Orbit, Sparkles, BookOpen, Clock } from 'lucide-react';
 
 interface JathagamLayoutProps {
   data: HoroscopeData;
@@ -38,8 +38,14 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
     ashtakavarga,
     shadbala,
     jaiminiKarakas,
-    upagrahas
+    upagrahas,
+    dsPredictions
   } = data;
+
+  // Filter out 'intimacy' from PDF-rendered prediction cards for family privacy
+  const printableDSPredictions: DSPredictionItem[] = dsPredictions
+    ? (Object.values(dsPredictions) as DSPredictionItem[]).filter(item => item && item.category !== 'intimacy')
+    : [];
 
   return (
     <div className="w-full flex flex-col items-center py-4 px-2">
@@ -55,7 +61,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
               முழுமையான திருக்கணித ஜாதக அறிக்கை (Full Multi-Page Vedic Report)
             </h2>
             <p className="text-[11px] text-slate-400 font-sans">
-              அனைத்து வர்க்க சக்கரங்கள், அஷ்டகவர்க்கம், ஷட்பலம், ஜைமினி & பலன்கள் அடங்கியது
+              A4 அச்சு வடிவில் 4 பக்கங்கள்: கட்டங்கள், வர்க்கங்கள், அஷ்டகவர்க்கம், ஷட்பலம் & D.S. ஆஸ்ட்ரோ பலன்கள்
             </p>
           </div>
         </div>
@@ -68,7 +74,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
             className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm rounded-lg shadow-md flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
           >
             <Download className="w-4 h-4 text-slate-950" />
-            <span>{isDownloadingPdf ? 'PDF தயாராகிறது...' : 'முழு ஜாதகம் PDF Download'}</span>
+            <span>{isDownloadingPdf ? 'PDF தயாராகிறது...' : 'முழு ஜாதகம் PDF Download (A4)'}</span>
           </button>
         )}
       </div>
@@ -304,11 +310,11 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
         <div className="page-break w-full my-2 border-b border-dashed border-slate-700/50 no-print" />
 
         {/* ========================================================================= */}
-        {/* PAGE 4: JAIMINI KARAKAS & UPAGRAHAS */}
+        {/* PAGE 4: JAIMINI, UPAGRAHAS & D.S. ASTRO SYSTEM PREDICTIONS */}
         {/* ========================================================================= */}
         <div
           id="a4-jathagam-sheet-page-4"
-          className="w-full bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-4 sm:p-6 font-tamil leading-relaxed select-text space-y-4"
+          className="w-full bg-[#FDF7E3] text-neutral-900 border-2 border-neutral-900 shadow-2xl p-4 sm:p-6 font-tamil leading-relaxed select-text space-y-3.5"
           style={{ boxSizing: 'border-box' }}
         >
           {/* Header Title for Page 4 */}
@@ -318,7 +324,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
             </div>
             <div className="inline-block border border-neutral-900 bg-[#F7EED5] px-4 py-0.5 shadow-xs">
               <h2 className="text-xs sm:text-sm font-bold text-neutral-950 tracking-wider">
-                ஜைமினி காரகங்கள் & உபகிரகங்கள் (Jaimini Karakas & Upagrahas)
+                ஜைமினி, உபகிரகங்கள் & D.S. ஆஸ்ட்ரோ சிறப்புப் பலன்கள் (Vedic Predictions)
               </h2>
             </div>
           </div>
@@ -334,10 +340,52 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
             upagrahas={upagrahas}
             id="upagrahas-module"
           />
+
+          {/* Concise Printable D.S. Predictions Summary (Filtered for Family Privacy - No Intimacy) */}
+          {printableDSPredictions.length > 0 && (
+            <div className="border border-neutral-900 bg-[#FFFDF7] p-2.5 space-y-2 shadow-xs">
+              <div className="bg-[#EFE6CE] text-center font-bold py-0.5 border-b border-neutral-900 text-[10.5px] text-neutral-950 flex items-center justify-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-900" />
+                <span>D.S. ஆஸ்ட்ரோ சிஸ்டம் முதன்மைப் பலன்கள் (Key Predictions Summary)</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                {printableDSPredictions.slice(0, 6).map((pred, pIdx) => (
+                  <div
+                    key={pIdx}
+                    className="p-2 border border-neutral-300 bg-[#FAF3DE] rounded-xs space-y-1"
+                  >
+                    <div className="font-bold text-neutral-950 flex items-center justify-between border-b border-neutral-300/80 pb-0.5">
+                      <span>✦ {pred.title}</span>
+                      {pred.timing && (
+                        <span className="text-[9px] font-mono text-amber-900 bg-amber-100/80 px-1 rounded">
+                          {pred.timing.dasa} / {pred.timing.bhukti}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-neutral-800 text-[9.5px] leading-snug line-clamp-3">
+                      {pred.summary}
+                    </p>
+                    {pred.matchedRules && pred.matchedRules.length > 0 && (
+                      <div className="text-[8.5px] text-neutral-600 font-mono flex items-center gap-1 pt-0.5">
+                        <BookOpen className="w-2.5 h-2.5 text-neutral-500" />
+                        <span>விதி: {pred.matchedRules[0].ruleId} (பக்கம் {pred.matchedRules[0].sourcePage})</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Footnote on Page 4 */}
+          <div className="text-[9px] text-center text-neutral-600 border-t border-neutral-400 pt-1.5">
+            D.S. ஆஸ்ட்ரோ சிஸ்டம் • தசாநாதன் லக்னம் & 131 பக்க மூலநூல் கணிதம் • அய்யன் ஆஸ்ட்ரோ அகாடமி, மதுரை
+          </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* D.S. ASTRO SYSTEM & PREDICTIONS (EXCLUDED FROM PDF EXPORT) */}
+        {/* D.S. ASTRO SYSTEM & INTERACTIVE DASHBOARD (UI ONLY, SCREEN INTERACTION) */}
         {/* ========================================================================= */}
         <div
           data-html2canvas-ignore="true"
@@ -475,7 +523,7 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
             </div>
           )}
 
-          {/* D.S. Astro System Comprehensive Rules & Predictions Dashboard */}
+          {/* D.S. Astro System Comprehensive Interactive Dashboard */}
           <div className="w-full">
             <DSPredictionsDashboard data={data} />
           </div>
@@ -487,4 +535,3 @@ export const JathagamLayout: React.FC<JathagamLayoutProps> = ({
     </div>
   );
 };
-

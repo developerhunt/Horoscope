@@ -133,14 +133,19 @@ export function isDusthana(fromSign: number, toSign: number): boolean {
 }
 
 /**
- * DETERMINISTIC TIMING CORRELATOR
+ * DETERMINISTIC TIMING CORRELATOR (LIFE-STAGE & HISTORICAL AWARE)
  * Scans user's Dasa-Bhukti timeline and pins the exact month/year when a rule activates.
+ * If userDob and [targetAgeStart, targetAgeEnd] are provided, it first checks the historical
+ * or designated age window to locate when the event historically took place or will take place.
  */
 export function correlateTiming(
   dasaTimelines: DasaTimeline[] | undefined,
   targetPlanets: string[],
   currentDasaLord: string,
-  currentBhuktiLord: string
+  currentBhuktiLord: string,
+  userDob?: string,
+  targetAgeStart?: number,
+  targetAgeEnd?: number
 ): DSPredictionTiming {
   if (!dasaTimelines || dasaTimelines.length === 0) {
     return {
@@ -152,13 +157,59 @@ export function correlateTiming(
 
   const now = new Date();
 
-  // Search forward from current or upcoming bhuktis
+  // Helper to calculate user's age at a specific date
+  let birthDate: Date | null = null;
+  if (userDob) {
+    const parts = userDob.includes('-') ? userDob.split('-') : userDob.split('/');
+    if (parts.length >= 3) {
+      birthDate = parts[0].length === 4
+        ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+        : new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+  }
+
+  // 1. AGE WINDOW SEARCH (Historical or Future window scan e.g., marriage between 23 and 36)
+  if (birthDate && targetAgeStart !== undefined && targetAgeEnd !== undefined) {
+    for (const dasa of dasaTimelines) {
+      if (dasa.bhuktis && dasa.bhuktis.length > 0) {
+        for (const bhukti of dasa.bhuktis) {
+          const bStart = new Date(bhukti.startDate);
+          const bEnd = new Date(bhukti.endDate);
+
+          // Age during bhukti
+          const ageAtStart = (bStart.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+          const ageAtEnd = (bEnd.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+
+          // Check if bhukti overlaps target age window
+          const ageOverlaps = ageAtEnd >= targetAgeStart && ageAtStart <= targetAgeEnd;
+
+          if (ageOverlaps) {
+            const matches = targetPlanets.some(
+              p => bhukti.bhuktiLord.includes(p) || p.includes(bhukti.bhuktiLord) || dasa.dasaLord.includes(p)
+            );
+            if (matches) {
+              const startStr = formatDateTamilMonthYear(bhukti.startDate);
+              const endStr = formatDateTamilMonthYear(bhukti.endDate);
+              return {
+                dasa: dasa.dasaLord,
+                bhukti: bhukti.bhuktiLord,
+                startDate: bhukti.startDate,
+                endDate: bhukti.endDate,
+                window: `${startStr} முதல் ${endStr} வரை (${dasa.dasaLord} தசையில் ${bhukti.bhuktiLord} புக்தி)`
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 2. FORWARD SEARCH (From current or upcoming bhuktis)
   for (const dasa of dasaTimelines) {
     if (dasa.bhuktis && dasa.bhuktis.length > 0) {
       for (const bhukti of dasa.bhuktis) {
         const endD = new Date(bhukti.endDate);
         if (endD >= now) {
-          // Check if bhukti lord or dasa lord matches target planets
           const matches = targetPlanets.some(
             p => bhukti.bhuktiLord.includes(p) || p.includes(bhukti.bhuktiLord) || dasa.dasaLord.includes(p)
           );
@@ -210,7 +261,8 @@ export function evaluatePremiumChart(
   dasaTimelines?: DasaTimeline[],
   gender: string = 'ஆண்',
   mode: 'dasa' | 'bhukti' = 'dasa',
-  age: number = 30
+  age: number = 30,
+  userDob?: string
 ): Record<string, DSPredictionItem> {
   const getP = (name: string): DSPlanetPosition | undefined =>
     positions.find(p => p.name === name || p.name.includes(name));
@@ -445,55 +497,172 @@ export function evaluatePremiumChart(
   };
 
   // ----------------------------------------------------------------------------------------
-  // 5. MARRIAGE & TIMING (திருமணம், மங்களகாரகன் செவ்வாய் & வரன் காலம் - Pages 21-35)
+  // 5. MARRIAGE, TIMING & MARITAL HARMONY (100% CHART & TIMELINE DRIVEN - Pages 21-35)
   // ----------------------------------------------------------------------------------------
-  if (age >= 15 && age < 70) {
+  if (age >= 16) {
     const lord7Sign = (activeLagna + 6) % 12;
     const lord2Sign = (activeLagna + 1) % 12;
+    const lord6Sign = (activeLagna + 5) % 12;
+    const lord8Sign = (activeLagna + 7) % 12;
     const lord7Name = SIGN_LORDS[lord7Sign];
     const lord2Name = SIGN_LORDS[lord2Sign];
+    const lord6Name = SIGN_LORDS[lord6Sign];
+    const lord8Name = SIGN_LORDS[lord8Sign];
     const lord12Name = SIGN_LORDS[house12Sign];
 
-    const isMarsAfflicted = mars && saturn && checkPlanetaryAspect(saturn.sign, mars.sign, 'சனி');
+    const lord7Obj = getP(lord7Name);
+    const lord2Obj = getP(lord2Name);
+    const lord6Obj = getP(lord6Name);
+    const lord8Obj = getP(lord8Name);
+
+    // Rule A: DENIAL (திருமணமே இல்லை / கடுமையான தடை - Pages 21-25)
+    // Check if Mars is in Paapakarthari Yoga (trapped between Saturn and Ketu), AND Venus is debilitated (Virgo/Kanni = 5) or heavily afflicted.
+    let isMarsInPaapakarthari = false;
+    if (mars && saturn && ketu) {
+      const marsSign = mars.sign;
+      const prevSign = (marsSign + 11) % 12;
+      const nextSign = (marsSign + 1) % 12;
+      const isSurrounded = (saturn.sign === prevSign && ketu.sign === nextSign) ||
+                           (ketu.sign === prevSign && saturn.sign === nextSign) ||
+                           (saturn.sign === marsSign && ketu.sign === marsSign);
+      if (isSurrounded) isMarsInPaapakarthari = true;
+    }
+    const isVenusDebilitated = venus ? venus.sign === 5 : false; // Virgo (கன்னி)
+    const isVenusDusthana = venus ? isDusthana(activeLagna, venus.sign) : false;
+    const isMarriageDenial = (isMarsInPaapakarthari && isVenusDebilitated) ||
+                             (isMarsInPaapakarthari && isVenusDusthana && lord7Obj && isDusthana(activeLagna, lord7Obj.sign));
+
+    // Rule B: DELAY (திருமண தாமதம் - 30 முதல் 35+ வயதிற்கு மேல் - Pages 22-26)
+    // Check if Saturn aspects Mars, or Mars is conjunct Ketu / Mandi (8th/12th contact).
+    const isSaturnAspectingMars = (saturn && mars) ? checkPlanetaryAspect(saturn.sign, mars.sign, 'சனி') : false;
+    const isMarsConjunctKetu = (mars && ketu) ? mars.sign === ketu.sign : false;
+    const isMarsInDusthana = mars ? isDusthana(activeLagna, mars.sign) : false;
+    const isMarriageDelayed = (isSaturnAspectingMars || isMarsConjunctKetu || isMarsInDusthana) && !isMarriageDenial;
+
+    // Rule C: SEPARATION / DIVORCE (குடும்ப பிரிவினை / மனஸ்தாபம் - Pages 27-31)
+    // Check if 2nd Lord is conjunct 6th/8th Lord AND Ketu
+    let isSeparationIndicated = false;
+    if (lord2Obj && ketu && lord2Obj.sign === ketu.sign) {
+      if ((lord6Obj && lord2Obj.sign === lord6Obj.sign) || (lord8Obj && lord2Obj.sign === lord8Obj.sign)) {
+        isSeparationIndicated = true;
+      }
+    }
+    // Also check 7th lord in 6/8 with Ketu
+    if (lord7Obj && ketu && lord7Obj.sign === ketu.sign && [lord6Sign, lord8Sign].includes(lord7Obj.sign)) {
+      isSeparationIndicated = true;
+    }
+
+    // Rule D: LOVE & INTER-COMMUNITY (காதல் மற்றும் கலப்பு மணம் - Pages 28-30)
     const isLoveMarriage = mercury && (mercury.sign === lord7Sign || mercury.sign === (activeLagna + 4) % 12);
     const isInterCaste = (rahu && [lord2Sign, lord7Sign].includes(rahu.sign)) || (ketu && [lord2Sign, lord7Sign].includes(ketu.sign));
 
-    let marSummary = `மங்களகாரகன் செவ்வாய் மற்றும் 7-ஆம் அதிபதி ${lord7Name} சுப பலம் பெற்றுள்ளதால், குடும்ப வாழ்க்கையும் தாம்பத்திய பந்தமும் நன்முறையில் அமையும்.`;
-    let marStatus: DSPredictionItem['status'] = 'strong_indication';
+    // Rule E: LIFE-STAGE AWARE HISTORICAL & FUTURE TIMELINE SCAN
+    // Target planets that trigger marriage: 7th lord, Venus, Mars (Mangalakaraka), 2nd lord, 12th lord, Rahu, Jupiter
+    const marriageTriggerPlanets = ['செவ்வாய்', lord7Name, lord2Name, lord12Name, 'சுக்கிரன்', 'குரு', 'ராகு'];
+    const now = new Date();
 
-    if (isMarsAfflicted) {
-      marSummary = 'செவ்வாய் மீது சனியின் பார்வை அல்லது தொடர்பு உள்ளதால், முறையான காலாகாலத்தில் வரன் தேடி 28-30 வயதுக்கு மேல் திருமணம் முடிப்பது நலம்.';
-      marStatus = 'caution';
-    } else if (isLoveMarriage) {
-      marSummary = 'காதல் கிரகம் புதன் மற்றும் 5, 7-ஆம் அதிபதிகளின் திரிகோண தொடர்பால் சுப காதல் திருமணம் கைகூடும் அமைப்பு உள்ளது.';
-    }
+    // Standard Vedic marriage age window (24 to 35 years)
+    const targetAgeStart = 24;
+    const targetAgeEnd = 35;
 
+    // Use life-stage aware correlateTiming with historical age window
     const marTiming = correlateTiming(
       dasaTimelines,
-      ['செவ்வாய்', lord7Name, lord2Name, lord12Name, 'சுக்கிரன்', 'ராகு'],
+      marriageTriggerPlanets,
       currentDasaLord,
-      currentBhuktiLord
+      currentBhuktiLord,
+      userDob,
+      targetAgeStart,
+      targetAgeEnd
     );
 
-    results['marriage'] = {
-      category: 'marriage',
-      title: 'திருமணம், தாம்பத்திய பந்தம் & கால நிர்ணயம் (Marriage & Timing)',
-      status: marStatus,
-      summary: `${marSummary} திருமணம் நடைபெறும் உத்தேச காலம்: ${marTiming.window}.`,
-      signals: [
-        `களத்திர ஸ்தானாதிபதி: ${lord7Name} (${SIGN_NAMES_TAMIL[lord7Sign]})`,
-        `மங்களகாரகன் செவ்வாய் நிலை: ${mars ? SIGN_NAMES_TAMIL[mars.sign] : 'சுப பலம்'}`,
-        isLoveMarriage ? 'காதல் திருமண யோகம்: புதன் + 5, 7 அதிபதிகள் தொடர்பு' : 'பெற்றோர் சம்மதத்துடன் கூடிய சுப விவாக யோகம்',
-        isInterCaste ? 'மாற்று மதம்/வகுப்பு தொடர்பு யோகம்: 2/7-ல் ராகு/கேது சேர்க்கை' : 'குடும்பப் பாரம்பரிய முறைப்படியான வரன்'
-      ],
-      obstructions: isMarsAfflicted ? ['செவ்வாய் மீது சனியின் பார்வை இருப்பதால் திருமணத்தில் அவசரம் தவிர்த்து தகுந்த பொருத்தம் பார்க்கவும்'] : [],
-      timing: marTiming,
-      matchedRules: [
+    // Evaluate whether the identified marriage window is in the past or future
+    const isHistoricalMarriage = marTiming.endDate ? new Date(marTiming.endDate) < now : false;
+
+    let marTitle = 'திருமணம், தாம்பத்திய பந்தம் & கால நிர்ணயம் (Marriage & Timing)';
+    let marStatus: DSPredictionItem['status'] = 'strong_indication';
+    let marSummary = '';
+    const marSignals: string[] = [];
+    const marObstructions: string[] = [];
+    const matchedRules: DSPredictionRuleMatch[] = [];
+
+    // Construct Prediction based on exact Chart Combinations & Life-Stage Timeline
+    if (isMarriageDenial) {
+      marTitle = 'திருமண அமைப்பு & கிரக தோஷ ஆய்வு (Marriage Denial / Severe Affliction)';
+      marStatus = 'caution';
+      marSummary = 'மங்களகாரகன் செவ்வாய் சனி-கேது பாபகர்த்தாரி யோகத்தில் சிக்கி, சுக்கிரனும் பலவீனமடைந்துள்ளதால் திருமண அமைப்பில் கடுமையான தோஷம் உள்ளது. பெரும்பாலும் திருமணம் அமைவது கடினம் அல்லது ஆன்மீக நாட்டம் அதிகம் இருக்கும்.';
+      marSignals.push('செவ்வாய் பாபகர்த்தாரி யோகம்: சனி மற்றும் கேதுவின் பிடியில் செவ்வாய்');
+      marSignals.push(`சுக்கிரன் நிலை: ${venus ? (isVenusDebilitated ? 'கன்னியில் நீசம்' : 'மறைவு ஸ்தானம்') : 'பலவீனம்'}`);
+      marObstructions.push('களத்திர தோஷ நிவர்த்தி பரிகாரங்கள் மற்றும் குலதெய்வ வழிபாடு இன்றி அவசரப்பட்டு வரன் முடிவு செய்வதைத் தவிர்க்கவும்');
+      matchedRules.push(
+        { ruleId: 'DS-MAR-009', title: 'திருமணமே அமையாத பாபகர்த்தாரி யோக ரகசியம்', sourcePage: 25, section: 'திருமணத் தடை' },
+        { ruleId: 'DS-MAR-001', title: 'செவ்வாய் மங்களகாரகனை வைத்தே திருமணம் அறிதல்', sourcePage: 22, section: 'மங்களகாரகன்' }
+      );
+    } else if (isSeparationIndicated) {
+      marTitle = 'குடும்ப ஒற்றுமை & தம்பதியர் பந்தம் (Marital Harmony & Caution)';
+      marStatus = 'caution';
+      marSummary = `குடும்ப ஸ்தானாதிபதி ${lord2Name} உடன் கேது மற்றும் 6/8-ஆம் அதிபதிகள் தொடர்பால் குடும்பப் பிரிவினை, கருத்து வேறுபாடு அல்லது சட்ட ரீதியான சிக்கல்கள் ஏற்படலாம். பரஸ்பர விட்டுக்கொடுத்தல் மிக அவசியம்.`;
+      marSignals.push(`2-ஆம் குடும்ப ஸ்தானாதிபதி: ${lord2Name} + கேது + துஸ்தான தொடர்பு`);
+      marSignals.push('மனஸ்தாபங்களை வளர்க்காமல் குடும்பப் பெரியவர்களின் ஆலோசனையைப் பெறுவது நலம்');
+      marObstructions.push('கோபமான பேச்சு மற்றும் ஈகோ மோதல்களைத் தவிர்ப்பது இல்லற அமைதியைக் காக்கும்');
+      matchedRules.push(
+        { ruleId: 'DS-MAR-008', title: 'குடும்பப் பிரிவினை & விவாகரத்து சூத்திரங்கள்', sourcePage: 27, section: 'பிரிவினை' },
+        { ruleId: 'DS-MAR-003', title: 'எந்த தசா புத்தியில் குடும்ப அமைதி பாதிக்கும்', sourcePage: 24, section: 'புத்தி காலங்கள்' }
+      );
+    } else if (isMarriageDelayed && !isHistoricalMarriage) {
+      marTitle = 'திருமண தாமத யோகம் & வரன் காலம் (Delayed Marriage & Timing)';
+      marStatus = 'caution';
+      marSummary = `செவ்வாய் மீது சனி பார்வை அல்லது கேது/மறைவு தொடர்பு உள்ளதால் திருமணம் தாமதத்திற்குப் பிறகே (30 முதல் 35+ வயதிற்கு மேல்) நன்முறையில் நடக்கும். உங்களுக்கு திருமணம் நடைபெறும் உத்தேச காலம்: ${marTiming.window}.`;
+      marSignals.push('செவ்வாய்-சனி பார்வை அல்லது கேது தொடர்பு: திருமணம் தாமத அமைப்பு');
+      marSignals.push(`7-ஆம் களத்திர ஸ்தானாதிபதி: ${lord7Name} (${SIGN_NAMES_TAMIL[lord7Sign]})`);
+      if (isLoveMarriage) marSignals.push('காதல் திருமண யோகம்: புதன் + 5, 7 அதிபதிகள் தொடர்பு');
+      if (isInterCaste) marSignals.push('மாற்று மதம்/வகுப்பு தொடர்பு: 2/7-ல் ராகு/கேது சேர்க்கை');
+      marObstructions.push('திருமணத்தில் அவசரம் தவிர்த்து 30 வயதிற்குப் பின் தகுந்த ஜாதகப் பொருத்தம் பார்த்து வரன் முடிப்பது நலம்');
+      matchedRules.push(
+        { ruleId: 'DS-MAR-005', title: 'செவ்வாய் மீது சனி பார்வை - திருமண தாமத ரகசியம்', sourcePage: 23, section: 'தாமத திருமணம்' },
+        { ruleId: 'DS-MAR-002', title: 'திருமணம் எப்போது நடக்கும் சூத்திரம் (12-ஆம் அதிபதி)', sourcePage: 23, section: 'சூத்திரம்' }
+      );
+    } else if (isHistoricalMarriage) {
+      // Historical Marriage in Past
+      marTitle = 'தாம்பத்திய வாழ்க்கை & குடும்ப ஒற்றுமை (Marital Harmony & Spousal Bond)';
+      marStatus = 'favorable';
+      marSummary = `உங்கள் ஜாதகப்படி, கடந்த ${marTiming.window} காலகட்டத்தில் திருமணம் நடந்திருக்க வாய்ப்புள்ளது. தற்போது தாம்பத்திய மற்றும் குடும்ப உறவுகள் பற்றிய பலன்கள்: களத்திர ஸ்தானாதிபதி ${lord7Name} மற்றும் மங்களகாரகன் செவ்வாய் சுப பலம் பெற்றுள்ளதால் இல்லற வாழ்க்கையும் தம்பதியர் ஒற்றுமையும் நீடிக்கும்.`;
+      marSignals.push(`திருமணம் நடந்த உத்தேச காலம்: ${marTiming.window}`);
+      marSignals.push(`7-ஆம் களத்திர அதிபதி: ${lord7Name} (${SIGN_NAMES_TAMIL[lord7Sign]})`);
+      marSignals.push(`மங்களகாரகன் செவ்வாய்: ${mars ? SIGN_NAMES_TAMIL[mars.sign] : 'சுப பலம்'}`);
+      if (isMarriageDelayed) marSignals.push('கிரக நிலைகளின்படி திருமண தாமத யோகம் கடந்து சுப வாழ்க்கை அமைந்த அமைப்பு');
+      marSignals.push('குடும்ப வளர்ச்சி மற்றும் சுப காரியங்கள் தடையின்றி நடக்கும்');
+      matchedRules.push(
+        { ruleId: 'DS-MAR-001', title: 'செவ்வாய் மங்களகாரகனை வைத்தே திருமணம் அறிதல்', sourcePage: 22, section: 'திருமணம்' },
+        { ruleId: 'DS-MAR-004', title: 'தாம்பத்திய சுகமும் குடும்ப ஸ்தான வலிமையும்', sourcePage: 26, section: 'குடும்ப சுகம்' }
+      );
+    } else {
+      // Future Unmarried Prospects
+      marTitle = 'திருமணம் & வரன் அமையும் காலம் (Marriage Prospects & Timing)';
+      marStatus = 'strong_indication';
+      marSummary = `மங்களகாரகன் செவ்வாய் மற்றும் 7-ஆம் அதிபதி ${lord7Name} சுப பலம் பெற்றுள்ளதால், குடும்ப வாழ்க்கையும் தாம்பத்திய பந்தமும் நன்முறையில் அமையும். உங்களுக்கு திருமணம் நடைபெறும் உத்தேச காலம்: ${marTiming.window}.`;
+      marSignals.push(`7-ஆம் களத்திர அதிபதி: ${lord7Name} (${SIGN_NAMES_TAMIL[lord7Sign]})`);
+      marSignals.push(`மங்களகாரகன் செவ்வாய்: ${mars ? SIGN_NAMES_TAMIL[mars.sign] : 'சுப பலம்'}`);
+      if (isLoveMarriage) marSignals.push('காதல் திருமண யோகம்: புதன் + 5, 7 அதிபதிகள் தொடர்பு');
+      else marSignals.push('பெற்றோர் சம்மதத்துடன் கூடிய சுப விவாக யோகம்');
+      if (isInterCaste) marSignals.push('மாற்று மதம்/வகுப்பு தொடர்பு யோகம்: 2/7-ல் ராகு/கேது சேர்க்கை');
+      matchedRules.push(
         { ruleId: 'DS-MAR-001', title: 'செவ்வாய் மங்களகாரகனை வைத்தே திருமணம் அறிதல்', sourcePage: 22, section: 'திருமணம்' },
         { ruleId: 'DS-MAR-002', title: 'திருமணம் எப்போது நடக்கும் சூத்திரம் (12-ஆம் அதிபதி)', sourcePage: 23, section: 'சூத்திரம்' },
         { ruleId: 'DS-MAR-003', title: 'எந்த தசா புத்தியில் திருமணம் நடக்கும் எளிய வழி', sourcePage: 24, section: 'புத்தி காலங்கள்' }
-      ],
-      reasoning: `நூலின் 21-30 பக்கங்களின்படி மங்களகாரகன் செவ்வாய், தசாநாதனுக்கு 12-ஆம் அதிபதி மற்றும் புத்திநாதனுக்கு 12-ஆம் அதிபதி இணைவு பெற்று விவாக காலத்தை துல்லியமாக நிர்ணயிக்கிறது.`
+      );
+    }
+
+    results['marriage'] = {
+      category: 'marriage',
+      title: marTitle,
+      status: marStatus,
+      summary: marSummary,
+      signals: marSignals,
+      obstructions: marObstructions,
+      timing: marTiming,
+      matchedRules: matchedRules,
+      reasoning: `நூலின் 21-35 பக்கங்களின்படி மங்களகாரகன் செவ்வாய் மீதான சனி/கேது சேர்க்கை பார்வைகள், 2/7-ஆம் பாவக தொடர்புகள் மற்றும் தசா-புத்தி கால வரிசை அடிப்படையில் திருமண பலன்கள் மற்றும் நிலை துல்லியமாக பகுப்பாய்வு செய்யப்பட்டது.`
     };
   }
 

@@ -474,7 +474,9 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
               <div
                 key={item.category}
                 id={`pred-${item.category}`}
-                className={`border rounded-2xl p-4 sm:p-6 space-y-4 shadow-xl transition-all hover:border-slate-700 ${cardBorderClass}`}
+                className={`border rounded-2xl p-4 sm:p-6 space-y-4 shadow-xl transition-all hover:border-slate-700 ${
+                  item.category === 'intimacy' ? 'privacy-hide-print' : ''
+                } ${cardBorderClass}`}
               >
                 
                 {/* 1. Header: Title, Category Badge & Status Badge */}
