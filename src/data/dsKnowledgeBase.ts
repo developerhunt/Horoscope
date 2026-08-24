@@ -271,6 +271,7 @@ export function evaluatePremiumChart(
   const house12Sign = (activeLagna + 11) % 12;
   const house8Sign = (activeLagna + 7) % 12;
   const house6Sign = (activeLagna + 5) % 12;
+  const house4Sign = (activeLagna + 3) % 12;
   const house3Sign = (activeLagna + 2) % 12;
 
   const isDispositorHidden = activeDispositorObj && [house3Sign, house6Sign, house8Sign, house12Sign].includes(activeDispositorObj.sign);
@@ -312,41 +313,91 @@ export function evaluatePremiumChart(
   };
 
   // ----------------------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------------------
   // 3. ANATOMY & BODY HEALTH (உடல் உறுப்புகள் & நோய்கள் - Pages 12, 52-54, 114-128)
   // ----------------------------------------------------------------------------------------
+  const isFemale = gender === 'பெண்' || gender?.toLowerCase() === 'female' || gender === 'f';
+  const isMale = !isFemale;
+
   const anatomyData = RASI_ANATOMY_MAP[activeLagna];
   const lord6Name = SIGN_LORDS[house6Sign];
   const lord6Obj = getP(lord6Name);
 
   let diseaseSpecific = 'பொதுவான சீரான உடல் நலம்';
-  if (lord6Name === 'சூரியன்') diseaseSpecific = 'தலைவலி, முடி உதிர்வு, வலது கண் பார்வை அல்லது முதுகெலும்பு கவனம்';
-  else if (lord6Name === 'சந்திரன்') diseaseSpecific = 'சளி, சைனஸ், இடது கண் பார்வை அல்லது மன உளைச்சல்';
-  else if (lord6Name === 'செவ்வாய்') diseaseSpecific = 'ரத்த அழுத்தம், உஷ்ண நோய்கள், பற்கள் அல்லது எலும்பு மஜ்ஜை';
-  else if (lord6Name === 'புதன்') diseaseSpecific = 'தோல் அலர்ஜி, நரம்பு பலவீனம் அல்லது ENT காது-மூக்கு-தொண்டை';
-  else if (lord6Name === 'குரு') diseaseSpecific = 'கொழுப்பு, சர்க்கரை நோய் (நீரிழிவு) அல்லது கல்லீரல் கவனம்';
-  else if (lord6Name === 'சுக்கிரன்') diseaseSpecific = 'சிறுநீரகக் கற்கள், நீர் அடைப்பு அல்லது ஹார்மோன் சமநிலை';
-  else if (lord6Name === 'சனி') diseaseSpecific = 'கால்கள் வலி, மூட்டு வாதம் அல்லது நரம்பு தளர்ச்சி';
+  if (lord6Name === 'சூரியன்') {
+    diseaseSpecific = isMale
+      ? 'தலைவலி, முடி உதிர்வு, வலது கண் பார்வை, ஆண்மை/வீரிய குறைபாடு அல்லது தண்டுவடம்'
+      : 'தலைவலி, முடி உதிர்வு, வலது கண் பார்வை, முதுகு எலும்பு அல்லது தண்டுவடம்';
+  } else if (lord6Name === 'சந்திரன்') {
+    diseaseSpecific = 'சளி, சைனஸ், இடது கண் பார்வை, மன அழுத்தம் அல்லது நீர் உபாதைகள்';
+  } else if (lord6Name === 'செவ்வாய்') {
+    diseaseSpecific = isFemale
+      ? 'மாதவிடாய் உதிரப்போக்கு, ரத்த சோகை, எலும்பு மஜ்ஜை, பற்கள் அல்லது உஷ்ண உபாதைகள்'
+      : 'ரத்த அழுத்தம், எலும்பு மஜ்ஜை, விபத்து காயங்கள், பற்கள் அல்லது ஈறுகளில் ரத்தக்கசிவு';
+  } else if (lord6Name === 'புதன்') {
+    diseaseSpecific = 'தோல் அலர்ஜி, நரம்பு பலவீனம் அல்லது ENT காது-மூக்கு-தொண்டை உபாதைகள்';
+  } else if (lord6Name === 'குரு') {
+    diseaseSpecific = 'கொழுப்பு கட்டி, சர்க்கரை நோய் (நீரிழிவு), கல்லீரல் அல்லது மூளை வளர்ச்சி/நரம்பு கவனம்';
+  } else if (lord6Name === 'சுக்கிரன்') {
+    diseaseSpecific = isFemale
+      ? 'கர்ப்பப்பை கோளாறு, மாதவிடாய் பிரச்சனை, ஹார்மோன் சமநிலை அல்லது சர்க்கரை உபாதைகள்'
+      : 'சிறுநீரகக் கற்கள் (Kidney Stones), நீர் அடைப்பு, விந்தணு/சுக்கில பலவீனம் அல்லது சர்க்கரை நோய்';
+  } else if (lord6Name === 'சனி') {
+    diseaseSpecific = 'கால்கள் வலி, மூட்டு வாதம், நரம்பு தளர்ச்சி அல்லது எலும்பு பலவீனம்';
+  }
+
+  // Gender-specific special health warnings from Book
+  const healthSignals: string[] = [
+    `பிரதான உடல் உறுப்பு: ${anatomyData.organ} (${anatomyData.organEnglish})`,
+    `காரக உறுப்பு ரகசியம்: ${anatomyData.secretSignificance}`,
+    `கவனிக்க வேண்டிய பகுதி: ${diseaseSpecific}`
+  ];
+
+  const healthObstructions: string[] = [];
+
+  // Female-specific Breast Health Rule (Page 60, 119-120)
+  if (isFemale) {
+    const isBreastAffliction = (moon && mars && (rahu || ketu) && (
+      (rahu && moon.sign === rahu.sign) || (ketu && moon.sign === ketu.sign) ||
+      (mars && saturn && (house4Sign === 3 || moon.sign === 3))
+    ));
+    if (isBreastAffliction) {
+      healthSignals.push('பெண்கள் நலம் (பக்கம் 119): மார்பகப் பகுதியில் தாய்ப்பால்/ஹார்மோன் சீரான பராமரிப்பு அவசியம்');
+      healthObstructions.push('தாய்ப்பால் புகட்டுதல் மற்றும் மார்பக ஆரோக்கியத்தில் மருத்துவரின் வழக்கமான பரிசோதனை நலம்');
+    }
+  }
+
+  // Male-specific Semen/Vitality Rule (Page 16, 42, 109)
+  if (isMale) {
+    const isVitalityAffliction = venus && saturn && ketu && (
+      venus.sign === saturn.sign || isTrine(venus.sign, ketu.sign)
+    );
+    if (isVitalityAffliction) {
+      healthSignals.push('ஆண்கள் நலம் (பக்கம் 16, 109): விந்து வீரியம் மற்றும் சுக்கில பலம் காக்க முறையான உணவுப் பழக்கம் அவசியம்');
+      healthObstructions.push('இளமைக்கால வீரிய விரயங்களைத் தவிர்த்து யோகா மற்றும் ஊட்டச்சத்து உணவுகள் பழகுவது நலம்');
+    }
+  }
+
+  if (ketu && ketu.sign === house6Sign) {
+    healthObstructions.push('6-ல் கேது இருப்பதால் ஒவ்வாமை மற்றும் மருந்து விவகாரங்களில் தகுந்த மருத்துவ ஆலோசனை அவசியம்');
+  }
 
   const healthTiming = correlateTiming(dasaTimelines, [lord6Name, 'சனி', 'கேது'], currentDasaLord, currentBhuktiLord);
 
   results['health'] = {
     category: 'health',
     title: 'உடல் உறுப்புகள் & ஆரோக்கிய பாதுகாப்பு (Anatomy & Health)',
-    status: (lord6Obj && saturn && isDusthana(activeLagna, saturn.sign)) ? 'caution' : 'favorable',
-    summary: `${activeLagnaName} லக்னம் உடலின் '${anatomyData.organ}' பகுதியைக் குறிக்கிறது (${anatomyData.secretSignificance}). 6-ஆம் அதிபதி ${lord6Name} நிலையின்படி: "${diseaseSpecific}".`,
-    signals: [
-      `பிரதான உடல் உறுப்பு: ${anatomyData.organ} (${anatomyData.organEnglish})`,
-      `காரக உறுப்பு ரகசியம்: ${anatomyData.secretSignificance}`,
-      `கவனிக்க வேண்டிய பகுதி: ${diseaseSpecific}`
-    ],
-    obstructions: (ketu && ketu.sign === house6Sign) ? ['6-ல் கேது இருப்பதால் ஒவ்வாமை மற்றும் மருந்து விவகாரங்களில் மருத்துவ ஆலோசனை அவசியம்'] : [],
+    status: (lord6Obj && saturn && isDusthana(activeLagna, saturn.sign)) || healthObstructions.length > 0 ? 'caution' : 'favorable',
+    summary: `${activeLagnaName} லக்னம் உடலின் '${anatomyData.organ}' பகுதியைக் குறிக்கிறது (${anatomyData.secretSignificance}). பாலினம்: ${isFemale ? 'பெண்' : 'ஆண்'} ஜாதக 6-ஆம் அதிபதி ${lord6Name} நிலைப்படி: "${diseaseSpecific}". நோய்த் தீர்வு/குணமாகும் காலம்: ${healthTiming.window}.`,
+    signals: healthSignals,
+    obstructions: healthObstructions,
     timing: healthTiming,
     matchedRules: [
       { ruleId: 'DS-BOD-001', title: 'ராசிகள் மற்றும் உடல் உறுப்புகள் தொடர்பு', sourcePage: 12, section: 'உடல் உறுப்புகள்' },
       { ruleId: 'DS-BOD-002', title: '6-ஆம் அதிபதி யார்? அவரால் ஏற்படும் நோய்கள்', sourcePage: 53, section: 'நோய் விவரம்' },
       { ruleId: 'DS-BOD-003', title: 'நோய் எப்போது குணமாகும் சூத்திரம்', sourcePage: 52, section: 'நோய் நிவர்த்தி' }
     ],
-    reasoning: `நூலின் 12 மற்றும் 52-54 பக்கங்களின்படி, 6-ஆம் அதிபதியின் கிரக காரகம் மற்றும் தசா லக்னத்திற்குரிய உடல் உறுப்புப் பகுதிகள் இணைத்து பகுப்பாய்வு செய்யப்பட்டது.`
+    reasoning: `நூலின் 12 மற்றும் 52-54 பக்கங்களின்படி, 6-ஆம் அதிபதியின் கிரக காரகம், பாலின வேறுபாடு (${isFemale ? 'பெண்' : 'ஆண்'}) மற்றும் தசா லக்னத்திற்குரிய உடல் உறுப்புப் பகுதிகள் இணைத்து பகுப்பாய்வு செய்யப்பட்டது.`
   };
 
   // ----------------------------------------------------------------------------------------
@@ -648,27 +699,39 @@ export function evaluatePremiumChart(
 
   // Same-sex intimacy combinations explicitly from Book Pages 120-121:
   // Male Homo-sex (Page 120): Venus, Moon, Mercury in Male signs with Male stars + Saturn/Ketu contact in male chart
-  const isHomoInMale = gender === 'ஆண்' && venus && moon && mercury &&
+  const isHomoInMale = isMale && venus && moon && mercury &&
     MALE_SIGNS.includes(venus.sign) && MALE_SIGNS.includes(moon.sign) && MALE_SIGNS.includes(mercury.sign) &&
     ((saturn && isTrine(venus.sign, saturn.sign)) || (ketu && isTrine(venus.sign, ketu.sign)));
 
   // Female Lesbian-sex (Page 121): Venus, Moon, Mercury in Female signs with Female stars + Saturn/Rahu contact in female chart
-  const isLesbianInFemale = gender === 'பெண்' && venus && moon && mercury &&
+  const isLesbianInFemale = isFemale && venus && moon && mercury &&
     FEMALE_SIGNS.includes(venus.sign) && FEMALE_SIGNS.includes(moon.sign) && FEMALE_SIGNS.includes(mercury.sign) &&
     ((saturn && isTrine(venus.sign, saturn.sign)) || (rahu && isTrine(venus.sign, rahu.sign)));
 
   // Strict Loyalty by Mars (Pages 35, 108): Mars aspecting Venus or Lagna enforces strict loyalty to spouse
   const isStrictLoyalty = mars && venus && (checkPlanetaryAspect(mars.sign, venus.sign, 'செவ்வாய்') || mars.sign === venus.sign);
 
+  // Venus + Mars Bed-Life Dynamics (Page 123)
+  const isVenusMarsConjunction = venus && mars && (venus.sign === mars.sign || isTrine(venus.sign, mars.sign));
+
   let intimacySummary = 'சுக்கிரன் மற்றும் 12-ஆம் பாவக அயன சயன சுப பலத்தால் இல்லற தாம்பத்திய சுகமும் நேர்மையான வாழ்க்கை நெறியும் அமையும்.';
   let intimacySignals = ['தாம்பத்திய சுக காரகன் சுக்கிரன் சுப பலம்'];
 
   if (isStrictLoyalty) {
     intimacySummary = 'மங்களகாரகன் செவ்வாய் சுக்கிரனுடன் நல் தொடர்பு கொண்டுள்ளதால், திருமணத்திற்குப் பின் தனது துணையிடம் மட்டுமே உண்மையான அன்பு, ஒழுக்கம் மற்றும் கற்பு நெறி காக்கும் உன்னத ஜாதகம்.';
-    intimacySignals.push('செவ்வாயின் ஒழுக்கக் கட்டுப்பாடு: திருமணத்திற்குப் பின் வாழ்க்கைத் துணையிடம் மட்டுமே தாம்பத்திய ஈடுபாடு');
+    intimacySignals.push('செவ்வாயின் ஒழுக்கக் கட்டுப்பாடு: திருமணத்திற்குப் பின் வாழ்க்கைத் துணையிடம் மட்டுமே தாம்பத்திய ஈடுபாடு (கற்பு நெறி பலம்)');
   } else if (isAffairTrigger) {
     intimacySummary = '4, 8, 12 மறைவு ஸ்தானங்களுடன் சந்திரன், புதன், சுக்கிரன் தொடர்பு பெறுவதால் அந்தரங்க ஈர்ப்புகளில் எல்லை மீறாமல் மனக்கட்டுப்பாடு மற்றும் விவேகம் தேவை.';
     intimacySignals.push('அந்தரங்க விழிப்புணர்வு: சபல புத்தி மற்றும் எல்லை மீறிய ஈர்ப்புகளை தவிர்க்க மனக்கட்டுப்பாடு அவசியம்');
+  }
+
+  // Gender-specific bed-life nuances from Page 123
+  if (isVenusMarsConjunction) {
+    if (isMale) {
+      intimacySignals.push('ஆண்கள் தாம்பத்திய யோகம் (பக்கம் 123): சுக்கிரன் + செவ்வாய் சேர்க்கையால் மனைவியை மகிழ்விக்கும் வீரியமும் பாசமும் கொண்டவர்');
+    } else {
+      intimacySignals.push('பெண்கள் தாம்பத்திய யோகம் (பக்கம் 123): சுக்கிரன் + செவ்வாய் தொடர்பால் கணவரிடம் கூச்சமின்றி தாம்பத்திய சுகத்தில் முழுமை காணும் நிலை');
+    }
   }
 
   if (isHomoInMale) {
@@ -677,6 +740,13 @@ export function evaluatePremiumChart(
     intimacySignals.push('நூல் பக்கம் 121 விதி: சுக்கிரன், சந்திரன், புதன் பெண் ராசிகளில் சனி/ராகு தொடர்பால் தோழிகள் மீதான அதீத அந்தரங்க பந்தம்');
   }
 
+  const intimacyTiming = correlateTiming(
+    dasaTimelines,
+    ['சுக்கிரன்', 'செவ்வாய்', SIGN_LORDS[house12Sign], 'ராகு'],
+    currentDasaLord,
+    currentBhuktiLord
+  );
+
   results['intimacy'] = {
     category: 'intimacy',
     title: 'அந்தரங்க ஜோதிட ரகசியங்கள் & தாம்பத்திய ஒழுக்கம் (Intimacy & Secrets)',
@@ -684,18 +754,15 @@ export function evaluatePremiumChart(
     summary: intimacySummary,
     signals: intimacySignals,
     obstructions: isAffairTrigger ? ['தவறான நட்புகள் மற்றும் எல்லை மீறிய விவகாரங்களைத் தவிர்க்கவும்'] : [],
-    timing: {
-      dasa: currentDasaLord,
-      bhukti: currentBhuktiLord,
-      window: `${currentDasaLord} தசா - ${currentBhuktiLord} புக்தி காலங்கள்`
-    },
+    timing: intimacyTiming,
     matchedRules: [
       { ruleId: 'DS-INT-001', title: 'எல்லை மீறிய செயல்கள் & அந்தரங்க ரகசியங்கள்', sourcePage: 97, section: 'அந்தரங்க ரகசியங்கள்' },
       { ruleId: 'DS-INT-002', title: 'கள்ளத்தொடர்பு காரண கிரகங்கள் (சந்திரன், சுக்கிரன், புதன்)', sourcePage: 35, section: 'கள்ளத்தொடர்பு' },
       { ruleId: 'DS-INT-003', title: 'விபச்சார யோகம் & மாற்று ஈர்ப்பு ரகசியங்கள்', sourcePage: 30, section: 'விபச்சார யோகம்' },
-      { ruleId: 'DS-INT-004', title: 'செவ்வாய் தரும் ஒழுக்கமும் கற்பு நெறியும்', sourcePage: 35, section: 'ஒழுக்க நெறி' }
+      { ruleId: 'DS-INT-004', title: 'செவ்வாய் தரும் ஒழுக்கமும் கற்பு நெறியும்', sourcePage: 35, section: 'ஒழுக்க நெறி' },
+      { ruleId: 'DS-INT-005', title: 'சுக்கிரனுடன் தொடர்பு வரும் கிரகங்கள் & தாம்பத்திய சுகம்', sourcePage: 122, section: 'தாம்பத்திய சுகம்' }
     ],
-    reasoning: `நூலின் 97-124 பக்கங்களில் மிக விளக்கமாக கூறப்பட்டுள்ள 12 பாவக அந்தரங்க ரகசியங்கள், சுக்கிரன்-செவ்வாய் சேர்க்கை ஒழுக்கம் மற்றும் சந்திரன்-புதன்-சுக்கிரன் மறைவு நிலைகள் அடிப்படையில் தொகுக்கப்பட்டது.`
+    reasoning: `நூலின் 97-124 பக்கங்களில் மிக விளக்கமாக கூறப்பட்டுள்ள 12 பாவக அந்தரங்க ரகசியங்கள், பாலின வேறுபாடு (${isFemale ? 'பெண்' : 'ஆண்'}), சுக்கிரன்-செவ்வாய் சேர்க்கை ஒழுக்கம் மற்றும் சந்திரன்-புதன்-சுக்கிரன் மறைவு நிலைகள் அடிப்படையில் தொகுக்கப்பட்டது.`
   };
 
   return results;
