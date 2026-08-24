@@ -209,7 +209,8 @@ export function evaluatePremiumChart(
   lagnaIndex: number,
   dasaTimelines?: DasaTimeline[],
   gender: string = 'ஆண்',
-  mode: 'dasa' | 'bhukti' = 'dasa'
+  mode: 'dasa' | 'bhukti' = 'dasa',
+  age: number = 30
 ): Record<string, DSPredictionItem> {
   const getP = (name: string): DSPlanetPosition | undefined =>
     positions.find(p => p.name === name || p.name.includes(name));
@@ -446,190 +447,239 @@ export function evaluatePremiumChart(
   // ----------------------------------------------------------------------------------------
   // 5. MARRIAGE & TIMING (திருமணம், மங்களகாரகன் செவ்வாய் & வரன் காலம் - Pages 21-35)
   // ----------------------------------------------------------------------------------------
-  const lord7Sign = (activeLagna + 6) % 12;
-  const lord2Sign = (activeLagna + 1) % 12;
-  const lord7Name = SIGN_LORDS[lord7Sign];
-  const lord2Name = SIGN_LORDS[lord2Sign];
-  const lord12Name = SIGN_LORDS[house12Sign];
+  if (age >= 15 && age < 70) {
+    const lord7Sign = (activeLagna + 6) % 12;
+    const lord2Sign = (activeLagna + 1) % 12;
+    const lord7Name = SIGN_LORDS[lord7Sign];
+    const lord2Name = SIGN_LORDS[lord2Sign];
+    const lord12Name = SIGN_LORDS[house12Sign];
 
-  const isMarsAfflicted = mars && saturn && checkPlanetaryAspect(saturn.sign, mars.sign, 'சனி');
-  const isLoveMarriage = mercury && (mercury.sign === lord7Sign || mercury.sign === (activeLagna + 4) % 12);
-  const isInterCaste = (rahu && [lord2Sign, lord7Sign].includes(rahu.sign)) || (ketu && [lord2Sign, lord7Sign].includes(ketu.sign));
+    const isMarsAfflicted = mars && saturn && checkPlanetaryAspect(saturn.sign, mars.sign, 'சனி');
+    const isLoveMarriage = mercury && (mercury.sign === lord7Sign || mercury.sign === (activeLagna + 4) % 12);
+    const isInterCaste = (rahu && [lord2Sign, lord7Sign].includes(rahu.sign)) || (ketu && [lord2Sign, lord7Sign].includes(ketu.sign));
 
-  let marSummary = `மங்களகாரகன் செவ்வாய் மற்றும் 7-ஆம் அதிபதி ${lord7Name} சுப பலம் பெற்றுள்ளதால், குடும்ப வாழ்க்கையும் தாம்பத்திய பந்தமும் நன்முறையில் அமையும்.`;
-  let marStatus: DSPredictionItem['status'] = 'strong_indication';
+    let marSummary = `மங்களகாரகன் செவ்வாய் மற்றும் 7-ஆம் அதிபதி ${lord7Name} சுப பலம் பெற்றுள்ளதால், குடும்ப வாழ்க்கையும் தாம்பத்திய பந்தமும் நன்முறையில் அமையும்.`;
+    let marStatus: DSPredictionItem['status'] = 'strong_indication';
 
-  if (isMarsAfflicted) {
-    marSummary = 'செவ்வாய் மீது சனியின் பார்வை அல்லது தொடர்பு உள்ளதால், முறையான காலாகாலத்தில் வரன் தேடி 28-30 வயதுக்கு மேல் திருமணம் முடிப்பது நலம்.';
-    marStatus = 'caution';
-  } else if (isLoveMarriage) {
-    marSummary = 'காதல் கிரகம் புதன் மற்றும் 5, 7-ஆம் அதிபதிகளின் திரிகோண தொடர்பால் சுப காதல் திருமணம் கைகூடும் அமைப்பு உள்ளது.';
+    if (isMarsAfflicted) {
+      marSummary = 'செவ்வாய் மீது சனியின் பார்வை அல்லது தொடர்பு உள்ளதால், முறையான காலாகாலத்தில் வரன் தேடி 28-30 வயதுக்கு மேல் திருமணம் முடிப்பது நலம்.';
+      marStatus = 'caution';
+    } else if (isLoveMarriage) {
+      marSummary = 'காதல் கிரகம் புதன் மற்றும் 5, 7-ஆம் அதிபதிகளின் திரிகோண தொடர்பால் சுப காதல் திருமணம் கைகூடும் அமைப்பு உள்ளது.';
+    }
+
+    const marTiming = correlateTiming(
+      dasaTimelines,
+      ['செவ்வாய்', lord7Name, lord2Name, lord12Name, 'சுக்கிரன்', 'ராகு'],
+      currentDasaLord,
+      currentBhuktiLord
+    );
+
+    results['marriage'] = {
+      category: 'marriage',
+      title: 'திருமணம், தாம்பத்திய பந்தம் & கால நிர்ணயம் (Marriage & Timing)',
+      status: marStatus,
+      summary: `${marSummary} திருமணம் நடைபெறும் உத்தேச காலம்: ${marTiming.window}.`,
+      signals: [
+        `களத்திர ஸ்தானாதிபதி: ${lord7Name} (${SIGN_NAMES_TAMIL[lord7Sign]})`,
+        `மங்களகாரகன் செவ்வாய் நிலை: ${mars ? SIGN_NAMES_TAMIL[mars.sign] : 'சுப பலம்'}`,
+        isLoveMarriage ? 'காதல் திருமண யோகம்: புதன் + 5, 7 அதிபதிகள் தொடர்பு' : 'பெற்றோர் சம்மதத்துடன் கூடிய சுப விவாக யோகம்',
+        isInterCaste ? 'மாற்று மதம்/வகுப்பு தொடர்பு யோகம்: 2/7-ல் ராகு/கேது சேர்க்கை' : 'குடும்பப் பாரம்பரிய முறைப்படியான வரன்'
+      ],
+      obstructions: isMarsAfflicted ? ['செவ்வாய் மீது சனியின் பார்வை இருப்பதால் திருமணத்தில் அவசரம் தவிர்த்து தகுந்த பொருத்தம் பார்க்கவும்'] : [],
+      timing: marTiming,
+      matchedRules: [
+        { ruleId: 'DS-MAR-001', title: 'செவ்வாய் மங்களகாரகனை வைத்தே திருமணம் அறிதல்', sourcePage: 22, section: 'திருமணம்' },
+        { ruleId: 'DS-MAR-002', title: 'திருமணம் எப்போது நடக்கும் சூத்திரம் (12-ஆம் அதிபதி)', sourcePage: 23, section: 'சூத்திரம்' },
+        { ruleId: 'DS-MAR-003', title: 'எந்த தசா புத்தியில் திருமணம் நடக்கும் எளிய வழி', sourcePage: 24, section: 'புத்தி காலங்கள்' }
+      ],
+      reasoning: `நூலின் 21-30 பக்கங்களின்படி மங்களகாரகன் செவ்வாய், தசாநாதனுக்கு 12-ஆம் அதிபதி மற்றும் புத்திநாதனுக்கு 12-ஆம் அதிபதி இணைவு பெற்று விவாக காலத்தை துல்லியமாக நிர்ணயிக்கிறது.`
+    };
   }
-
-  const marTiming = correlateTiming(
-    dasaTimelines,
-    ['செவ்வாய்', lord7Name, lord2Name, lord12Name, 'சுக்கிரன்', 'ராகு'],
-    currentDasaLord,
-    currentBhuktiLord
-  );
-
-  results['marriage'] = {
-    category: 'marriage',
-    title: 'திருமணம், தாம்பத்திய பந்தம் & கால நிர்ணயம் (Marriage & Timing)',
-    status: marStatus,
-    summary: `${marSummary} திருமணம் நடைபெறும் உத்தேச காலம்: ${marTiming.window}.`,
-    signals: [
-      `களத்திர ஸ்தானாதிபதி: ${lord7Name} (${SIGN_NAMES_TAMIL[lord7Sign]})`,
-      `மங்களகாரகன் செவ்வாய் நிலை: ${mars ? SIGN_NAMES_TAMIL[mars.sign] : 'சுப பலம்'}`,
-      isLoveMarriage ? 'காதல் திருமண யோகம்: புதன் + 5, 7 அதிபதிகள் தொடர்பு' : 'பெற்றோர் சம்மதத்துடன் கூடிய சுப விவாக யோகம்',
-      isInterCaste ? 'மாற்று மதம்/வகுப்பு தொடர்பு யோகம்: 2/7-ல் ராகு/கேது சேர்க்கை' : 'குடும்பப் பாரம்பரிய முறைப்படியான வரன்'
-    ],
-    obstructions: isMarsAfflicted ? ['செவ்வாய் மீது சனியின் பார்வை இருப்பதால் திருமணத்தில் அவசரம் தவிர்த்து தகுந்த பொருத்தம் பார்க்கவும்'] : [],
-    timing: marTiming,
-    matchedRules: [
-      { ruleId: 'DS-MAR-001', title: 'செவ்வாய் மங்களகாரகனை வைத்தே திருமணம் அறிதல்', sourcePage: 22, section: 'திருமணம்' },
-      { ruleId: 'DS-MAR-002', title: 'திருமணம் எப்போது நடக்கும் சூத்திரம் (12-ஆம் அதிபதி)', sourcePage: 23, section: 'சூத்திரம்' },
-      { ruleId: 'DS-MAR-003', title: 'எந்த தசா புத்தியில் திருமணம் நடக்கும் எளிய வழி', sourcePage: 24, section: 'புத்தி காலங்கள்' }
-    ],
-    reasoning: `நூலின் 21-30 பக்கங்களின்படி மங்களகாரகன் செவ்வாய், தசாநாதனுக்கு 12-ஆம் அதிபதி மற்றும் புத்திநாதனுக்கு 12-ஆம் அதிபதி இணைவு பெற்று விவாக காலத்தை துல்லியமாக நிர்ணயிக்கிறது.`
-  };
 
   // ----------------------------------------------------------------------------------------
   // 6. CAREER & BUSINESS (தொழில், சொந்த வியாபாரம் & உத்தியோகம் - Pages 43-47, 50-53)
   // ----------------------------------------------------------------------------------------
-  const lord10Sign = (activeLagna + 9) % 12;
-  const lord10Name = SIGN_LORDS[lord10Sign];
-  const isGovtJob = (sun && mars && saturn && (
-    sun.sign === lord10Sign ||
-    checkPlanetaryAspect(saturn.sign, sun.sign, 'சனி') ||
-    checkPlanetaryAspect(mars.sign, sun.sign, 'செவ்வாய்')
-  ));
+  if (age >= 15) {
+    const lord10Sign = (activeLagna + 9) % 12;
+    const lord10Name = SIGN_LORDS[lord10Sign];
+    const isGovtJob = (sun && mars && saturn && (
+      sun.sign === lord10Sign ||
+      checkPlanetaryAspect(saturn.sign, sun.sign, 'சனி') ||
+      checkPlanetaryAspect(mars.sign, sun.sign, 'செவ்வாய்')
+    ));
 
-  let carSummary = '10-ஆம் அதிபதி மற்றும் தொழில் காரகன் சனியின் நற்பலன்களால் உத்தியோகத்தில் நிர்வாக மேன்மை மற்றும் நிலையான வருமானம் கிட்டும்.';
-  let carSignals = [`10-ஆம் தொழில் ஸ்தானாதிபதி: ${lord10Name}`];
+    let carSummary = '10-ஆம் அதிபதி மற்றும் தொழில் காரகன் சனியின் நற்பலன்களால் உத்தியோகத்தில் நிர்வாக மேன்மை மற்றும் நிலையான வருமானம் கிட்டும்.';
+    let carSignals = [`10-ஆம் தொழில் ஸ்தானாதிபதி: ${lord10Name}`];
 
-  if (isGovtJob) {
-    carSummary = 'சூரியன் + செவ்வாய் அரசு கிரகங்களுடன் தொழில் காரகன் சனி தொடர்பு பெறுவதால் அரசுத் துறை அல்லது பொதுத்துறை நிறுவனங்களில் உயர் பதவி யோகம் உண்டு.';
-    carSignals.push('மத்திய/மாநில அரசு வேலைக்குரிய கிரக சேர்க்கை பலம்');
-  } else {
-    carSignals.push('தனியார் துறை தலைமை நிர்வாகம் அல்லது சொந்த தொழில் மேன்மை');
+    if (isGovtJob) {
+      carSummary = 'சூரியன் + செவ்வாய் அரசு கிரகங்களுடன் தொழில் காரகன் சனி தொடர்பு பெறுவதால் அரசுத் துறை அல்லது பொதுத்துறை நிறுவனங்களில் உயர் பதவி யோகம் உண்டு.';
+      carSignals.push('மத்திய/மாநில அரசு வேலைக்குரிய கிரக சேர்க்கை பலம்');
+    } else {
+      carSignals.push('தனியார் துறை தலைமை நிர்வாகம் அல்லது சொந்த தொழில் மேன்மை');
+    }
+
+    if (age >= 60) {
+      carSummary = 'தொழில் ஸ்தான பலத்தின்படி ஆலோசகர் பதவி, சொந்த தொழில் வழிநடத்துதல் மற்றும் அனுபவ ரீதியான கௌரவம் நிலைக்கும்.';
+    }
+
+    const carTiming = correlateTiming(dasaTimelines, ['சனி', 'சூரியன்', lord10Name, 'புதன்'], currentDasaLord, currentBhuktiLord);
+
+    results['career'] = {
+      category: 'career',
+      title: 'தொழில், சொந்த வியாபாரம் & அரசு உத்தியோகம் (Career & Enterprise)',
+      status: 'strong_indication',
+      summary: `${carSummary} தொழில் ஏற்றம் மற்றும் சாதக காலகட்டம்: ${carTiming.window}.`,
+      signals: carSignals,
+      obstructions: [],
+      timing: carTiming,
+      matchedRules: [
+        { ruleId: 'DS-CAR-001', title: 'யார் உத்தியோகத்திற்கு செல்வார்கள்? (6 vs 10-ஆம் அதிபதி)', sourcePage: 43, section: 'உத்தியோகம்' },
+        { ruleId: 'DS-CAR-002', title: 'மத்திய & மாநில அரசு வேலை யாருக்கு?', sourcePage: 44, section: 'அரசு வேலை' },
+        { ruleId: 'DS-CAR-004', title: 'சொந்தத் தொழில் & தந்தை வழித் தொழில்', sourcePage: 46, section: 'சொந்தத் தொழில்' }
+      ],
+      reasoning: `நூலின் 43-47 பக்கங்களின்படி லக்னாதிபதி பலம், 10-ஆம் அதிபதி மற்றும் தொழில் காரகன் சனி மீது விழும் சூரியன்/செவ்வாய் பார்வைகள் கொண்டு தொழில் துறை நிர்ணயிக்கப்பட்டுள்ளது.`
+    };
   }
-
-  const carTiming = correlateTiming(dasaTimelines, ['சனி', 'சூரியன்', lord10Name, 'புதன்'], currentDasaLord, currentBhuktiLord);
-
-  results['career'] = {
-    category: 'career',
-    title: 'தொழில், சொந்த வியாபாரம் & அரசு உத்தியோகம் (Career & Enterprise)',
-    status: 'strong_indication',
-    summary: `${carSummary} தொழில் ஏற்றம் மற்றும் பதவி உயர்வுக்கான உத்தேச காலம்: ${carTiming.window}.`,
-    signals: carSignals,
-    obstructions: [],
-    timing: carTiming,
-    matchedRules: [
-      { ruleId: 'DS-CAR-001', title: 'யார் உத்தியோகத்திற்கு செல்வார்கள்? (6 vs 10-ஆம் அதிபதி)', sourcePage: 43, section: 'உத்தியோகம்' },
-      { ruleId: 'DS-CAR-002', title: 'மத்திய & மாநில அரசு வேலை யாருக்கு?', sourcePage: 44, section: 'அரசு வேலை' },
-      { ruleId: 'DS-CAR-004', title: 'சொந்தத் தொழில் & தந்தை வழித் தொழில்', sourcePage: 46, section: 'சொந்தத் தொழில்' }
-    ],
-    reasoning: `நூலின் 43-47 பக்கங்களின்படி லக்னாதிபதி பலம், 10-ஆம் அதிபதி மற்றும் தொழில் காரகன் சனி மீது விழும் சூரியன்/செவ்வாய் பார்வைகள் கொண்டு தொழில் துறை நிர்ணயிக்கப்பட்டுள்ளது.`
-  };
 
   // ----------------------------------------------------------------------------------------
   // 7. PROGENY & 15 GENDER RULES (குழந்தை பாக்கியம், பாலினம் & இரட்டை குழந்தை - Pages 36-48, 60)
   // ----------------------------------------------------------------------------------------
-  const lord5Sign = (activeLagna + 4) % 12;
-  const lord5Name = SIGN_LORDS[lord5Sign];
-  const lord5Obj = getP(lord5Name);
+  if (age >= 18) {
+    const lord5Sign = (activeLagna + 4) % 12;
+    const lord5Name = SIGN_LORDS[lord5Sign];
 
-  const isMaleSign5 = MALE_SIGNS.includes(lord5Sign);
-  const isKetuWithGuru = jupiter && ketu && (jupiter.sign === ketu.sign || isTrine(jupiter.sign, ketu.sign));
-  const isRahuWithGuru = jupiter && rahu && (jupiter.sign === rahu.sign || isTrine(jupiter.sign, rahu.sign));
-  const isTwins = UBAYA_SIGNS.includes(activeLagna) && UBAYA_SIGNS.includes(lord5Sign);
+    const isMaleSign5 = MALE_SIGNS.includes(lord5Sign);
+    const isKetuWithGuru = jupiter && ketu && (jupiter.sign === ketu.sign || isTrine(jupiter.sign, ketu.sign));
+    const isRahuWithGuru = jupiter && rahu && (jupiter.sign === rahu.sign || isTrine(jupiter.sign, rahu.sign));
+    const isTwins = UBAYA_SIGNS.includes(activeLagna) && UBAYA_SIGNS.includes(lord5Sign);
 
-  let genderPrediction = isMaleSign5 ? 'ஆண் குழந்தை யோகம் அதிகம் (5-ஆம் பாவக ஆண் ராசி விதி)' : 'பெண் குழந்தை யோகம் அதிகம் (5-ஆம் பாவக பெண் ராசி விதி)';
-  if (isKetuWithGuru) genderPrediction = 'குருவுடன் கேது தொடர்பு இருப்பதால் முதல் குழந்தை ஆண் குழந்தையாக அமைய வாய்ப்பு';
-  else if (isRahuWithGuru) genderPrediction = 'குருவுடன் ராகு தொடர்பு இருப்பதால் முதல் குழந்தை பெண் குழந்தையாக அமைய வாய்ப்பு';
+    let genderPrediction = isMaleSign5 ? 'ஆண் குழந்தை யோகம் அதிகம் (5-ஆம் பாவக ஆண் ராசி விதி)' : 'பெண் குழந்தை யோகம் அதிகம் (5-ஆம் பாவக பெண் ராசி விதி)';
+    if (isKetuWithGuru) genderPrediction = 'குருவுடன் கேது தொடர்பு இருப்பதால் முதல் குழந்தை ஆண் குழந்தையாக அமைய வாய்ப்பு';
+    else if (isRahuWithGuru) genderPrediction = 'குருவுடன் ராகு தொடர்பு இருப்பதால் முதல் குழந்தை பெண் குழந்தையாக அமைய வாய்ப்பு';
 
-  const progenyTiming = correlateTiming(dasaTimelines, ['குரு', lord5Name, 'சூரியன்'], currentDasaLord, currentBhuktiLord);
+    const progenyTiming = correlateTiming(dasaTimelines, ['குரு', lord5Name, 'சூரியன்'], currentDasaLord, currentBhuktiLord);
 
-  results['children'] = {
-    category: 'children',
-    title: 'புத்திர பாக்கியம் & 15 பாலின விதிகள் (Progeny & Gender Rules)',
-    status: 'strong_indication',
-    summary: `புத்திரகாரகன் குரு மற்றும் 5-ஆம் அதிபதி ${lord5Name} சுப பலம் பெற்றுள்ளனர். D.S.Astro 15 விதிகளின்படி: "${genderPrediction}".`,
-    signals: [
-      `புத்திர ஸ்தானம் (5-ஆம் வீடு): ${SIGN_NAMES_TAMIL[lord5Sign]} (${isMaleSign5 ? 'ஆண் ராசி' : 'பெண் ராசி'})`,
-      `பாலின விதி முடிவு: ${genderPrediction}`,
-      isTwins ? 'இரட்டை குழந்தை யோகம்: லக்னம் மற்றும் 5-ஆம் அதிபதி உபய ராசிகளில் (Gemini/Virgo/Sagittarius/Pisces) அமர்ந்துள்ளனர்' : 'சீரான புத்திர பாக்கிய வளர்ச்சி'
-    ],
-    obstructions: (saturn && jupiter && checkPlanetaryAspect(saturn.sign, jupiter.sign, 'சனி')) ? ['குரு மீது சனி பார்வை உள்ளதால் குழந்தை பாக்கியத்தில் சிறு தாமதம் ஏற்படலாம்; சுப வழிபாடுகள் நலம்'] : [],
-    timing: progenyTiming,
-    matchedRules: [
-      { ruleId: 'DS-CHD-001', title: 'புத்திர தோஷம் & புத்திர சோகம் வேறுபாடு', sourcePage: 37, section: 'புத்திர பாக்கியம்' },
-      { ruleId: 'DS-CHD-002', title: 'குழந்தைகள் ஆணா? பெண்ணா? 15 விதிகள்', sourcePage: 40, section: 'பாலின விதிகள்' },
-      { ruleId: 'DS-CHD-003', title: 'இரட்டை குழந்தை யாருக்கு பிறக்கும்? (உபய ராசிகள்)', sourcePage: 60, section: 'இரட்டை குழந்தை' }
-    ],
-    reasoning: `நூலின் 36-42 மற்றும் 60-ஆம் பக்கங்களின்படி குருவின் சாரம், 5-ஆம் வீட்டு ஆண்/பெண் பண்பு மற்றும் ராகு-கேது நிழல் கிரகங்களின் கருப்பிரிப்பு ஆற்றல் கொண்டு துல்லியமாக கணிக்கப்பட்டது.`
-  };
+    const isSenior = age >= 55;
+    results['children'] = {
+      category: 'children',
+      title: isSenior ? 'வம்சாவழி விருத்தி & பேரன்-பேத்தி யோகம் (Lineage & Prosperity)' : 'புத்திர பாக்கியம் & 15 பாலின விதிகள் (Progeny & Gender Rules)',
+      status: 'strong_indication',
+      summary: isSenior
+        ? `புத்திரகாரகன் குரு மற்றும் 5-ஆம் அதிபதி ${lord5Name} நற்பலனால் வம்ச விருத்தியும், பிள்ளைகளின் நல்வாழ்வும், பேரன்-பேத்தி சுகமும் சிறக்கும்.`
+        : `புத்திரகாரகன் குரு மற்றும் 5-ஆம் அதிபதி ${lord5Name} சுப பலம் பெற்றுள்ளனர். D.S.Astro 15 விதிகளின்படி: "${genderPrediction}".`,
+      signals: [
+        `புத்திர ஸ்தானம் (5-ஆம் வீடு): ${SIGN_NAMES_TAMIL[lord5Sign]} (${isMaleSign5 ? 'ஆண் ராசி' : 'பெண் ராசி'})`,
+        `பாலின விதி முடிவு: ${genderPrediction}`,
+        isTwins ? 'இரட்டை குழந்தை யோகம்: லக்னம் மற்றும் 5-ஆம் அதிபதி உபய ராசிகளில் (Gemini/Virgo/Sagittarius/Pisces) அமர்ந்துள்ளனர்' : 'சீரான புத்திர பாக்கிய வளர்ச்சி'
+      ],
+      obstructions: (saturn && jupiter && checkPlanetaryAspect(saturn.sign, jupiter.sign, 'சனி')) ? ['குரு மீது சனி பார்வை உள்ளதால் குழந்தை பாக்கியத்தில் சிறு தாமதம் ஏற்படலாம்; சுப வழிபாடுகள் நலம்'] : [],
+      timing: progenyTiming,
+      matchedRules: [
+        { ruleId: 'DS-CHD-001', title: 'புத்திர தோஷம் & புத்திர சோகம் வேறுபாடு', sourcePage: 37, section: 'புத்திர பாக்கியம்' },
+        { ruleId: 'DS-CHD-002', title: 'குழந்தைகள் ஆணா? பெண்ணா? 15 விதிகள்', sourcePage: 40, section: 'பாலின விதிகள்' },
+        { ruleId: 'DS-CHD-003', title: 'இரட்டை குழந்தை யாருக்கு பிறக்கும்? (உபய ராசிகள்)', sourcePage: 60, section: 'இரட்டை குழந்தை' }
+      ],
+      reasoning: `நூலின் 36-42 மற்றும் 60-ஆம் பக்கங்களின்படி குருவின் சாரம், 5-ஆம் வீட்டு ஆண்/பெண் பண்பு மற்றும் ராகு-கேது நிழல் கிரகங்களின் கருப்பிரிப்பு ஆற்றல் கொண்டு துல்லியமாக கணிக்கப்பட்டது.`
+    };
+  }
+
+  // ----------------------------------------------------------------------------------------
+  // PARENTAL CARE & SIBLINGS (DS-PAR for young ages < 20)
+  // ----------------------------------------------------------------------------------------
+  if (age < 20) {
+    const lord9Sign = (activeLagna + 8) % 12;
+    const lord9Name = SIGN_LORDS[lord9Sign];
+    const lord4Name = SIGN_LORDS[house4Sign];
+
+    results['parents'] = {
+      category: 'parents',
+      title: 'பெற்றோர் நலம் & குழந்தை வளர்ப்பு (Parental Care & Upbringing)',
+      status: 'favorable',
+      summary: `தாய் ஸ்தானாதிபதி ${lord4Name} மற்றும் பிதுர்காரகன் சூரியன் பலத்தால் தாயன்பும் தந்தை வழி வழிகாட்டுதலும் நன்முறையில் கிட்டும். சிறுவயது கல்வி மற்றும் நற்பண்பு வளர்ச்சிக்கு பெற்றோரின் கவனம் துணைநிற்கும்.`,
+      signals: [
+        `தாய்/குடும்ப சுக ஸ்தானாதிபதி: ${lord4Name}`,
+        `தந்தை/பாக்கிய ஸ்தானாதிபதி: ${lord9Name}`,
+        'பெற்றோரின் ஆசியும் வழிகாட்டுதலும் கல்வி மேன்மைக்கு உதவும்'
+      ],
+      obstructions: [],
+      timing: {
+        dasa: currentDasaLord,
+        bhukti: currentBhuktiLord,
+        window: 'இளமைக் காலம் முழுவதும்'
+      },
+      matchedRules: [
+        { ruleId: 'DS-PAR-001', title: 'தாய் & தந்தை வழி நற்பலன்கள் அறிதல்', sourcePage: 14, section: 'பெற்றோர் காரகம்' },
+        { ruleId: 'DS-PAR-002', title: 'குழந்தை வளர்ப்பு & ஆரம்பக்கல்வி நல்வழி', sourcePage: 17, section: 'வளர்ப்பு முறை' }
+      ],
+      reasoning: `நூலின் 14 மற்றும் 17-ஆம் பக்கங்களின்படி இளம் வயதினருக்கு 4-ஆம் மற்றும் 9-ஆம் பாவகங்கள் வழியே பெற்றோர் சுகமும் கல்வி வழிகாட்டலும் நிர்ணயிக்கப்படுகின்றன.`
+    };
+  }
 
   // ----------------------------------------------------------------------------------------
   // 8. FINANCE & DEBT (தனம், கோடீஸ்வர யோகம் & கடன் நிவர்த்தி - Pages 47-49, 51)
   // ----------------------------------------------------------------------------------------
-  const lord11Sign = (activeLagna + 10) % 12;
-  const isKoteeswara = isKendra(lord2Sign, lord11Sign) || isTrine(lord2Sign, lord11Sign);
-  const isKetuIn6 = ketu && ketu.sign === house6Sign;
+  if (age >= 15) {
+    const lord2Sign = (activeLagna + 1) % 12;
+    const lord11Sign = (activeLagna + 10) % 12;
+    const isKoteeswara = isKendra(lord2Sign, lord11Sign) || isTrine(lord2Sign, lord11Sign);
+    const isKetuIn6 = ketu && ketu.sign === house6Sign;
 
-  const finTiming = correlateTiming(dasaTimelines, [SIGN_LORDS[lord2Sign], SIGN_LORDS[lord11Sign], 'குரு'], currentDasaLord, currentBhuktiLord);
+    const finTiming = correlateTiming(dasaTimelines, [SIGN_LORDS[lord2Sign], SIGN_LORDS[lord11Sign], 'குரு'], currentDasaLord, currentBhuktiLord);
 
-  results['finance'] = {
-    category: 'finance',
-    title: 'தன ஸ்தானம், கோடீஸ்வர யோகம் & கடன் தீர்வு (Wealth & Finance)',
-    status: isKetuIn6 ? 'caution' : 'strong_indication',
-    summary: isKoteeswara
-      ? `2, 11-ஆம் அதிபதிகள் தங்களுக்குள் கேந்திர-திரிகோண சுப தொடர்பு பெற்றுள்ளதால் பெரும் தன சேர்க்கை, கோடீஸ்வர யோகம் மற்றும் நிலையான சொத்துக்கள் அமையும்.`
-      : `படிப்படியான பொருளாதார முன்னேற்றமும் உழைப்பிற்கேற்ற சேமிப்பும் உண்டாகும்.`,
-    signals: [
-      `தன ஸ்தானாதிபதி (2-ஆம் இடம்): ${SIGN_NAMES_TAMIL[lord2Sign]}`,
-      `லாப ஸ்தானாதிபதி (11-ஆம் இடம்): ${SIGN_NAMES_TAMIL[lord11Sign]}`,
-      isKetuIn6 ? '6-ல் கேது அமர்ந்துள்ளதால் கடன் விவகாரங்களில் கவனமும், ஜாமீன் போடுவதைத் தவிர்ப்பதும் அவசியம்' : 'பழைய பாக்கிகள் வசூலாகி கடன் சுமை படிப்படியாக குறையும்'
-    ],
-    obstructions: isKetuIn6 ? ['அநாவசிய கடன் வாங்குவதைத் தவிர்க்கவும்'] : [],
-    timing: finTiming,
-    matchedRules: [
-      { ruleId: 'DS-FIN-001', title: 'பணக்கஷ்டம், பொருளாதார நெருக்கடி காரணங்கள்', sourcePage: 47, section: 'பொருளாதாரம்' },
-      { ruleId: 'DS-FIN-002', title: 'யார் கோடீஸ்வரன்? (2, 11 அதிபதிகள் சேர்க்கை)', sourcePage: 48, section: 'கோடீஸ்வரன்' },
-      { ruleId: 'DS-FIN-003', title: 'கடன் எப்போது தீரும்? (6-ஆம் அதிபதி & கேது)', sourcePage: 51, section: 'கடன் தீர்வு' }
-    ],
-    reasoning: `நூலின் 47-51 பக்கங்களின்படி 2 மற்றும் 11-ஆம் அதிபதிகள் 6, 8, 12-ல் மறையாமல் இருப்பதும், தசா லக்னத்திற்கு 6-ஆம் இடத்து கேதுவின் நிலையும் பொருளாதார பலத்தை நிர்ணயிக்கின்றன.`
-  };
+    results['finance'] = {
+      category: 'finance',
+      title: 'தன ஸ்தானம், கோடீஸ்வர யோகம் & கடன் தீர்வு (Wealth & Finance)',
+      status: isKetuIn6 ? 'caution' : 'strong_indication',
+      summary: isKoteeswara
+        ? `2, 11-ஆம் அதிபதிகள் தங்களுக்குள் கேந்திர-திரிகோண சுப தொடர்பு பெற்றுள்ளதால் பெரும் தன சேர்க்கை, கோடீஸ்வர யோகம் மற்றும் நிலையான சொத்துக்கள் அமையும்.`
+        : `படிப்படியான பொருளாதார முன்னேற்றமும் உழைப்பிற்கேற்ற சேமிப்பும் உண்டாகும்.`,
+      signals: [
+        `தன ஸ்தானாதிபதி (2-ஆம் இடம்): ${SIGN_NAMES_TAMIL[lord2Sign]}`,
+        `லாப ஸ்தானாதிபதி (11-ஆம் இடம்): ${SIGN_NAMES_TAMIL[lord11Sign]}`,
+        isKetuIn6 ? '6-ல் கேது அமர்ந்துள்ளதால் கடன் விவகாரங்களில் கவனமும், ஜாமீன் போடுவதைத் தவிர்ப்பதும் அவசியம்' : 'பழைய பாக்கிகள் வசூலாகி கடன் சுமை படிப்படியாக குறையும்'
+      ],
+      obstructions: isKetuIn6 ? ['அநாவசிய கடன் வாங்குவதைத் தவிர்க்கவும்'] : [],
+      timing: finTiming,
+      matchedRules: [
+        { ruleId: 'DS-FIN-001', title: 'பணக்கஷ்டம், பொருளாதார நெருக்கடி காரணங்கள்', sourcePage: 47, section: 'பொருளாதாரம்' },
+        { ruleId: 'DS-FIN-002', title: 'யார் கோடீஸ்வரன்? (2, 11 அதிபதிகள் சேர்க்கை)', sourcePage: 48, section: 'கோடீஸ்வரன்' },
+        { ruleId: 'DS-FIN-003', title: 'கடன் எப்போது தீரும்? (6-ஆம் அதிபதி & கேது)', sourcePage: 51, section: 'கடன் தீர்வு' }
+      ],
+      reasoning: `நூலின் 47-51 பக்கங்களின்படி 2 மற்றும் 11-ஆம் அதிபதிகள் 6, 8, 12-ல் மறையாமல் இருப்பதும், தசா லக்னத்திற்கு 6-ஆம் இடத்து கேதுவின் நிலையும் பொருளாதார பலத்தை நிர்ணயிக்கின்றன.`
+    };
+  }
 
   // ----------------------------------------------------------------------------------------
   // 9. PROPERTY & VEHICLES (சொந்த வீடு, மனை & சொகுசு வாகனம் - Pages 54-56)
   // ----------------------------------------------------------------------------------------
-  const lord4Sign = (activeLagna + 3) % 12;
-  const isVenusRahuVehicle = venus && rahu && (venus.sign === rahu.sign || isTrine(venus.sign, rahu.sign));
-  const isMoonStrongHouse = moon && [1, 3].includes(moon.sign); // Taurus (exalted), Cancer (own)
+  if (age >= 15) {
+    const lord4Sign = (activeLagna + 3) % 12;
+    const isVenusRahuVehicle = venus && rahu && (venus.sign === rahu.sign || isTrine(venus.sign, rahu.sign));
+    const isMoonStrongHouse = moon && [1, 3].includes(moon.sign); // Taurus (exalted), Cancer (own)
 
-  const propTiming = correlateTiming(dasaTimelines, ['சந்திரன்', 'சுக்கிரன்', 'செவ்வாய்', SIGN_LORDS[lord4Sign]], currentDasaLord, currentBhuktiLord);
+    const propTiming = correlateTiming(dasaTimelines, ['சந்திரன்', 'சுக்கிரன்', 'செவ்வாய்', SIGN_LORDS[lord4Sign]], currentDasaLord, currentBhuktiLord);
 
-  results['property'] = {
-    category: 'property',
-    title: 'சொந்த வீடு கட்டும் யோகம் & சொகுசு வாகனம் (Property & Vehicle)',
-    status: 'strong_indication',
-    summary: `தாய் கிரகமான சந்திரன் மற்றும் சுக்கிரனின் பலத்தால் சொந்த வீடு கட்டும் மன அமைதி யோகமும், வாகனம் வாங்கும் நல்வாய்ப்பும் கைகூடும். யோக காலம்: ${propTiming.window}.`,
-    signals: [
-      `சுக/வீட்டு ஸ்தானம் (4-ஆம் இடம்): ${SIGN_NAMES_TAMIL[lord4Sign]}`,
-      isMoonStrongHouse ? 'சந்திரன் உச்சம்/ஆட்சியில் உள்ளதால் அமைதியான சொந்த இல்லம் அமையும்' : 'சொந்த வீடு கட்டும் முயற்சி படிப்படியாக முழுமையடையும்',
-      isVenusRahuVehicle ? 'சுக்கிரன் + ராகு தொடர்பால் புத்தம் புதிய நவீன சொகுசு வாகனம் யோகம் உண்டு' : 'குடும்பத் தேவைக்கான பயன்பாட்டு வாகனம் அமையும்'
-    ],
-    obstructions: [],
-    timing: propTiming,
-    matchedRules: [
-      { ruleId: 'DS-PRP-001', title: 'சொந்த வீடு கட்டும் யோகம் எப்போது? (சந்திரன் காரகம்)', sourcePage: 54, section: 'சொந்த வீடு' },
-      { ruleId: 'DS-VEH-001', title: 'வாகனம் வாங்கும் யோகம் (சுக்கிரன் + ராகு சேர்க்கை)', sourcePage: 55, section: 'வாகனம்' },
-      { ruleId: 'DS-VEH-002', title: 'பழைய வாகனம் & பழுது ஏற்படும் கிரக நிலைகள்', sourcePage: 56, section: 'வாகன பழுது' }
-    ],
-    reasoning: `நூலின் 54-56 பக்கங்களின்படி சந்திரன் தாயின் கருவறை போன்ற நிம்மதியான வீட்டையும், சுக்கிரன் வீட்டின் பிரம்மாண்டத்தையும், சுக்கிரன்+ராகு புதிய சொகுசு வாகனத்தையும் குறிக்கின்றன.`
-  };
+    results['property'] = {
+      category: 'property',
+      title: 'சொந்த வீடு கட்டும் யோகம் & சொகுசு வாகனம் (Property & Vehicle)',
+      status: 'strong_indication',
+      summary: `தாய் கிரகமான சந்திரன் மற்றும் சுக்கிரனின் பலத்தால் சொந்த வீடு கட்டும் மன அமைதி யோகமும், வாகனம் வாங்கும் நல்வாய்ப்பும் கைகூடும். யோக காலம்: ${propTiming.window}.`,
+      signals: [
+        `சுக/வீட்டு ஸ்தானம் (4-ஆம் இடம்): ${SIGN_NAMES_TAMIL[lord4Sign]}`,
+        isMoonStrongHouse ? 'சந்திரன் உச்சம்/ஆட்சியில் உள்ளதால் அமைதியான சொந்த இல்லம் அமையும்' : 'சொந்த வீடு கட்டும் முயற்சி படிப்படியாக முழுமையடையும்',
+        isVenusRahuVehicle ? 'சுக்கிரன் + ராகு தொடர்பால் புத்தம் புதிய நவீன சொகுசு வாகனம் யோகம் உண்டு' : 'குடும்பத் தேவைக்கான பயன்பாட்டு வாகனம் அமையும்'
+      ],
+      obstructions: [],
+      timing: propTiming,
+      matchedRules: [
+        { ruleId: 'DS-PRP-001', title: 'சொந்த வீடு கட்டும் யோகம் எப்போது? (சந்திரன் காரகம்)', sourcePage: 54, section: 'சொந்த வீடு' },
+        { ruleId: 'DS-VEH-001', title: 'வாகனம் வாங்கும் யோகம் (சுக்கிரன் + ராகு சேர்க்கை)', sourcePage: 55, section: 'வாகனம்' },
+        { ruleId: 'DS-VEH-002', title: 'பழைய வாகனம் & பழுது ஏற்படும் கிரக நிலைகள்', sourcePage: 56, section: 'வாகன பழுது' }
+      ],
+      reasoning: `நூலின் 54-56 பக்கங்களின்படி சந்திரன் தாயின் கருவறை போன்ற நிம்மதியான வீட்டையும், சுக்கிரன் வீட்டின் பிரம்மாண்டத்தையும், சுக்கிரன்+ராகு புதிய சொகுசு வாகனத்தையும் குறிக்கின்றன.`
+    };
+  }
 
   // ----------------------------------------------------------------------------------------
   // 10. RAHU-KETU AXIS & PARIVARTHANAI (மிட்பாய்ண்ட் மையப்புள்ளி & பரிவர்த்தனை - Pages 28-29, 76-88)
@@ -681,89 +731,91 @@ export function evaluatePremiumChart(
   // ----------------------------------------------------------------------------------------
   // 11. INTIMACY & SECRET LIFE (அந்தரங்க ஜோதிட ரகசியங்கள் - Pages 97-124)
   // ----------------------------------------------------------------------------------------
-  const lord4Name = SIGN_LORDS[lord4Sign];
-  const lord8Name = SIGN_LORDS[house8Sign];
+  if (age >= 18 && age < 65) {
+    const lord4Name = SIGN_LORDS[house4Sign];
+    const lord8Name = SIGN_LORDS[house8Sign];
 
-  // Extra-marital affair combination (Pages 34-35, 41, 107): 4, 8, 12 lords + Moon/Venus/Mercury during Dasa without Mars moral protection
-  const isAffairTrigger = (moon && venus && mercury && (
-    [lord4Sign, house8Sign, house12Sign].includes(moon.sign) ||
-    [lord4Sign, house8Sign, house12Sign].includes(venus.sign) ||
-    [lord4Sign, house8Sign, house12Sign].includes(mercury.sign)
-  ) && (!mars || !checkPlanetaryAspect(mars.sign, venus.sign, 'செவ்வாய்')));
+    // Extra-marital affair combination (Pages 34-35, 41, 107): 4, 8, 12 lords + Moon/Venus/Mercury during Dasa without Mars moral protection
+    const isAffairTrigger = (moon && venus && mercury && (
+      [house4Sign, house8Sign, house12Sign].includes(moon.sign) ||
+      [house4Sign, house8Sign, house12Sign].includes(venus.sign) ||
+      [house4Sign, house8Sign, house12Sign].includes(mercury.sign)
+    ) && (!mars || !checkPlanetaryAspect(mars.sign, venus.sign, 'செவ்வாய்')));
 
-  // Prostitution yoga / Boundary violation (Page 30-31, 117): Mercury + Ketu in Venus star/house or Moon house
-  const isProstitutionYoga = mercury && ketu && (
-    mercury.sign === ketu.sign ||
-    (mercury.sign === 1 || mercury.sign === 6 || mercury.sign === 3) // Taurus, Libra, Cancer
-  ) && (moon && venus && isTrine(mercury.sign, venus.sign));
+    // Prostitution yoga / Boundary violation (Page 30-31, 117): Mercury + Ketu in Venus star/house or Moon house
+    const isProstitutionYoga = mercury && ketu && (
+      mercury.sign === ketu.sign ||
+      (mercury.sign === 1 || mercury.sign === 6 || mercury.sign === 3) // Taurus, Libra, Cancer
+    ) && (moon && venus && isTrine(mercury.sign, venus.sign));
 
-  // Same-sex intimacy combinations explicitly from Book Pages 120-121:
-  // Male Homo-sex (Page 120): Venus, Moon, Mercury in Male signs with Male stars + Saturn/Ketu contact in male chart
-  const isHomoInMale = isMale && venus && moon && mercury &&
-    MALE_SIGNS.includes(venus.sign) && MALE_SIGNS.includes(moon.sign) && MALE_SIGNS.includes(mercury.sign) &&
-    ((saturn && isTrine(venus.sign, saturn.sign)) || (ketu && isTrine(venus.sign, ketu.sign)));
+    // Same-sex intimacy combinations explicitly from Book Pages 120-121:
+    // Male Homo-sex (Page 120): Venus, Moon, Mercury in Male signs with Male stars + Saturn/Ketu contact in male chart
+    const isHomoInMale = isMale && venus && moon && mercury &&
+      MALE_SIGNS.includes(venus.sign) && MALE_SIGNS.includes(moon.sign) && MALE_SIGNS.includes(mercury.sign) &&
+      ((saturn && isTrine(venus.sign, saturn.sign)) || (ketu && isTrine(venus.sign, ketu.sign)));
 
-  // Female Lesbian-sex (Page 121): Venus, Moon, Mercury in Female signs with Female stars + Saturn/Rahu contact in female chart
-  const isLesbianInFemale = isFemale && venus && moon && mercury &&
-    FEMALE_SIGNS.includes(venus.sign) && FEMALE_SIGNS.includes(moon.sign) && FEMALE_SIGNS.includes(mercury.sign) &&
-    ((saturn && isTrine(venus.sign, saturn.sign)) || (rahu && isTrine(venus.sign, rahu.sign)));
+    // Female Lesbian-sex (Page 121): Venus, Moon, Mercury in Female signs with Female stars + Saturn/Rahu contact in female chart
+    const isLesbianInFemale = isFemale && venus && moon && mercury &&
+      FEMALE_SIGNS.includes(venus.sign) && FEMALE_SIGNS.includes(moon.sign) && FEMALE_SIGNS.includes(mercury.sign) &&
+      ((saturn && isTrine(venus.sign, saturn.sign)) || (rahu && isTrine(venus.sign, rahu.sign)));
 
-  // Strict Loyalty by Mars (Pages 35, 108): Mars aspecting Venus or Lagna enforces strict loyalty to spouse
-  const isStrictLoyalty = mars && venus && (checkPlanetaryAspect(mars.sign, venus.sign, 'செவ்வாய்') || mars.sign === venus.sign);
+    // Strict Loyalty by Mars (Pages 35, 108): Mars aspecting Venus or Lagna enforces strict loyalty to spouse
+    const isStrictLoyalty = mars && venus && (checkPlanetaryAspect(mars.sign, venus.sign, 'செவ்வாய்') || mars.sign === venus.sign);
 
-  // Venus + Mars Bed-Life Dynamics (Page 123)
-  const isVenusMarsConjunction = venus && mars && (venus.sign === mars.sign || isTrine(venus.sign, mars.sign));
+    // Venus + Mars Bed-Life Dynamics (Page 123)
+    const isVenusMarsConjunction = venus && mars && (venus.sign === mars.sign || isTrine(venus.sign, mars.sign));
 
-  let intimacySummary = 'சுக்கிரன் மற்றும் 12-ஆம் பாவக அயன சயன சுப பலத்தால் இல்லற தாம்பத்திய சுகமும் நேர்மையான வாழ்க்கை நெறியும் அமையும்.';
-  let intimacySignals = ['தாம்பத்திய சுக காரகன் சுக்கிரன் சுப பலம்'];
+    let intimacySummary = 'சுக்கிரன் மற்றும் 12-ஆம் பாவக அயன சயன சுப பலத்தால் இல்லற தாம்பத்திய சுகமும் நேர்மையான வாழ்க்கை நெறியும் அமையும்.';
+    let intimacySignals = ['தாம்பத்திய சுக காரகன் சுக்கிரன் சுப பலம்'];
 
-  if (isStrictLoyalty) {
-    intimacySummary = 'மங்களகாரகன் செவ்வாய் சுக்கிரனுடன் நல் தொடர்பு கொண்டுள்ளதால், திருமணத்திற்குப் பின் தனது துணையிடம் மட்டுமே உண்மையான அன்பு, ஒழுக்கம் மற்றும் கற்பு நெறி காக்கும் உன்னத ஜாதகம்.';
-    intimacySignals.push('செவ்வாயின் ஒழுக்கக் கட்டுப்பாடு: திருமணத்திற்குப் பின் வாழ்க்கைத் துணையிடம் மட்டுமே தாம்பத்திய ஈடுபாடு (கற்பு நெறி பலம்)');
-  } else if (isAffairTrigger) {
-    intimacySummary = '4, 8, 12 மறைவு ஸ்தானங்களுடன் சந்திரன், புதன், சுக்கிரன் தொடர்பு பெறுவதால் அந்தரங்க ஈர்ப்புகளில் எல்லை மீறாமல் மனக்கட்டுப்பாடு மற்றும் விவேகம் தேவை.';
-    intimacySignals.push('அந்தரங்க விழிப்புணர்வு: சபல புத்தி மற்றும் எல்லை மீறிய ஈர்ப்புகளை தவிர்க்க மனக்கட்டுப்பாடு அவசியம்');
-  }
-
-  // Gender-specific bed-life nuances from Page 123
-  if (isVenusMarsConjunction) {
-    if (isMale) {
-      intimacySignals.push('ஆண்கள் தாம்பத்திய யோகம் (பக்கம் 123): சுக்கிரன் + செவ்வாய் சேர்க்கையால் மனைவியை மகிழ்விக்கும் வீரியமும் பாசமும் கொண்டவர்');
-    } else {
-      intimacySignals.push('பெண்கள் தாம்பத்திய யோகம் (பக்கம் 123): சுக்கிரன் + செவ்வாய் தொடர்பால் கணவரிடம் கூச்சமின்றி தாம்பத்திய சுகத்தில் முழுமை காணும் நிலை');
+    if (isStrictLoyalty) {
+      intimacySummary = 'மங்களகாரகன் செவ்வாய் சுக்கிரனுடன் நல் தொடர்பு கொண்டுள்ளதால், திருமணத்திற்குப் பின் தனது துணையிடம் மட்டுமே உண்மையான அன்பு, ஒழுக்கம் மற்றும் கற்பு நெறி காக்கும் உன்னத ஜாதகம்.';
+      intimacySignals.push('செவ்வாயின் ஒழுக்கக் கட்டுப்பாடு: திருமணத்திற்குப் பின் வாழ்க்கைத் துணையிடம் மட்டுமே தாம்பத்திய ஈடுபாடு (கற்பு நெறி பலம்)');
+    } else if (isAffairTrigger) {
+      intimacySummary = '4, 8, 12 மறைவு ஸ்தானங்களுடன் சந்திரன், புதன், சுக்கிரன் தொடர்பு பெறுவதால் அந்தரங்க ஈர்ப்புகளில் எல்லை மீறாமல் மனக்கட்டுப்பாடு மற்றும் விவேகம் தேவை.';
+      intimacySignals.push('அந்தரங்க விழிப்புணர்வு: சபல புத்தி மற்றும் எல்லை மீறிய ஈர்ப்புகளை தவிர்க்க மனக்கட்டுப்பாடு அவசியம்');
     }
+
+    // Gender-specific bed-life nuances from Page 123
+    if (isVenusMarsConjunction) {
+      if (isMale) {
+        intimacySignals.push('ஆண்கள் தாம்பத்திய யோகம் (பக்கம் 123): சுக்கிரன் + செவ்வாய் சேர்க்கையால் மனைவியை மகிழ்விக்கும் வீரியமும் பாசமும் கொண்டவர்');
+      } else {
+        intimacySignals.push('பெண்கள் தாம்பத்திய யோகம் (பக்கம் 123): சுக்கிரன் + செவ்வாய் தொடர்பால் கணவரிடம் கூச்சமின்றி தாம்பத்திய சுகத்தில் முழுமை காணும் நிலை');
+      }
+    }
+
+    if (isHomoInMale) {
+      intimacySignals.push('நூல் பக்கம் 120 விதி: சுக்கிரன், சந்திரன், புதன் ஆண் ராசிகளில் சனி/கேது தொடர்பால் மாறுபட்ட அந்தரங்க நட்பு ஈர்ப்பு');
+    } else if (isLesbianInFemale) {
+      intimacySignals.push('நூல் பக்கம் 121 விதி: சுக்கிரன், சந்திரன், புதன் பெண் ராசிகளில் சனி/ராகு தொடர்பால் தோழிகள் மீதான அதீத அந்தரங்க பந்தம்');
+    }
+
+    const intimacyTiming = correlateTiming(
+      dasaTimelines,
+      ['சுக்கிரன்', 'செவ்வாய்', SIGN_LORDS[house12Sign], 'ராகு'],
+      currentDasaLord,
+      currentBhuktiLord
+    );
+
+    results['intimacy'] = {
+      category: 'intimacy',
+      title: 'அந்தரங்க ஜோதிட ரகசியங்கள் & தாம்பத்திய ஒழுக்கம் (Intimacy & Secrets)',
+      status: isStrictLoyalty ? 'favorable' : isAffairTrigger ? 'caution' : 'strong_indication',
+      summary: intimacySummary,
+      signals: intimacySignals,
+      obstructions: isAffairTrigger ? ['தவறான நட்புகள் மற்றும் எல்லை மீறிய விவகாரங்களைத் தவிர்க்கவும்'] : [],
+      timing: intimacyTiming,
+      matchedRules: [
+        { ruleId: 'DS-INT-001', title: 'எல்லை மீறிய செயல்கள் & அந்தரங்க ரகசியங்கள்', sourcePage: 97, section: 'அந்தரங்க ரகசியங்கள்' },
+        { ruleId: 'DS-INT-002', title: 'கள்ளத்தொடர்பு காரண கிரகங்கள் (சந்திரன், சுக்கிரன், புதன்)', sourcePage: 35, section: 'கள்ளத்தொடர்பு' },
+        { ruleId: 'DS-INT-003', title: 'விபச்சார யோகம் & மாற்று ஈர்ப்பு ரகசியங்கள்', sourcePage: 30, section: 'விபச்சார யோகம்' },
+        { ruleId: 'DS-INT-004', title: 'செவ்வாய் தரும் ஒழுக்கமும் கற்பு நெறியும்', sourcePage: 35, section: 'ஒழுக்க நெறி' },
+        { ruleId: 'DS-INT-005', title: 'சுக்கிரனுடன் தொடர்பு வரும் கிரகங்கள் & தாம்பத்திய சுகம்', sourcePage: 122, section: 'தாம்பத்திய சுகம்' }
+      ],
+      reasoning: `நூலின் 97-124 பக்கங்களில் மிக விளக்கமாக கூறப்பட்டுள்ள 12 பாவக அந்தரங்க ரகசியங்கள், பாலின வேறுபாடு (${isFemale ? 'பெண்' : 'ஆண்'}), சுக்கிரன்-செவ்வாய் சேர்க்கை ஒழுக்கம் மற்றும் சந்திரன்-புதன்-சுக்கிரன் மறைவு நிலைகள் அடிப்படையில் தொகுக்கப்பட்டது.`
+    };
   }
-
-  if (isHomoInMale) {
-    intimacySignals.push('நூல் பக்கம் 120 விதி: சுக்கிரன், சந்திரன், புதன் ஆண் ராசிகளில் சனி/கேது தொடர்பால் மாறுபட்ட அந்தரங்க நட்பு ஈர்ப்பு');
-  } else if (isLesbianInFemale) {
-    intimacySignals.push('நூல் பக்கம் 121 விதி: சுக்கிரன், சந்திரன், புதன் பெண் ராசிகளில் சனி/ராகு தொடர்பால் தோழிகள் மீதான அதீத அந்தரங்க பந்தம்');
-  }
-
-  const intimacyTiming = correlateTiming(
-    dasaTimelines,
-    ['சுக்கிரன்', 'செவ்வாய்', SIGN_LORDS[house12Sign], 'ராகு'],
-    currentDasaLord,
-    currentBhuktiLord
-  );
-
-  results['intimacy'] = {
-    category: 'intimacy',
-    title: 'அந்தரங்க ஜோதிட ரகசியங்கள் & தாம்பத்திய ஒழுக்கம் (Intimacy & Secrets)',
-    status: isStrictLoyalty ? 'favorable' : isAffairTrigger ? 'caution' : 'strong_indication',
-    summary: intimacySummary,
-    signals: intimacySignals,
-    obstructions: isAffairTrigger ? ['தவறான நட்புகள் மற்றும் எல்லை மீறிய விவகாரங்களைத் தவிர்க்கவும்'] : [],
-    timing: intimacyTiming,
-    matchedRules: [
-      { ruleId: 'DS-INT-001', title: 'எல்லை மீறிய செயல்கள் & அந்தரங்க ரகசியங்கள்', sourcePage: 97, section: 'அந்தரங்க ரகசியங்கள்' },
-      { ruleId: 'DS-INT-002', title: 'கள்ளத்தொடர்பு காரண கிரகங்கள் (சந்திரன், சுக்கிரன், புதன்)', sourcePage: 35, section: 'கள்ளத்தொடர்பு' },
-      { ruleId: 'DS-INT-003', title: 'விபச்சார யோகம் & மாற்று ஈர்ப்பு ரகசியங்கள்', sourcePage: 30, section: 'விபச்சார யோகம்' },
-      { ruleId: 'DS-INT-004', title: 'செவ்வாய் தரும் ஒழுக்கமும் கற்பு நெறியும்', sourcePage: 35, section: 'ஒழுக்க நெறி' },
-      { ruleId: 'DS-INT-005', title: 'சுக்கிரனுடன் தொடர்பு வரும் கிரகங்கள் & தாம்பத்திய சுகம்', sourcePage: 122, section: 'தாம்பத்திய சுகம்' }
-    ],
-    reasoning: `நூலின் 97-124 பக்கங்களில் மிக விளக்கமாக கூறப்பட்டுள்ள 12 பாவக அந்தரங்க ரகசியங்கள், பாலின வேறுபாடு (${isFemale ? 'பெண்' : 'ஆண்'}), சுக்கிரன்-செவ்வாய் சேர்க்கை ஒழுக்கம் மற்றும் சந்திரன்-புதன்-சுக்கிரன் மறைவு நிலைகள் அடிப்படையில் தொகுக்கப்பட்டது.`
-  };
 
   return results;
 }

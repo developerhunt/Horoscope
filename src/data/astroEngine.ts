@@ -2244,6 +2244,15 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     ]
   };
 
+  // Age Calculation for life-stage aware predictions
+  const now = new Date();
+  let userAge = now.getFullYear() - birthDate.getFullYear();
+  const monthDiff = now.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
+    userAge--;
+  }
+  if (userAge < 0) userAge = 0;
+
   // 12. D.S. Astro System Rules Engine Predictions
   const specialPredictions = generateDSSystemPredictions(
     evaluationList,
@@ -2257,7 +2266,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     lagnaSign,
     dasaTimelines,
     input.gender,
-    'dasa'
+    'dasa',
+    userAge
   );
 
   const subLagnaPredictions = evaluatePremiumChart(
@@ -2266,7 +2276,8 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
     lagnaSign,
     dasaTimelines,
     input.gender,
-    'bhukti'
+    'bhukti',
+    userAge
   );
 
   // 13. Advanced Master Calculations (Phase 4 & 5)
@@ -2285,7 +2296,6 @@ export function calculateHoroscope(input: HoroscopeInput): HoroscopeData {
   const shadbala = calculateShadbala(planets, lagnaSign, isDayBirth);
 
   // 14. Footer and Basic Details
-  const now = new Date();
   const ageYears = Math.max(0, now.getFullYear() - year);
 
   const footerInfo: FooterInfo = {

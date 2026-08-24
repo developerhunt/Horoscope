@@ -47,9 +47,10 @@ interface CategoryTabConfig {
 const CATEGORY_TABS: CategoryTabConfig[] = [
   { id: 'all', label: 'அனைத்தும் (All Topics)', shortLabel: 'அனைத்தும்', icon: Layers },
   { id: 'education', label: 'கல்வி & வித்யா (Education)', shortLabel: 'கல்வி', icon: GraduationCap },
+  { id: 'parents', label: 'பெற்றோர் நலம் & குழந்தை வளர்ப்பு (Parents & Upbringing)', shortLabel: 'பெற்றோர்', icon: HeartHandshake },
   { id: 'career', label: 'தொழில் & உத்தியோகம் (Career)', shortLabel: 'தொழில்', icon: Briefcase },
   { id: 'marriage', label: 'திருமணம் & வரன் (Marriage)', shortLabel: 'திருமணம்', icon: Heart },
-  { id: 'children', label: 'குழந்தை பாக்கியம் & பாலினம் (Children)', shortLabel: 'குழந்தை', icon: Baby },
+  { id: 'children', label: 'குழந்தை பாக்கியம் & பாலினம் (Children)', shortLabel: 'குழந்தை/வம்சம்', icon: Baby },
   { id: 'finance', label: 'தனம் & கடன் நிவர்த்தி (Finance)', shortLabel: 'பொருளாதாரம்', icon: Coins },
   { id: 'property', label: 'வீடு & சொகுசு வாகனம் (Property & Vehicle)', shortLabel: 'வீடு/வாகனம்', icon: Home },
   { id: 'health', label: 'உடல் உறுப்புகள் & நோய்கள் (Health)', shortLabel: 'உடல்நலம்', icon: Activity },
@@ -65,44 +66,58 @@ interface QuickQuestion {
   category: string;
   subtext: string;
   ruleCitation: string;
+  minAge?: number;
+  maxAge?: number;
 }
 
 const PREDEFINED_QUESTIONS: QuickQuestion[] = [
   {
+    q: 'கல்வி வளர்ச்சி, உயர் படிப்பு & தேர்ச்சி யோகம் எவ்வாறு உள்ளது?',
+    category: 'education',
+    subtext: 'வித்யாகாரகன் புதன், 4-ஆம் அதிபதி & குரு பார்வை',
+    ruleCitation: 'பக்கம் 14, 42-43 (DS-EDU-001)'
+  },
+  {
     q: 'எனக்கு எப்போது திருமணம் நடக்கும்?',
     category: 'marriage',
     subtext: 'மங்களகாரகன் செவ்வாய், 12-ஆம் அதிபதி & தசாபுத்தி கால நிர்ணயம்',
-    ruleCitation: 'பக்கம் 21-26 (DS-MAR-001)'
+    ruleCitation: 'பக்கம் 21-26 (DS-MAR-001)',
+    minAge: 16
   },
   {
     q: 'சொந்தத் தொழில் யோகமா அல்லது உத்தியோகமா?',
     category: 'career',
     subtext: '10-ஆம் அதிபதி ஆட்சி/உச்சம் vs 6-ஆம் பாவகம் & சனி பார்வை',
-    ruleCitation: 'பக்கம் 43-47 (DS-CAR-001)'
+    ruleCitation: 'பக்கம் 43-47 (DS-CAR-001)',
+    minAge: 16
   },
   {
     q: 'அரசு வேலை (Govt Job) தேர்வு எழுதினால் வெற்றி கிடைக்குமா?',
     category: 'career',
     subtext: 'சூரியன், புதன், செவ்வாய், சனி கூட்டு யோகம்',
-    ruleCitation: 'பக்கம் 44-45 (DS-CAR-002)'
+    ruleCitation: 'பக்கம் 44-45 (DS-CAR-002)',
+    minAge: 16
   },
   {
     q: 'குழந்தை பாக்கியம் & பாலினம் (ஆண்/பெண்) எவ்வாறு அமையும்?',
     category: 'children',
     subtext: 'புத்திரகாரகன் குருவுடன் ராகு/கேது சேர்க்கை & 15 பாலின விதிகள்',
-    ruleCitation: 'பக்கம் 36-48 (DS-CHL-001)'
+    ruleCitation: 'பக்கம் 36-48 (DS-CHL-001)',
+    minAge: 18
   },
   {
     q: 'பழைய கடன்கள் எப்போது முழுமையாகத் தீரும்?',
     category: 'finance',
     subtext: 'தசா/புக்தி லக்னத்திற்கு 6-ஆம் இடத்து கேது & தன ஸ்தானம்',
-    ruleCitation: 'பக்கம் 47-51 (DS-FIN-001)'
+    ruleCitation: 'பக்கம் 47-51 (DS-FIN-001)',
+    minAge: 15
   },
   {
     q: 'சொந்த வீடு கட்டும் யோகம் & புதிய வாகனம் எப்போது அமையும்?',
     category: 'property',
     subtext: 'தாய்க்காரகன் சந்திரன் சுப பலம், 4-ஆம் பாவகம் & சுக்கிரன்+ராகு சேர்க்கை',
-    ruleCitation: 'பக்கம் 54-56 (DS-PRP-001)'
+    ruleCitation: 'பக்கம் 54-56 (DS-PRP-001)',
+    minAge: 15
   },
   {
     q: 'வெளியூர் / வெளிநாட்டு வேலை & குடியுரிமை யோகம் உண்டா?',
@@ -126,7 +141,9 @@ const PREDEFINED_QUESTIONS: QuickQuestion[] = [
     q: 'அந்தரங்க தாம்பத்திய ஒழுக்கம், கற்பு நெறி & கள்ளத்தொடர்பு விழிப்புணர்வு நிலை என்ன?',
     category: 'intimacy',
     subtext: 'செவ்வாய்-சுக்கிரன் கட்டுப்பாடு, 4-8-12 மறைவு ஸ்தானங்கள் & சந்திரன்-புதன்-சுக்கிரன் சேர்க்கை',
-    ruleCitation: 'பக்கம் 35, 97-124 (DS-INT-001)'
+    ruleCitation: 'பக்கம் 35, 97-124 (DS-INT-001)',
+    minAge: 18,
+    maxAge: 65
   }
 ];
 
@@ -141,6 +158,34 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
   const currentDasa = data.currentDasaBhukti?.dasaLord || 'குரு';
   const currentBhukti = data.currentDasaBhukti?.bhuktiLord || 'சுக்கிரன்';
   const dasaLagna = data.dsSystem?.dasaLagnaSign || data.basicDetails?.lagna || '';
+
+  // Calculate age dynamically
+  const calculateAge = (): { age: number; stage: string } => {
+    const dobStr = data.basicDetails?.dob || (data as any).input?.dob;
+    if (!dobStr) return { age: 30, stage: 'குடும்ப & நடுத்தர பருவம்' };
+    const parts = dobStr.includes('-') ? dobStr.split('-') : dobStr.split('/');
+    if (parts.length < 3) return { age: 30, stage: 'குடும்ப & நடுத்தர பருவம்' };
+    const bDate = parts[0].length === 4
+      ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+      : new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    const now = new Date();
+    let age = now.getFullYear() - bDate.getFullYear();
+    const m = now.getMonth() - bDate.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < bDate.getDate())) {
+      age--;
+    }
+    age = Math.max(0, age);
+
+    let stage = 'குடும்ப & நடுத்தர பருவம்';
+    if (age < 15) stage = 'இளமை & ஆரம்பக் கல்விப் பருவம்';
+    else if (age < 25) stage = 'இளமை & உயர்கல்வி / ஆரம்ப வாழ்க்கை';
+    else if (age < 55) stage = 'தொழில், திருமணம் & குடும்ப பருவம்';
+    else stage = 'முதுமை, பேரக்குழந்தை & ஆன்மீக பருவம்';
+
+    return { age, stage };
+  };
+
+  const { age: userAge, stage: userAgeStage } = calculateAge();
 
   // Determine active prediction map based on toggle
   const activePredictionsMap = subLagnaMode === 'bhukti' && data.subLagnaPredictions
@@ -165,6 +210,16 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
   }, {});
+
+  // Dynamic available tabs based on generated categories
+  const availableTabs = CATEGORY_TABS.filter(tab => tab.id === 'all' || (categoryCounts[tab.id] && categoryCounts[tab.id] > 0));
+
+  // Filter available quick questions based on user age
+  const availableQuestions = PREDEFINED_QUESTIONS.filter(q => {
+    if (q.minAge !== undefined && userAge < q.minAge) return false;
+    if (q.maxAge !== undefined && userAge > q.maxAge) return false;
+    return true;
+  });
 
   const filteredPredictions = predictionsList.filter(item => {
     if (activeTab !== 'all' && item.category !== activeTab) return false;
@@ -241,6 +296,15 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
             </button>
           </div>
 
+          {/* Life-Stage & Age Awareness Badge */}
+          <div className="flex items-center gap-2 bg-slate-950/90 border border-sky-900/60 px-3.5 py-1.5 rounded-xl text-xs font-tamil shadow-sm">
+            <UserCheck className="w-3.5 h-3.5 text-sky-400" />
+            <span className="text-slate-400 font-medium">வயது:</span>
+            <span className="text-sky-300 font-bold">{userAge} வயது</span>
+            <span className="text-slate-600 font-mono">|</span>
+            <span className="text-sky-400 font-semibold">{userAgeStage}</span>
+          </div>
+
           {/* Current Core Snapshot Badge */}
           <div className="flex items-center gap-2 bg-slate-950/90 border border-amber-900/60 px-3.5 py-1.5 rounded-xl text-xs font-tamil shadow-sm">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -265,12 +329,12 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
           </div>
           <span className="text-[11px] text-slate-400 font-tamil flex items-center gap-1">
             <Info className="w-3 h-3 text-slate-500" />
-            கேள்வியைத் தேர்ந்தெடுத்து துல்லிய கால நிர்ணய பலனை உடனடியாக அறியலாம்
+            வயது & தசா நிலைக்கு ஏற்ற கேள்விகளைத் தேர்ந்தெடுத்து துல்லிய பலனை உடனடியாக அறியலாம்
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1">
-          {PREDEFINED_QUESTIONS.map((item, idx) => {
+          {availableQuestions.map((item, idx) => {
             const isSelected = selectedQuestion === item.q;
             return (
               <button
@@ -316,7 +380,7 @@ export const DSPredictionsDashboard: React.FC<DSPredictionsDashboardProps> = ({ 
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Scrollable Category Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 max-w-full scrollbar-none text-xs font-tamil">
-            {CATEGORY_TABS.map(tab => {
+            {availableTabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               const count = tab.id === 'all' ? predictionsList.length : (categoryCounts[tab.id] || 0);
