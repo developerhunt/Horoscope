@@ -2,10 +2,13 @@ import {
   HoroscopeData,
   PoruthamItem,
   KujaDoshaAnalysis,
+  RahuKetuDoshaDetail,
+  RahuKetuDoshaAnalysis,
   PapaSamyamAnalysis,
   PapaSamyamDetail,
   DasaSandhiAnalysis,
   DasaSandhiAlert,
+  SameDasaStatus,
   PersonMatchingSummary,
   MarriageCompatibilityResult
 } from '../types';
@@ -1029,6 +1032,126 @@ export function evaluateKujaDosha(chart?: HoroscopeData): KujaDoshaAnalysis {
 }
 
 // ==========================================
+// 3B. RAHU-KETU (SARPA) DOSHA ENGINE
+// ==========================================
+
+export function evaluateRahuKetuDosha(chart?: HoroscopeData): RahuKetuDoshaDetail {
+  if (!chart || !chart.planetaryDegrees) {
+    return {
+      hasDosha: false,
+      score: 0,
+      placements: [],
+      balanceStatus: 'ராகு-கேது (சர்ப்ப) தோஷமில்லை'
+    };
+  }
+
+  const pMap: Record<string, PlanetPosition> = {};
+  for (const p of chart.planetaryDegrees) {
+    let clean = p.planet;
+    if (clean.includes('லக்னம்')) clean = 'லக்னம்';
+    else if (clean.includes('சந்திரன்')) clean = 'சந்திரன்';
+    else if (clean.includes('ராகு')) clean = 'ராகு';
+    else if (clean.includes('கேது')) clean = 'கேது';
+
+    const signIdx = p.rasiIndex !== undefined
+      ? p.rasiIndex
+      : (p.rasi ? RASI_NAMES_TAMIL.indexOf(p.rasi) : 0);
+    const degNum = parseFloat(p.degree) || 0;
+
+    pMap[clean] = {
+      name: clean,
+      sign: signIdx >= 0 ? signIdx : 0,
+      degree: degNum,
+      rawLon: p.rawLongitude ?? ((signIdx >= 0 ? signIdx : 0) * 30 + degNum)
+    };
+  }
+
+  const lagna = pMap['லக்னம்'];
+  const moon = pMap['சந்திரன்'];
+  const rahu = pMap['ராகு'];
+  const ketu = pMap['கேது'];
+
+  if (!lagna || (!rahu && !ketu)) {
+    return {
+      hasDosha: false,
+      score: 0,
+      placements: [],
+      balanceStatus: 'ராகு-கேது விபரம் கிடைக்கவில்லை'
+    };
+  }
+
+  const placements: string[] = [];
+  let score = 0;
+
+  // Sarpa dosha houses from Lagna and Moon: 1, 2, 5, 7, 8, 12
+  const checkRahuKetu = (refSign: number, refName: string, weight: number) => {
+    if (rahu) {
+      const h = ((rahu.sign - refSign + 12) % 12) + 1;
+      if ([1, 2, 5, 7, 8].includes(h)) {
+        const pts = (h === 1 || h === 7 || h === 8 ? 1.0 : 0.5) * weight;
+        score += pts;
+        placements.push(`${refName}-லிருந்து ${h}-ஆம் வீட்டில் ராகு (${pts.toFixed(1)} புள்ளி)`);
+      }
+    }
+    if (ketu) {
+      const h = ((ketu.sign - refSign + 12) % 12) + 1;
+      if ([1, 2, 5, 7, 8].includes(h)) {
+        const pts = (h === 1 || h === 7 || h === 8 ? 1.0 : 0.5) * weight;
+        score += pts;
+        placements.push(`${refName}-லிருந்து ${h}-ஆம் வீட்டில் கேது (${pts.toFixed(1)} புள்ளி)`);
+      }
+    }
+  };
+
+  checkRahuKetu(lagna.sign, 'லக்னம்', 1.0);
+  if (moon) {
+    checkRahuKetu(moon.sign, 'சந்திரன்', 0.5);
+  }
+
+  const hasDosha = score >= 1.0;
+  let balanceStatus = 'ராகு-கேது தோஷமில்லை';
+  if (hasDosha) {
+    balanceStatus = score > 2.0 ? 'வலுவான ராகு-கேது (சர்ப்ப) தோஷம் உண்டு' : 'மிதமான ராகு-கேது தோஷம் உண்டு';
+  }
+
+  return {
+    hasDosha,
+    score: Math.round(score * 10) / 10,
+    placements,
+    balanceStatus
+  };
+}
+
+export function compareRahuKetuDosha(boyChart?: HoroscopeData, girlChart?: HoroscopeData): RahuKetuDoshaAnalysis {
+  const boy = evaluateRahuKetuDosha(boyChart);
+  const girl = evaluateRahuKetuDosha(girlChart);
+
+  let isBalanced = true;
+  let balanceVerdict = 'ராகு-கேது தோஷம் சமநிலையில் உள்ளது';
+
+  if (boy.hasDosha && !girl.hasDosha) {
+    isBalanced = false;
+    balanceVerdict = 'ஆணுக்கு ராகு-கேது தோஷம் உண்டு, பெண்ணுக்கு இல்லை (சமநிலையின்மை)';
+  } else if (!boy.hasDosha && girl.hasDosha) {
+    isBalanced = false;
+    balanceVerdict = 'பெண்ணுக்கு ராகு-கேது தோஷம் உண்டு, ஆணுக்கு இல்லை (சமநிலையின்மை)';
+  } else if (boy.hasDosha && girl.hasDosha) {
+    isBalanced = true;
+    balanceVerdict = 'இருவருக்கும் ராகு-கேது தோஷம் அமைந்திருப்பதால் பரஸ்பரம் தோஷ நிவர்த்தி ஆகிறது';
+  } else {
+    isBalanced = true;
+    balanceVerdict = 'இருவருக்கும் ராகு-கேது (சர்ப்ப) தோஷமில்லை (சுப நிலை)';
+  }
+
+  return {
+    boy,
+    girl,
+    isBalanced,
+    balanceVerdict
+  };
+}
+
+// ==========================================
 // 4. PAPA SAMYAM (பாப சாம்யம்) BALANCE ENGINE
 // ==========================================
 
@@ -1254,6 +1377,67 @@ export interface PersonMatchInput {
   chartData?: HoroscopeData;
 }
 
+// Helper to extract Current Active Dasa
+function getActiveDasa(chart?: HoroscopeData): string | undefined {
+  if (!chart || !chart.dasaTimelines || chart.dasaTimelines.length === 0) return undefined;
+  const now = new Date();
+  for (const t of chart.dasaTimelines) {
+    if (t.startDate && t.endDate) {
+      const s = new Date(t.startDate);
+      const e = new Date(t.endDate);
+      if (now >= s && now <= e) {
+        return t.dasaLord;
+      }
+    }
+  }
+  return chart.dasaTimelines[0]?.dasaLord;
+}
+
+// Helper to extract Lagna and Lagna Lord
+function getLagnaInfo(chart?: HoroscopeData): { lagnaName?: string; lagnaLord?: string } {
+  if (!chart || !chart.planetaryDegrees) return {};
+  const lagnaP = chart.planetaryDegrees.find(p => p.planet.includes('லக்னம்'));
+  if (!lagnaP) return {};
+  const signIdx = lagnaP.rasiIndex !== undefined
+    ? lagnaP.rasiIndex
+    : (lagnaP.rasi ? RASI_NAMES_TAMIL.indexOf(lagnaP.rasi) : 0);
+  if (signIdx >= 0 && signIdx < 12) {
+    return {
+      lagnaName: RASI_NAMES_TAMIL[signIdx],
+      lagnaLord: SIGN_LORDS[signIdx]
+    };
+  }
+  return {};
+}
+
+// Helper to check same dasa running
+export function checkSameDasaRunning(boyChart?: HoroscopeData, girlChart?: HoroscopeData): SameDasaStatus {
+  const boyDasa = getActiveDasa(boyChart);
+  const girlDasa = getActiveDasa(girlChart);
+
+  if (!boyDasa || !girlDasa) {
+    return {
+      isSame: false,
+      currentDasaBoy: boyDasa,
+      currentDasaGirl: girlDasa,
+      details: 'இருவரின் தசா விவரங்கள் பெறப்படவில்லை.'
+    };
+  }
+
+  const isSame = boyDasa.trim() === girlDasa.trim();
+  let details = `ஆணுக்கு ${boyDasa} தசையும் பெண்ணுக்கு ${girlDasa} தசையும் நடைபெறுகிறது. வெவ்வேறு தசா என்பதால் நற்பலன் தரும்.`;
+  if (isSame) {
+    details = `எச்சரிக்கை: தம்பதியர் இருவருக்கும் ஒரே சமயத்தில் '${boyDasa}' தசை நடைபெறுகிறது (ஏக தசா). இருவருக்கும் ஒரே கிரகத்தின் தாக்கம் இருப்பதால் பரஸ்பர சகிப்புத்தன்மையும் வழிபாடும் அவசியம்.`;
+  }
+
+  return {
+    isSame,
+    currentDasaBoy: boyDasa,
+    currentDasaGirl: girlDasa,
+    details
+  };
+}
+
 export function calculateMarriageCompatibility(
   boyInput: PersonMatchInput,
   girlInput: PersonMatchInput
@@ -1314,13 +1498,17 @@ export function calculateMarriageCompatibility(
     kujaBalanceVerdict = 'இருவருக்கும் செவ்வாய் தோஷமில்லை (சுப நிலை)';
   }
 
-  // 3. Papa Samyam Evaluation
+  // 3. Rahu-Ketu (Sarpa) Dosha Evaluation
+  const rahuKetuDosha = compareRahuKetuDosha(boyInput.chartData, girlInput.chartData);
+
+  // 4. Papa Samyam Evaluation
   const papaSamyam = comparePapaSamyam(boyInput.chartData, girlInput.chartData);
 
-  // 4. Dasa Sandhi Evaluation
+  // 5. Dasa Sandhi Evaluation & Same Dasa Check
   const dasaSandhi = scanDasaSandhi(boyInput.chartData, girlInput.chartData);
+  const sameDasaRunning = checkSameDasaRunning(boyInput.chartData, girlInput.chartData);
 
-  // 5. Final Verdict Construction
+  // 6. Final Verdict Construction
   let finalVerdict: 'excellent' | 'moderate' | 'not_recommended' = 'moderate';
   let verdictTitleTamil = '';
   let verdictSubtitleTamil = '';
@@ -1339,11 +1527,11 @@ export function calculateMarriageCompatibility(
     verdictSubtitleTamil = 'நட்சத்திர வேதை தாக்கம் இருப்பதால் மன அமைதி குறையலாம்';
     summaryTamil = `நட்சத்திர வேதை தோஷம் காரணமாக தம்பதியரிடையே பரஸ்பர தாக்குதலும் துன்பங்களும் நேரலாம் என்பதால் வரன் சேர்ப்பதில் கூடுதல் கவனம் தேவை.`;
     recommendationsTamil.push('வேதை தோஷம் உள்ளதால் பிற கிரக அமைப்புகளை ஆராய்ந்து முடிவெடுக்கவும்.');
-  } else if (totalScore >= 7 && isKujaBalanced && papaSamyam.isBalanced && !dasaSandhi.hasSandhiAlert) {
+  } else if (totalScore >= 7 && isKujaBalanced && papaSamyam.isBalanced && !dasaSandhi.hasSandhiAlert && rahuKetuDosha.isBalanced) {
     finalVerdict = 'excellent';
     verdictTitleTamil = 'மிக உத்தமமான பொருத்தம் (Excellent Match)';
     verdictSubtitleTamil = 'அனைத்து முக்கிய பொருத்தங்களும் முழுமையாக பொருந்தியுள்ளன';
-    summaryTamil = `10 பொருத்தங்களில் ${totalScore}/${maxScore} மதிப்பெண்கள் பெற்று, ரஜ்ஜு மற்றும் வேதை தோஷங்கள் இன்றி, செவ்வாய் மற்றும் பாப சாம்ய சமநிலையும் கூடி வந்துள்ளதால் இத்திருமணம் தம்பதியருக்கு தீர்க்காயுள், மகிழ்ச்சி மற்றும் சந்தான சௌபாக்கியங்களை வாரி வழங்கும்.`;
+    summaryTamil = `10 பொருத்தங்களில் ${totalScore}/${maxScore} மதிப்பெண்கள் பெற்று, ரஜ்ஜு மற்றும் வேதை தோஷங்கள் இன்றி, செவ்வாய், ராகு-கேது மற்றும் பாப சாம்ய சமநிலையும் கூடி வந்துள்ளதால் இத்திருமணம் தம்பதியருக்கு தீர்க்காயுள், மகிழ்ச்சி மற்றும் சந்தான சௌபாக்கியங்களை வாரி வழங்கும்.`;
     recommendationsTamil.push('மங்களகரமான சுப முகூர்த்த நாளில் திருமணம் நடத்தலாம்.');
     recommendationsTamil.push('குலதெய்வ வழிபாடு செய்து சுப காரியங்களைத் துவங்கவும்.');
   } else if (totalScore >= 5) {
@@ -1354,8 +1542,14 @@ export function calculateMarriageCompatibility(
     if (!isKujaBalanced) {
       recommendationsTamil.push('செவ்வாய் தோஷ நிவர்த்தி பரிகாரங்களை (வைத்தீஸ்வரன் கோவில் வழிபாடு) மேற்கொள்வது நலம்.');
     }
+    if (!rahuKetuDosha.isBalanced) {
+      recommendationsTamil.push('ராகு-கேது தோஷ சமநிலையின்மைக்கு திருநாகேஸ்வரம் அல்லது காளஹஸ்தி வழிபாடு மேற்கொள்வது சிறப்பு.');
+    }
     if (dasaSandhi.hasSandhiAlert) {
       recommendationsTamil.push('தசா சந்தி காலத்தில் நவகிரக ஹோமம் மற்றும் திருக்கடையூர் வழிபாடு செய்வது சிறப்பு.');
+    }
+    if (sameDasaRunning.isSame) {
+      recommendationsTamil.push('ஒரே தசா நடப்பதால் இஷ்ட தெய்வ வழிபாட்டையும் சுதர்சன ஹோமத்தையும் மேற்கொள்ளலாம்.');
     }
   } else {
     finalVerdict = 'not_recommended';
@@ -1364,6 +1558,11 @@ export function calculateMarriageCompatibility(
     summaryTamil = `10 பொருத்தங்களில் ${totalScore}/${maxScore} மதிப்பெண்கள் மட்டுமே பெற்றுள்ளதால் இணக்கமான தாம்பத்தியம் அமைய வாய்ப்பு குறைவு.`;
     recommendationsTamil.push('குடும்ப பெரியவர்கள் மற்றும் ஜோதிட நிபுணருடன் ஆலோசித்து முடிவு செய்யவும்.');
   }
+
+  const boyLagnaInfo = getLagnaInfo(boyInput.chartData);
+  const girlLagnaInfo = getLagnaInfo(girlInput.chartData);
+  const boyActiveDasa = getActiveDasa(boyInput.chartData);
+  const girlActiveDasa = getActiveDasa(girlInput.chartData);
 
   const boySummary: PersonMatchingSummary = {
     name: boyInput.name || 'மணமகன்',
@@ -1374,6 +1573,9 @@ export function calculateMarriageCompatibility(
     rasi: RASI_NAMES_TAMIL[boyRasi],
     rasiIndex: boyRasi,
     rasiLord: SIGN_LORDS[boyRasi],
+    lagna: boyLagnaInfo.lagnaName,
+    lagnaLord: boyLagnaInfo.lagnaLord,
+    currentDasa: boyActiveDasa,
     gana: boyStar.gana,
     yoni: { animal: boyStar.yoniAnimal, gender: boyStar.yoniGender },
     rajju: boyStar.rajju,
@@ -1390,6 +1592,9 @@ export function calculateMarriageCompatibility(
     rasi: RASI_NAMES_TAMIL[girlRasi],
     rasiIndex: girlRasi,
     rasiLord: SIGN_LORDS[girlRasi],
+    lagna: girlLagnaInfo.lagnaName,
+    lagnaLord: girlLagnaInfo.lagnaLord,
+    currentDasa: girlActiveDasa,
     gana: girlStar.gana,
     yoni: { animal: girlStar.yoniAnimal, gender: girlStar.yoniGender },
     rajju: girlStar.rajju,
@@ -1417,8 +1622,10 @@ export function calculateMarriageCompatibility(
       isBalanced: isKujaBalanced,
       balanceVerdict: kujaBalanceVerdict
     },
+    rahuKetuDosha,
     papaSamyam,
     dasaSandhi,
+    sameDasaRunning,
     recommendationsTamil
   };
 }

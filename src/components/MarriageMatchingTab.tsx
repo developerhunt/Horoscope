@@ -1,8 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   HoroscopeInput,
   MarriageCompatibilityResult,
-  PersonMatchingSummary,
   PoruthamItem
 } from '../types';
 import {
@@ -15,6 +14,8 @@ import {
   calculateMarriageCompatibility,
   PersonMatchInput
 } from '../data/poruthamEngine';
+import { TAMIL_NADU_CITIES, CityOption } from '../data/cities';
+import { formatDMSCoordinates, formatPlaceTitle, NominatimPlace } from '../utils/geoUtils';
 import { exportToPdf } from '../utils/pdfExport';
 import {
   Heart,
@@ -32,16 +33,226 @@ import {
   Clock,
   MapPin,
   Check,
-  ChevronRight,
-  Info,
-  Layers
+  ChevronDown,
+  Layers,
+  Activity,
+  Compass
 } from 'lucide-react';
 
-interface MarriageMatchingTabProps {
-  onBackToSingle?: () => void;
+interface SuggestionItem {
+  id: string | number;
+  displayName: string;
+  mainName: string;
+  subtitle: string;
+  lat: string;
+  lon: string;
+  isGlobal?: boolean;
 }
 
-export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
+// City / Location Autocomplete component for Horoscope inputs
+interface LocationInputProps {
+  label: string;
+  value: string;
+  onChange: (city: string, lat?: string, lon?: string) => void;
+  initialLat?: string;
+  initialLon?: string;
+  accentColor?: 'blue' | 'rose';
+}
+
+const LocationInput: React.FC<LocationInputProps> = ({
+  label,
+  value,
+  onChange,
+  initialLat,
+  initialLon,
+  accentColor = 'blue'
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(
+    initialLat && initialLon ? { lat: initialLat, lon: initialLon } : null
+  );
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const searchLocations = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      const popular = TAMIL_NADU_CITIES.slice(0, 8).map(c => ({
+        id: c.name,
+        displayName: `${c.tamilName} (${c.name})`,
+        mainName: c.tamilName,
+        subtitle: c.state,
+        lat: c.lat,
+        lon: c.long,
+        isGlobal: false
+      }));
+      setSuggestions(popular);
+      setIsSearching(false);
+      return;
+    }
+
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    setIsSearching(true);
+
+    try {
+      const qLower = trimmed.toLowerCase();
+      const localMatches: SuggestionItem[] = TAMIL_NADU_CITIES
+        .filter(c => c.name.toLowerCase().includes(qLower) || c.tamilName.toLowerCase().includes(qLower))
+        .map(c => ({
+          id: c.name,
+          displayName: `${c.tamilName} (${c.name})`,
+          mainName: c.tamilName,
+          subtitle: c.state,
+          lat: c.lat,
+          lon: c.long,
+          isGlobal: false
+        }));
+
+      if (trimmed.length >= 3) {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed)}&format=json&addressdetails=1&limit=5`,
+          {
+            signal: abortControllerRef.current.signal,
+            headers: { 'Accept-Language': 'ta,en' }
+          }
+        );
+        if (res.ok) {
+          const globalData: NominatimPlace[] = await res.json();
+          const globalMatches: SuggestionItem[] = globalData.map(p => {
+            const { mainName, subtitle } = formatPlaceTitle(p);
+            return {
+              id: p.place_id,
+              displayName: p.display_name,
+              mainName,
+              subtitle,
+              lat: p.lat,
+              lon: p.lon,
+              isGlobal: true
+            };
+          });
+          setSuggestions([...localMatches, ...globalMatches]);
+        } else {
+          setSuggestions(localMatches);
+        }
+      } else {
+        setSuggestions(localMatches);
+      }
+    } catch {
+      // Ignored
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    onChange(val, coords?.lat, coords?.lon);
+    setIsOpen(true);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      searchLocations(val);
+    }, 250);
+  };
+
+  const handleSelect = (s: SuggestionItem) => {
+    onChange(s.mainName, s.lat, s.lon);
+    setCoords({ lat: s.lat, lon: s.lon });
+    setIsOpen(false);
+  };
+
+  const ringFocus = accentColor === 'rose'
+    ? 'focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
+    : 'focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+
+  return (
+    <div ref={containerRef} className="relative space-y-1">
+      <label className="block text-slate-400 text-xs font-tamil flex items-center justify-between">
+        <span className="flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-amber-400" />
+          {label}
+        </span>
+        {coords && (
+          <span className="text-[10px] text-slate-400 font-mono">
+            {formatDMSCoordinates(coords.lat, coords.lon)}
+          </span>
+        )}
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={handleInputChange}
+          onFocus={() => {
+            setIsOpen(true);
+            if (!value) searchLocations('');
+          }}
+          placeholder="எ.கா. சென்னை, மதுரை, கோயம்புத்தூர்..."
+          className={`w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none transition-all ${ringFocus}`}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setIsOpen(!isOpen);
+            if (!isOpen && !value) searchLocations('');
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer p-1"
+        >
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Autocomplete Dropdown */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-50 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-48 overflow-y-auto">
+          {isSearching && (
+            <div className="p-2.5 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5 font-tamil">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+              <span>இடங்களைத் தேடுகிறது...</span>
+            </div>
+          )}
+          {!isSearching && suggestions.length === 0 && (
+            <div className="p-2.5 text-center text-xs text-slate-400 font-tamil">
+              இடம் கிடைக்கவில்லை
+            </div>
+          )}
+          {!isSearching && suggestions.map(s => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => handleSelect(s)}
+              className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 border-b border-slate-800/60 last:border-0 flex items-center justify-between text-slate-200 transition-colors cursor-pointer"
+            >
+              <div>
+                <div className="font-semibold font-tamil text-slate-100">{s.mainName}</div>
+                <div className="text-[10px] text-slate-400">{s.subtitle}</div>
+              </div>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {formatDMSCoordinates(s.lat, s.lon)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const MarriageMatchingTab: React.FC = () => {
   const [matchMode, setMatchMode] = useState<'quick' | 'full'>('quick');
 
   // Quick Select State
@@ -59,7 +270,9 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
     gender: 'ஆண்',
     dob: '1995-05-15',
     tob: '08:30',
-    pob: 'சென்னை, தமிழ்நாடு'
+    pob: 'சென்னை, தமிழ்நாடு',
+    lat: "13° 05' N",
+    lon: "80° 16' E"
   });
 
   const [girlForm, setGirlForm] = useState<HoroscopeInput>({
@@ -67,11 +280,12 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
     gender: 'பெண்',
     dob: '1997-08-20',
     tob: '10:15',
-    pob: 'மதுரை, தமிழ்நாடு'
+    pob: 'மதுரை, தமிழ்நாடு',
+    lat: "09° 55' N",
+    lon: "78° 07' E"
   });
 
   const [result, setResult] = useState<MarriageCompatibilityResult | null>(() => {
-    // Initial default match computation
     const boyInput: PersonMatchInput = {
       name: 'மணமகன்',
       gender: 'ஆண்',
@@ -100,13 +314,13 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
     try {
       if (matchMode === 'quick') {
         const boyInput: PersonMatchInput = {
-          name: boyName || 'மணமகன்',
+          name: boyName.trim() || 'மணமகன்',
           gender: 'ஆண்',
           nakshatraIndex: boyStarIdx,
           pada: boyPada
         };
         const girlInput: PersonMatchInput = {
-          name: girlName || 'மணமகள்',
+          name: girlName.trim() || 'மணமகள்',
           gender: 'பெண்',
           nakshatraIndex: girlStarIdx,
           pada: girlPada
@@ -149,7 +363,7 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
         }
 
         const boyInput: PersonMatchInput = {
-          name: boyForm.name || 'மணமகன்',
+          name: boyForm.name?.trim() || 'மணமகன்',
           gender: 'ஆண்',
           nakshatraIndex: bStar,
           pada: bPada,
@@ -158,7 +372,7 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
         };
 
         const girlInput: PersonMatchInput = {
-          name: girlForm.name || 'மணமகள்',
+          name: girlForm.name?.trim() || 'மணமகள்',
           gender: 'பெண்',
           nakshatraIndex: gStar,
           pada: gPada,
@@ -240,7 +454,7 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
                 </span>
               </h1>
               <p className="text-xs text-slate-400 font-tamil mt-0.5">
-                திருக்கணித முறைப்படி 10 பொருத்தங்கள், ரஜ்ஜு, வேதை, செவ்வாய் தோஷம், பாப சாம்யம் மற்றும் தசா சந்தி முழு ஆய்வு
+                திருக்கணித முறைப்படி 10 பொருத்தங்கள், ரஜ்ஜு, வேதை, செவ்வாய் தோஷம், ராகு-கேது (சர்ப்ப) தோஷம், பாப சாம்யம் மற்றும் தசா சந்தி முழு ஆய்வு
               </p>
             </div>
           </div>
@@ -380,43 +594,53 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
           ) : (
             <div className="space-y-3 text-xs font-tamil">
               <div>
-                <label className="block text-slate-400 mb-1">பெயர்</label>
+                <label className="block text-slate-400 mb-1 flex items-center gap-1">
+                  <User className="w-3 h-3 text-blue-400" /> பெயர்
+                </label>
                 <input
                   type="text"
                   value={boyForm.name}
                   onChange={(e) => setBoyForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                  placeholder="மணமகன் பெயர்"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-blue-500 outline-none"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-400 mb-1">பிறந்த தேதி</label>
+                  <label className="block text-slate-400 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-blue-400" /> பிறந்த தேதி
+                  </label>
                   <input
                     type="date"
                     value={boyForm.dob}
                     onChange={(e) => setBoyForm(prev => ({ ...prev, dob: e.target.value }))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-blue-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">பிறந்த நேரம்</label>
+                  <label className="block text-slate-400 mb-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-blue-400" /> பிறந்த நேரம்
+                  </label>
                   <input
                     type="time"
                     value={boyForm.tob}
                     onChange={(e) => setBoyForm(prev => ({ ...prev, tob: e.target.value }))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-blue-500 outline-none"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-slate-400 mb-1">பிறந்த இடம்</label>
-                <input
-                  type="text"
-                  value={boyForm.pob}
-                  onChange={(e) => setBoyForm(prev => ({ ...prev, pob: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
-                />
-              </div>
+
+              <LocationInput
+                label="பிறந்த இடம் & அட்ச/தீர்க்க ரேகை"
+                value={boyForm.pob}
+                initialLat={boyForm.lat}
+                initialLon={boyForm.lon}
+                accentColor="blue"
+                onChange={(pob, lat, lon) => {
+                  setBoyForm(prev => ({ ...prev, pob, lat, lon }));
+                }}
+              />
             </div>
           )}
         </div>
@@ -490,59 +714,69 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
           ) : (
             <div className="space-y-3 text-xs font-tamil">
               <div>
-                <label className="block text-slate-400 mb-1">பெயர்</label>
+                <label className="block text-slate-400 mb-1 flex items-center gap-1">
+                  <User className="w-3 h-3 text-rose-400" /> பெயர்
+                </label>
                 <input
                   type="text"
                   value={girlForm.name}
                   onChange={(e) => setGirlForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                  placeholder="மணமகள் பெயர்"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-rose-500 outline-none"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-400 mb-1">பிறந்த தேதி</label>
+                  <label className="block text-slate-400 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-rose-400" /> பிறந்த தேதி
+                  </label>
                   <input
                     type="date"
                     value={girlForm.dob}
                     onChange={(e) => setGirlForm(prev => ({ ...prev, dob: e.target.value }))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-rose-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">பிறந்த நேரம்</label>
+                  <label className="block text-slate-400 mb-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-rose-400" /> பிறந்த நேரம்
+                  </label>
                   <input
                     type="time"
                     value={girlForm.tob}
                     onChange={(e) => setGirlForm(prev => ({ ...prev, tob: e.target.value }))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-rose-500 outline-none"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-slate-400 mb-1">பிறந்த இடம்</label>
-                <input
-                  type="text"
-                  value={girlForm.pob}
-                  onChange={(e) => setGirlForm(prev => ({ ...prev, pob: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
-                />
-              </div>
+
+              <LocationInput
+                label="பிறந்த இடம் & அட்ச/தீர்க்க ரேகை"
+                value={girlForm.pob}
+                initialLat={girlForm.lat}
+                initialLon={girlForm.lon}
+                accentColor="rose"
+                onChange={(pob, lat, lon) => {
+                  setGirlForm(prev => ({ ...prev, pob, lat, lon }));
+                }}
+              />
             </div>
           )}
         </div>
 
       </div>
 
-      {/* CALCULATE BUTTON */}
-      <div className="flex items-center justify-center gap-3 no-print">
+      {/* CALCULATE PRIMARY CTA BUTTON */}
+      <div className="flex flex-wrap items-center justify-center gap-3 no-print">
         <button
           type="button"
           onClick={handleCalculateMatch}
           disabled={isCalculating}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-rose-600/30 transition-all cursor-pointer font-tamil disabled:opacity-50"
+          className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-rose-600 via-amber-600 to-rose-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-sm flex items-center gap-2.5 shadow-xl shadow-rose-600/25 transition-all cursor-pointer font-tamil disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isCalculating ? 'animate-spin' : ''}`} />
-          <span>{isCalculating ? 'பொருத்தம் கணிக்கப்படுகிறது...' : 'திருமணப் பொருத்தம் கணிக்க'}</span>
+          <span>{isCalculating ? 'பொருத்தம் கணிக்கப்படுகிறது...' : 'திருமணப் பொருத்தம் பார்க்க'}</span>
         </button>
 
         {result && (
@@ -550,9 +784,9 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
             type="button"
             onClick={handleDownloadReportPdf}
             disabled={isDownloadingPdf}
-            className="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 font-tamil"
+            className="px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 font-tamil"
           >
-            <Download className="w-3.5 h-3.5 text-amber-400" />
+            <Download className="w-4 h-4 text-amber-400" />
             <span>{isDownloadingPdf ? 'தயாராகிறது...' : 'அறிக்கை PDF பதிவிறக்கம்'}</span>
           </button>
         )}
@@ -580,9 +814,9 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl font-bold text-amber-400 print:text-amber-700 font-tamil">௨</span>
-                  <h2 className="text-base sm:text-lg font-bold text-slate-100 print:text-slate-900 font-tamil">
-                    திருமணப் பொருத்த சாஸ்திர அறிக்கை (10 Porutham Report)
+                  <span className="text-2xl font-bold text-amber-400 print:text-amber-700 font-tamil">௨</span>
+                  <h2 className="text-base sm:text-xl font-bold text-slate-100 print:text-slate-900 font-tamil">
+                    திருமணப் பொருத்த சாஸ்திர அறிக்கை (10 Porutham Master Report)
                   </h2>
                 </div>
                 <p className="text-xs text-slate-400 print:text-slate-600 font-tamil">
@@ -603,37 +837,85 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
               </div>
             </div>
 
-            {/* Couple Profile Summary Bar */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/80 print:bg-slate-50 border border-slate-800/80 print:border-slate-300 rounded-xl p-3 text-xs font-tamil">
-              <div className="flex items-center justify-between border-b sm:border-b-0 sm:border-r border-slate-800 print:border-slate-300 pb-2 sm:pb-0 sm:pr-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded bg-blue-500/20 text-blue-400 font-bold text-[10px] flex items-center justify-center">ஆ</span>
-                  <div>
-                    <span className="font-bold text-slate-200 print:text-slate-900">{result.boy.name}</span>
-                    <span className="text-slate-400 text-[11px] block">
-                      {result.boy.nakshatra} ({result.boy.pada}-ஆம் பாதம்) • {result.boy.rasi} ராசி
-                    </span>
+            {/* SIDE-BY-SIDE BOY & GIRL ASTROLOGICAL PROFILE SUMMARY */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/80 print:bg-slate-50 border border-slate-800/80 print:border-slate-300 rounded-xl p-3.5 text-xs font-tamil">
+              {/* Boy Profile */}
+              <div className="space-y-2 border-b sm:border-b-0 sm:border-r border-slate-800 print:border-slate-300 pb-3 sm:pb-0 sm:pr-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded bg-blue-500/20 text-blue-400 font-bold text-[10px] flex items-center justify-center">ஆ</span>
+                    <span className="font-bold text-slate-100 print:text-slate-900 text-sm">{result.boy.name}</span>
                   </div>
+                  <span className="text-[10px] bg-blue-950/80 text-blue-300 px-2 py-0.5 rounded border border-blue-800/60 font-semibold">
+                    மணமகன்
+                  </span>
                 </div>
-                <div className="text-right text-[10px] text-slate-400">
-                  <div>கணம்: {result.boy.gana}</div>
-                  <div>ரஜ்ஜு: {result.boy.rajju}</div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-300 print:text-slate-700">
+                  <div>
+                    <span className="text-slate-400">நட்சத்திரம்:</span> <b className="text-amber-300 print:text-amber-800">{result.boy.nakshatra} ({result.boy.pada})</b>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">ராசி:</span> <b>{result.boy.rasi}</b> ({result.boy.rasiLord})
+                  </div>
+                  {result.boy.lagna && (
+                    <div>
+                      <span className="text-slate-400">லக்னம்:</span> <b className="text-blue-300 print:text-blue-700">{result.boy.lagna}</b> ({result.boy.lagnaLord})
+                    </div>
+                  )}
+                  {result.boy.currentDasa && (
+                    <div>
+                      <span className="text-slate-400">நடப்பு தசை:</span> <b className="text-emerald-300 print:text-emerald-700">{result.boy.currentDasa}</b>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-slate-400">கணம்:</span> {result.boy.gana}
+                  </div>
+                  <div>
+                    <span className="text-slate-400">யோனி:</span> {result.boy.yoni.animal} ({result.boy.yoni.gender})
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400">ரஜ்ஜு:</span> <b className="text-slate-200 print:text-slate-800">{result.boy.rajju} ரஜ்ஜு</b>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1 sm:pt-0 sm:pl-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] flex items-center justify-center">பெ</span>
-                  <div>
-                    <span className="font-bold text-slate-200 print:text-slate-900">{result.girl.name}</span>
-                    <span className="text-slate-400 text-[11px] block">
-                      {result.girl.nakshatra} ({result.girl.pada}-ஆம் பாதம்) • {result.girl.rasi} ராசி
-                    </span>
+              {/* Girl Profile */}
+              <div className="space-y-2 pt-2 sm:pt-0 sm:pl-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] flex items-center justify-center">பெ</span>
+                    <span className="font-bold text-slate-100 print:text-slate-900 text-sm">{result.girl.name}</span>
                   </div>
+                  <span className="text-[10px] bg-rose-950/80 text-rose-300 px-2 py-0.5 rounded border border-rose-800/60 font-semibold">
+                    மணமகள்
+                  </span>
                 </div>
-                <div className="text-right text-[10px] text-slate-400">
-                  <div>கணம்: {result.girl.gana}</div>
-                  <div>ரஜ்ஜு: {result.girl.rajju}</div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-300 print:text-slate-700">
+                  <div>
+                    <span className="text-slate-400">நட்சத்திரம்:</span> <b className="text-amber-300 print:text-amber-800">{result.girl.nakshatra} ({result.girl.pada})</b>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">ராசி:</span> <b>{result.girl.rasi}</b> ({result.girl.rasiLord})
+                  </div>
+                  {result.girl.lagna && (
+                    <div>
+                      <span className="text-slate-400">லக்னம்:</span> <b className="text-rose-300 print:text-rose-700">{result.girl.lagna}</b> ({result.girl.lagnaLord})
+                    </div>
+                  )}
+                  {result.girl.currentDasa && (
+                    <div>
+                      <span className="text-slate-400">நடப்பு தசை:</span> <b className="text-emerald-300 print:text-emerald-700">{result.girl.currentDasa}</b>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-slate-400">கணம்:</span> {result.girl.gana}
+                  </div>
+                  <div>
+                    <span className="text-slate-400">யோனி:</span> {result.girl.yoni.animal} ({result.girl.yoni.gender})
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400">ரஜ்ஜு:</span> <b className="text-slate-200 print:text-slate-800">{result.girl.rajju} ரஜ்ஜு</b>
+                  </div>
                 </div>
               </div>
             </div>
@@ -703,7 +985,7 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 print:text-slate-600 leading-relaxed">
-                பெண்: {result.girl.rajju} ரஜ்ஜு • ஆண்: {result.boy.rajju} ரஜ்ஜு.
+                பெண்: <b className="text-slate-200 print:text-slate-900">{result.girl.rajju} ரஜ்ஜு</b> • ஆண்: <b className="text-slate-200 print:text-slate-900">{result.boy.rajju} ரஜ்ஜு</b>.
                 {result.isRajjuMatch
                   ? ' இருவரும் வெவ்வேறு ரஜ்ஜு கொண்டிருப்பதால் மாங்கல்ய தோஷமில்லை.'
                   : ' ஒரே ரஜ்ஜு அமைந்திருப்பதால் சாஸ்திரப்படி எச்சரிக்கை.'}
@@ -775,7 +1057,14 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
                       >
                         <td className="py-2.5 px-3 font-mono text-slate-400 text-[11px]">{idx + 1}</td>
                         <td className="py-2.5 px-3 font-medium text-slate-200 print:text-slate-900">
-                          <div>{p.nameTamil}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span>{p.nameTamil}</span>
+                            {p.importance === 'critical' && (
+                              <span className="text-[9px] px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                முக்கியம்
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[10px] text-slate-500 print:text-slate-400 font-sans">
                             {p.nameEnglish}
                           </div>
@@ -807,7 +1096,7 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
             </div>
           </div>
 
-          {/* ADVANCED CHARTS ANALYSIS: KUJA DOSHA & PAPA SAMYAM */}
+          {/* ADVANCED CHARTS ANALYSIS: KUJA DOSHA, RAHU-KETU, PAPA SAMYAM, DASA SANDHI */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             
             {/* Kuja Dosha Card */}
@@ -865,6 +1154,65 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
 
                 <div className="text-[11px] text-slate-300 print:text-slate-700 italic pt-1">
                   முடிவு: {result.kujaDosha.balanceVerdict}
+                </div>
+              </div>
+            </div>
+
+            {/* Rahu-Ketu (Sarpa) Dosha Card */}
+            <div className="bg-slate-950/80 print:bg-slate-50 border border-slate-800 print:border-slate-300 rounded-xl p-4 space-y-3 font-tamil text-xs">
+              <div className="flex items-center justify-between border-b border-slate-800 print:border-slate-300 pb-2">
+                <div className="flex items-center gap-1.5 font-bold text-purple-300 print:text-purple-800">
+                  <Activity className="w-4 h-4 text-purple-400" />
+                  <span>ராகு-கேது (சர்ப்ப) தோஷம்</span>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                    result.rahuKetuDosha.isBalanced
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                  }`}
+                >
+                  {result.rahuKetuDosha.isBalanced ? 'சமநிலை உண்டு' : 'சமநிலையின்மை'}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="bg-slate-900 print:bg-white border border-slate-800/80 print:border-slate-200 rounded-lg p-2.5">
+                  <div className="flex items-center justify-between font-semibold text-slate-300 print:text-slate-800 mb-1">
+                    <span>ஆண் ராகு-கேது நிலை:</span>
+                    <span className="text-[11px] text-purple-400 print:text-purple-700 font-mono">
+                      புள்ளிகள்: {result.rahuKetuDosha.boy.score}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 print:text-slate-600">
+                    {result.rahuKetuDosha.boy.balanceStatus}
+                  </p>
+                  {result.rahuKetuDosha.boy.placements.length > 0 && (
+                    <div className="text-[10px] text-slate-400 mt-1">
+                      {result.rahuKetuDosha.boy.placements.join(' • ')}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-slate-900 print:bg-white border border-slate-800/80 print:border-slate-200 rounded-lg p-2.5">
+                  <div className="flex items-center justify-between font-semibold text-slate-300 print:text-slate-800 mb-1">
+                    <span>பெண் ராகு-கேது நிலை:</span>
+                    <span className="text-[11px] text-purple-400 print:text-purple-700 font-mono">
+                      புள்ளிகள்: {result.rahuKetuDosha.girl.score}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 print:text-slate-600">
+                    {result.rahuKetuDosha.girl.balanceStatus}
+                  </p>
+                  {result.rahuKetuDosha.girl.placements.length > 0 && (
+                    <div className="text-[10px] text-slate-400 mt-1">
+                      {result.rahuKetuDosha.girl.placements.join(' • ')}
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-[11px] text-slate-300 print:text-slate-700 italic pt-1">
+                  முடிவு: {result.rahuKetuDosha.balanceVerdict}
                 </div>
               </div>
             </div>
@@ -929,32 +1277,45 @@ export const MarriageMatchingTab: React.FC<MarriageMatchingTabProps> = () => {
               </div>
             </div>
 
-          </div>
+            {/* Dasa Sandhi & Same Dasa Card */}
+            <div className="bg-slate-950/80 print:bg-slate-50 border border-slate-800 print:border-slate-300 rounded-xl p-4 space-y-3 font-tamil text-xs">
+              <div className="flex items-center justify-between border-b border-slate-800 print:border-slate-300 pb-2">
+                <div className="flex items-center gap-1.5 font-bold text-sky-300 print:text-sky-800">
+                  <Clock className="w-4 h-4 text-sky-400" />
+                  <span>தசா சந்தி & தசா ஆய்வு</span>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                    !result.dasaSandhi.hasSandhiAlert && !result.sameDasaRunning.isSame
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  }`}
+                >
+                  {!result.dasaSandhi.hasSandhiAlert && !result.sameDasaRunning.isSame ? 'சுப தசா நிலை' : 'கவனிக்கத்தக்கது'}
+                </span>
+              </div>
 
-          {/* DASA SANDHI ALERT CARD */}
-          <div
-            className={`rounded-xl p-4 border font-tamil text-xs ${
-              result.dasaSandhi.hasSandhiAlert
-                ? 'bg-rose-950/40 border-rose-500/40 text-rose-200 print:bg-rose-50 print:border-rose-300 print:text-rose-900'
-                : 'bg-slate-950/80 print:bg-slate-50 border-slate-800 print:border-slate-300 text-slate-300 print:text-slate-700'
-            }`}
-          >
-            <div className="flex items-center gap-2 font-bold mb-1">
-              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>தசா சந்தி ஆய்வு (Dasa Sandhi Timeline Scan):</span>
-              {result.dasaSandhi.hasSandhiAlert ? (
-                <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/40 font-semibold">
-                  எச்சரிக்கை
-                </span>
-              ) : (
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/40 font-semibold">
-                  தோஷமில்லை
-                </span>
-              )}
+              <div className="space-y-2">
+                <div className="bg-slate-900 print:bg-white border border-slate-800/80 print:border-slate-200 rounded-lg p-2.5">
+                  <div className="text-slate-300 print:text-slate-800 font-semibold mb-1">
+                    நடப்பு தசா விவரம்:
+                  </div>
+                  <p className="text-[11px] text-slate-400 print:text-slate-600">
+                    {result.sameDasaRunning.details}
+                  </p>
+                </div>
+
+                <div className="bg-slate-900 print:bg-white border border-slate-800/80 print:border-slate-200 rounded-lg p-2.5">
+                  <div className="text-slate-300 print:text-slate-800 font-semibold mb-1">
+                    தசா சந்தி மாற்றம் (Timeline Gap):
+                  </div>
+                  <p className="text-[11px] text-slate-400 print:text-slate-600">
+                    {result.dasaSandhi.details}
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-[11px] opacity-90 leading-relaxed">
-              {result.dasaSandhi.details}
-            </p>
+
           </div>
 
           {/* RECOMMENDATIONS & PARIHARAM */}

@@ -309,6 +309,27 @@ export interface DasaSandhiAnalysis {
   details: string;
 }
 
+export interface RahuKetuDoshaDetail {
+  hasDosha: boolean;
+  score: number;
+  placements: string[];
+  balanceStatus: string;
+}
+
+export interface RahuKetuDoshaAnalysis {
+  boy: RahuKetuDoshaDetail;
+  girl: RahuKetuDoshaDetail;
+  isBalanced: boolean;
+  balanceVerdict: string;
+}
+
+export interface SameDasaStatus {
+  isSame: boolean;
+  currentDasaBoy?: string;
+  currentDasaGirl?: string;
+  details: string;
+}
+
 export interface PersonMatchingSummary {
   name: string;
   gender: 'ஆண்' | 'பெண்';
@@ -318,6 +339,9 @@ export interface PersonMatchingSummary {
   rasi: string;
   rasiIndex: number;
   rasiLord: string;
+  lagna?: string;
+  lagnaLord?: string;
+  currentDasa?: string;
   gana: string;
   yoni: { animal: string; gender: string };
   rajju: string;
@@ -345,7 +369,9 @@ export interface MarriageCompatibilityResult {
     isBalanced: boolean;
     balanceVerdict: string;
   };
+  rahuKetuDosha: RahuKetuDoshaAnalysis;
   papaSamyam: PapaSamyamAnalysis;
   dasaSandhi: DasaSandhiAnalysis;
+  sameDasaRunning: SameDasaStatus;
   recommendationsTamil: string[];
 }
