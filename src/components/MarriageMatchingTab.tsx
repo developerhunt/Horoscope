@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   HoroscopeInput,
+  HoroscopeData,
   MarriageCompatibilityResult,
   PoruthamItem
 } from '../types';
@@ -14,6 +15,7 @@ import {
   calculateMarriageCompatibility,
   PersonMatchInput
 } from '../data/poruthamEngine';
+import { SouthIndianChart } from './SouthIndianChart';
 import { TAMIL_NADU_CITIES, CityOption } from '../data/cities';
 import { formatDMSCoordinates, formatPlaceTitle, NominatimPlace } from '../utils/geoUtils';
 import { exportToPdf } from '../utils/pdfExport';
@@ -49,7 +51,7 @@ interface SuggestionItem {
   isGlobal?: boolean;
 }
 
-// City / Location Autocomplete component for Horoscope inputs
+// City / Location Autocomplete & Quick Preset Selector component for Horoscope inputs
 interface LocationInputProps {
   label: string;
   value: string;
@@ -78,6 +80,13 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Sync internal coordinates when parent props change
+  useEffect(() => {
+    if (initialLat && initialLon) {
+      setCoords({ lat: initialLat, lon: initialLon });
+    }
+  }, [initialLat, initialLon]);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -91,7 +100,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const searchLocations = useCallback(async (query: string) => {
     const trimmed = query.trim();
     if (trimmed.length < 2) {
-      const popular = TAMIL_NADU_CITIES.slice(0, 8).map(c => ({
+      const popular = TAMIL_NADU_CITIES.map(c => ({
         id: c.name,
         displayName: `${c.tamilName} (${c.name})`,
         mainName: c.tamilName,
@@ -175,45 +184,73 @@ const LocationInput: React.FC<LocationInputProps> = ({
     setIsOpen(false);
   };
 
+  const handleCitySelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCity = TAMIL_NADU_CITIES.find(c => c.name === e.target.value || c.tamilName === e.target.value);
+    if (selectedCity) {
+      onChange(selectedCity.tamilName, selectedCity.lat, selectedCity.long);
+      setCoords({ lat: selectedCity.lat, lon: selectedCity.long });
+      setIsOpen(false);
+    }
+  };
+
   const ringFocus = accentColor === 'rose'
     ? 'focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
     : 'focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
 
   return (
-    <div ref={containerRef} className="relative space-y-1">
-      <label className="block text-slate-400 text-xs font-tamil flex items-center justify-between">
-        <span className="flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-amber-400" />
+    <div ref={containerRef} className="relative space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="block text-slate-400 text-xs font-tamil flex items-center gap-1">
+          <MapPin className={`w-3 h-3 ${accentColor === 'rose' ? 'text-rose-400' : 'text-blue-400'}`} />
           {label}
-        </span>
+        </label>
         {coords && (
-          <span className="text-[10px] text-slate-400 font-mono">
+          <span className="text-[10px] text-amber-400 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
             {formatDMSCoordinates(coords.lat, coords.lon)}
           </span>
         )}
-      </label>
-      <div className="relative">
-        <input
-          type="text"
-          value={value}
-          onChange={handleInputChange}
-          onFocus={() => {
-            setIsOpen(true);
-            if (!value) searchLocations('');
-          }}
-          placeholder="எ.கா. சென்னை, மதுரை, கோயம்புத்தூர்..."
-          className={`w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none transition-all ${ringFocus}`}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(!isOpen);
-            if (!isOpen && !value) searchLocations('');
-          }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer p-1"
-        >
-          <ChevronDown className="w-3.5 h-3.5" />
-        </button>
+      </div>
+
+      {/* City Quick Dropdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        <div>
+          <select
+            value={TAMIL_NADU_CITIES.find(c => c.tamilName === value || c.name === value)?.name || ''}
+            onChange={handleCitySelectChange}
+            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:border-amber-500 outline-none cursor-pointer font-tamil"
+          >
+            <option value="">முக்கிய நகரங்கள் பட்டியல்...</option>
+            {TAMIL_NADU_CITIES.map(c => (
+              <option key={c.name} value={c.name}>
+                {c.tamilName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="relative">
+          <input
+            type="text"
+            value={value}
+            onChange={handleInputChange}
+            onFocus={() => {
+              setIsOpen(true);
+              if (!value) searchLocations('');
+            }}
+            placeholder="அல்லது ஊர் பெயரை தட்டச்சு செய்க..."
+            className={`w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none transition-all ${ringFocus}`}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(!isOpen);
+              if (!isOpen && !value) searchLocations('');
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer p-1"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Autocomplete Dropdown */}
@@ -301,6 +338,9 @@ export const MarriageMatchingTab: React.FC = () => {
     return calculateMarriageCompatibility(boyInput, girlInput);
   });
 
+  const [boyChartData, setBoyChartData] = useState<HoroscopeData | null>(null);
+  const [girlChartData, setGirlChartData] = useState<HoroscopeData | null>(null);
+
   const [isCalculating, setIsCalculating] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [showPdfSuccess, setShowPdfSuccess] = useState(false);
@@ -313,6 +353,8 @@ export const MarriageMatchingTab: React.FC = () => {
 
     try {
       if (matchMode === 'quick') {
+        setBoyChartData(null);
+        setGirlChartData(null);
         const boyInput: PersonMatchInput = {
           name: boyName.trim() || 'மணமகன்',
           gender: 'ஆண்',
@@ -331,6 +373,8 @@ export const MarriageMatchingTab: React.FC = () => {
         // Calculate Full Charts for both
         const boyChart = calculateHoroscope(boyForm);
         const girlChart = calculateHoroscope(girlForm);
+        setBoyChartData(boyChart);
+        setGirlChartData(girlChart);
 
         // Find Moon position / Nakshatra from chart
         const boyMoon = boyChart.planetaryDegrees.find(p => p.planet.includes('சந்திரன்'));
@@ -399,6 +443,8 @@ export const MarriageMatchingTab: React.FC = () => {
     setBoyPada(boyP);
     setGirlStarIdx(girlS);
     setGirlPada(girlP);
+    setBoyChartData(null);
+    setGirlChartData(null);
 
     const boyInput: PersonMatchInput = {
       name: boyName || 'மணமகன்',
@@ -1022,6 +1068,151 @@ export const MarriageMatchingTab: React.FC = () => {
               </p>
             </div>
           </div>
+
+          {/* ========================================================================= */}
+          {/* DUAL SOUTH INDIAN CHARTS DISPLAY (GROOM & BRIDE RASI + NAVAMSA CHAKRAS) */}
+          {/* Visible in Full Chart Mode when boyChartData and girlChartData exist     */}
+          {/* ========================================================================= */}
+          {matchMode === 'full' && boyChartData && girlChartData && (
+            <div className="space-y-6 pt-3 border-t border-slate-800 print:border-slate-300 print:break-inside-avoid">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 print:border-slate-300 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-amber-400 print:text-amber-800 shrink-0" />
+                  <h3 className="font-bold text-sm sm:text-base text-slate-100 print:text-slate-900 font-tamil">
+                    மணமக்கள் இருவரின் ஜாதக கட்டங்கள் (Rasi & Navamsa Chakras)
+                  </h3>
+                </div>
+                <span className="text-[11px] text-slate-400 print:text-slate-600 font-tamil">
+                  திருக்கணித சக்கரங்கள் & தசா இருப்பு
+                </span>
+              </div>
+
+              {/* Side-by-Side Dual Chart Container */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* GROOM (மணமகன்) CHARTS CARD */}
+                <div className="bg-slate-950/80 print:bg-white border border-blue-500/30 print:border-slate-300 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4 relative overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-blue-500/20 print:border-slate-200 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-400 font-bold text-xs flex items-center justify-center font-tamil">
+                        ஆ
+                      </span>
+                      <div>
+                        <h4 className="font-bold text-blue-200 print:text-blue-900 text-sm font-tamil">
+                          மணமகன் ஜாதக கட்டங்கள் ({boyChartData.input.name || 'மணமகன்'})
+                        </h4>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-blue-950/80 print:bg-blue-50 text-blue-300 print:text-blue-800 px-2.5 py-0.5 rounded-full border border-blue-800/60 font-tamil font-semibold">
+                      {boyChartData.basicDetails.lagna} லக்னம் • {boyChartData.basicDetails.rasi} ராசி
+                    </span>
+                  </div>
+
+                  {/* 2 Charts Grid for Boy */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center justify-items-center">
+                    <div className="w-full flex flex-col items-center">
+                      <SouthIndianChart
+                        title="இராசி"
+                        boxes={boyChartData.rasiChart}
+                        showAshtakavarga={true}
+                        id="boy-rasi-chart"
+                      />
+                    </div>
+                    <div className="w-full flex flex-col items-center">
+                      <SouthIndianChart
+                        title="நவாம்சம்"
+                        boxes={boyChartData.navamsamChart}
+                        showAshtakavarga={false}
+                        id="boy-navamsam-chart"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Boy Dasa Balance Banner */}
+                  <div className="bg-blue-950/40 print:bg-slate-50 border border-blue-900/50 print:border-slate-200 rounded-xl p-3 text-xs font-tamil space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 print:text-slate-600 font-semibold flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-blue-400" />
+                        ஜென்ம தசா இருப்பு:
+                      </span>
+                      <span className="font-bold text-blue-200 print:text-blue-900">
+                        {boyChartData.footerInfo?.janmaDasaIruppu || boyChartData.dasaTimelines[0]?.duration || 'கணிக்கப்பட்டது'}
+                      </span>
+                    </div>
+                    {boyChartData.footerInfo?.nadappuDasaBhukti && (
+                      <div className="flex items-center justify-between pt-1 border-t border-blue-900/30 print:border-slate-200 text-[11px]">
+                        <span className="text-slate-400 print:text-slate-600">நடப்பு தசா - புக்தி:</span>
+                        <span className="font-medium text-emerald-300 print:text-emerald-800">
+                          {boyChartData.footerInfo.nadappuDasaBhukti}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* BRIDE (மணமகள்) CHARTS CARD */}
+                <div className="bg-slate-950/80 print:bg-white border border-rose-500/30 print:border-slate-300 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4 relative overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-rose-500/20 print:border-slate-200 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-md bg-rose-500/20 text-rose-400 font-bold text-xs flex items-center justify-center font-tamil">
+                        பெ
+                      </span>
+                      <div>
+                        <h4 className="font-bold text-rose-200 print:text-rose-900 text-sm font-tamil">
+                          மணமகள் ஜாதக கட்டங்கள் ({girlChartData.input.name || 'மணமகள்'})
+                        </h4>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-rose-950/80 print:bg-rose-50 text-rose-300 print:text-rose-800 px-2.5 py-0.5 rounded-full border border-rose-800/60 font-tamil font-semibold">
+                      {girlChartData.basicDetails.lagna} லக்னம் • {girlChartData.basicDetails.rasi} ராசி
+                    </span>
+                  </div>
+
+                  {/* 2 Charts Grid for Girl */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center justify-items-center">
+                    <div className="w-full flex flex-col items-center">
+                      <SouthIndianChart
+                        title="இராசி"
+                        boxes={girlChartData.rasiChart}
+                        showAshtakavarga={true}
+                        id="girl-rasi-chart"
+                      />
+                    </div>
+                    <div className="w-full flex flex-col items-center">
+                      <SouthIndianChart
+                        title="நவாம்சம்"
+                        boxes={girlChartData.navamsamChart}
+                        showAshtakavarga={false}
+                        id="girl-navamsam-chart"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Girl Dasa Balance Banner */}
+                  <div className="bg-rose-950/40 print:bg-slate-50 border border-rose-900/50 print:border-slate-200 rounded-xl p-3 text-xs font-tamil space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 print:text-slate-600 font-semibold flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-rose-400" />
+                        ஜென்ம தசா இருப்பு:
+                      </span>
+                      <span className="font-bold text-rose-200 print:text-rose-900">
+                        {girlChartData.footerInfo?.janmaDasaIruppu || girlChartData.dasaTimelines[0]?.duration || 'கணிக்கப்பட்டது'}
+                      </span>
+                    </div>
+                    {girlChartData.footerInfo?.nadappuDasaBhukti && (
+                      <div className="flex items-center justify-between pt-1 border-t border-rose-900/30 print:border-slate-200 text-[11px]">
+                        <span className="text-slate-400 print:text-slate-600">நடப்பு தசா - புக்தி:</span>
+                        <span className="font-medium text-emerald-300 print:text-emerald-800">
+                          {girlChartData.footerInfo.nadappuDasaBhukti}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
 
           {/* 10 PORUTHAM BREAKDOWN TABLE */}
           <div className="space-y-3">
