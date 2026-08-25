@@ -3,10 +3,13 @@ import { HoroscopeInput, HoroscopeData } from './types';
 import { calculateHoroscope, enrichBackendDataWithPredictions } from './data/astroEngine';
 import { InputForm } from './components/InputForm';
 import { JathagamLayout } from './components/JathagamLayout';
+import { MarriageMatchingTab } from './components/MarriageMatchingTab';
 import { exportToPdf } from './utils/pdfExport';
-import { ArrowLeft, Check, Download, Compass } from 'lucide-react';
+import { ArrowLeft, Check, Download, Compass, Sparkles, Heart } from 'lucide-react';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'horoscope' | 'compatibility'>('horoscope');
+
   const [formData, setFormData] = useState<HoroscopeInput>({
     name: '',
     gender: 'ஆண்',
@@ -103,21 +106,53 @@ export default function App() {
     <div className="min-h-screen h-auto bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden overflow-y-visible">
       
       {/* Top Minimal Bar */}
-      <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 py-3 sticky top-0 z-50 no-print">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 py-2.5 sticky top-0 z-50 no-print">
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          
+          {/* Logo & Title */}
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold text-amber-400 font-tamil">௨</span>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex flex-col">
               <span className="font-bold text-sm sm:text-base text-slate-100 font-tamil">
                 திருக்கணித ஜோதிட கணிப்பான்
               </span>
-              <span className="text-[10px] text-amber-400/80 bg-amber-950/40 border border-amber-800/50 px-1.5 py-0.5 rounded font-mono hidden sm:inline">
-                A4 Printable Jathagam
+              <span className="text-[10px] text-amber-400/80 font-tamil hidden sm:inline">
+                வேத ஜோதிடம் & திருமணப் பொருத்தம்
               </span>
             </div>
           </div>
 
-          {horoscopeData && (
+          {/* Navigation Tab Switcher */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl shadow-inner">
+            <button
+              type="button"
+              onClick={() => setActiveTab('horoscope')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-tamil flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'horoscope'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>தனிநபர் ஜாதகம்</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('compatibility')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-tamil flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'compatibility'
+                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Heart className="w-3.5 h-3.5" />
+              <span>திருமணப் பொருத்தம் (10 Porutham)</span>
+            </button>
+          </div>
+
+          {/* Action Button for Horoscope PDF */}
+          {activeTab === 'horoscope' && horoscopeData && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -140,6 +175,7 @@ export default function App() {
               </button>
             </div>
           )}
+
         </div>
       </header>
 
@@ -154,34 +190,43 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-5xl mx-auto pb-16 overflow-visible">
         
-        {/* STATE 1: Clean Input Form */}
-        <section className="no-print">
-          <InputForm
-            initialValues={formData}
-            onSubmit={handleFormSubmit}
-            isGenerating={isGenerating}
-          />
+        {activeTab === 'horoscope' ? (
+          <>
+            {/* STATE 1: Clean Input Form */}
+            <section className="no-print">
+              <InputForm
+                initialValues={formData}
+                onSubmit={handleFormSubmit}
+                isGenerating={isGenerating}
+              />
 
-          {/* Progress Status Pill during generation */}
-          {isGenerating && generationStepText && (
-            <div className="max-w-md mx-auto -mt-3 mb-6 px-4">
-              <div className="bg-slate-900 border border-amber-500/40 rounded-xl p-3 text-center shadow-lg flex items-center justify-center gap-2.5 text-xs text-amber-300 font-tamil animate-pulse">
-                <Compass className="w-4 h-4 text-amber-400 animate-spin" />
-                <span>{generationStepText}</span>
-              </div>
-            </div>
-          )}
-        </section>
+              {/* Progress Status Pill during generation */}
+              {isGenerating && generationStepText && (
+                <div className="max-w-md mx-auto -mt-3 mb-6 px-4">
+                  <div className="bg-slate-900 border border-amber-500/40 rounded-xl p-3 text-center shadow-lg flex items-center justify-center gap-2.5 text-xs text-amber-300 font-tamil animate-pulse">
+                    <Compass className="w-4 h-4 text-amber-400 animate-spin" />
+                    <span>{generationStepText}</span>
+                  </div>
+                </div>
+              )}
+            </section>
 
-        {/* STATE 2: Generated Horoscope View (Classic A4 Template) */}
-        {horoscopeData && (
-          <section className="mt-2 animate-in fade-in duration-300">
-            <JathagamLayout
-              data={horoscopeData}
-              containerRef={jathagamContainerRef}
-              onDownloadPdf={handleDownloadPdf}
-              isDownloadingPdf={isDownloadingPdf}
-            />
+            {/* STATE 2: Generated Horoscope View (Classic A4 Template) */}
+            {horoscopeData && (
+              <section className="mt-2 animate-in fade-in duration-300">
+                <JathagamLayout
+                  data={horoscopeData}
+                  containerRef={jathagamContainerRef}
+                  onDownloadPdf={handleDownloadPdf}
+                  isDownloadingPdf={isDownloadingPdf}
+                />
+              </section>
+            )}
+          </>
+        ) : (
+          /* TAB 2: MARRIAGE COMPATIBILITY ENGINE */
+          <section className="animate-in fade-in duration-300">
+            <MarriageMatchingTab onBackToSingle={() => setActiveTab('horoscope')} />
           </section>
         )}
 
@@ -189,7 +234,7 @@ export default function App() {
 
       {/* Clean Minimal Footer */}
       <footer className="border-t border-slate-900 py-4 text-center text-xs text-slate-500 no-print">
-        திருக்கணித முறைப்படி துல்லியமாக கணிக்கப்பட்ட ஜாதக கட்டங்கள் • Classic Vedic Astrology Engine
+        திருக்கணித முறைப்படி துல்லியமாக கணிக்கப்பட்ட ஜாதக கட்டங்கள் & திருமணப் பொருத்த அமைப்பு • Classic Vedic Astrology Engine
       </footer>
 
     </div>

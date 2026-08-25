@@ -243,3 +243,109 @@ export interface HoroscopeData {
   jaiminiKarakas?: JaiminiKaraka[];
   upagrahas?: UpagrahaInfo[];
 }
+
+// ==========================================
+// MARRIAGE COMPATIBILITY (10 PORUTHAM) TYPES
+// ==========================================
+
+export interface PoruthamItem {
+  id: string;
+  nameTamil: string;
+  nameEnglish: string;
+  status: 'good' | 'average' | 'poor';
+  resultTamil: string;
+  score: number;
+  maxScore: number;
+  explanation: string;
+  importance: 'critical' | 'high' | 'medium' | 'standard';
+}
+
+export interface KujaDoshaAnalysis {
+  hasDosha: boolean;
+  score: number; // 0 for none, 1-3 based on strength
+  placements: string[];
+  exceptions: string[];
+  balanceStatus: string;
+}
+
+export interface PapaSamyamDetail {
+  fromLagna: number;
+  fromMoon: number;
+  fromVenus: number;
+  total: number;
+  breakdown: string[];
+}
+
+export interface PapaSamyamAnalysis {
+  boyPoints: number;
+  girlPoints: number;
+  boyDetails?: PapaSamyamDetail;
+  girlDetails?: PapaSamyamDetail;
+  difference: number;
+  isBalanced: boolean;
+  verdictTamil: string;
+  verdictDescription: string;
+}
+
+export interface DasaSandhiOccurrence {
+  person: 'boy' | 'girl';
+  dasaEnding: string;
+  dasaStarting: string;
+  transitionDate: string;
+  formattedDate: string;
+  age: number;
+}
+
+export interface DasaSandhiAlert {
+  boyTransition: DasaSandhiOccurrence;
+  girlTransition: DasaSandhiOccurrence;
+  gapMonths: number;
+  description: string;
+}
+
+export interface DasaSandhiAnalysis {
+  hasSandhiAlert: boolean;
+  alerts: DasaSandhiAlert[];
+  details: string;
+}
+
+export interface PersonMatchingSummary {
+  name: string;
+  gender: 'ஆண்' | 'பெண்';
+  nakshatra: string;
+  nakshatraIndex: number;
+  pada: number;
+  rasi: string;
+  rasiIndex: number;
+  rasiLord: string;
+  gana: string;
+  yoni: { animal: string; gender: string };
+  rajju: string;
+  hasFullChart: boolean;
+  chartData?: HoroscopeData;
+}
+
+export interface MarriageCompatibilityResult {
+  boy: PersonMatchingSummary;
+  girl: PersonMatchingSummary;
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  matchCount: number;
+  isRajjuMatch: boolean;
+  isVedhaMatch: boolean;
+  finalVerdict: 'excellent' | 'moderate' | 'not_recommended';
+  verdictTitleTamil: string;
+  verdictSubtitleTamil: string;
+  summaryTamil: string;
+  poruthams: PoruthamItem[];
+  kujaDosha: {
+    boy: KujaDoshaAnalysis;
+    girl: KujaDoshaAnalysis;
+    isBalanced: boolean;
+    balanceVerdict: string;
+  };
+  papaSamyam: PapaSamyamAnalysis;
+  dasaSandhi: DasaSandhiAnalysis;
+  recommendationsTamil: string[];
+}
